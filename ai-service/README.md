@@ -174,7 +174,7 @@ from google.colab import drive
 drive.mount('/content/drive')
 
 # Clone repository
-!git clone https://github.com/your-repo/bus-site.git
+!git clone https://github.com/ArcaneNova/bus-site.git
 %cd /content/bus-site/ai-service
 
 print("✅ Repository cloned & ready")
@@ -351,6 +351,81 @@ print("   • Ready for presentation & paper!")
 
 ---
 
+### **🔧 Troubleshooting Common Colab Issues**
+
+#### **Issue: "FileNotFoundError: dataset.csv not found"**
+
+**Fix:** The training scripts now auto-detect file locations. Just make sure:
+1. Cell 3 completed successfully (you should see "✅ Datasets generated")
+2. Don't skip Cell 3 — you MUST generate data before training
+3. If it still fails, run this in a new cell:
+```python
+import os
+os.chdir('/content/bus-site/ai-service')
+!ls -la data/
+!ls -la models/saved/
+```
+
+#### **Issue: "ModuleNotFoundError: No module named 'lightgbm' (or catboost)"**
+
+**Fix:** Cell 2 installs all packages. If error persists:
+```python
+!pip install -q lightgbm catboost optuna
+```
+Then re-run the training cell.
+
+#### **Issue: "CUDA out of memory" during training**
+
+**Fix:** Either:
+1. Use CPU (slower but works): Disable GPU (Runtime → Change Runtime Type → None)
+2. Reduce batch size: Edit the training script to use smaller BATCH_SIZE before running
+3. Run each model separately instead of all at once
+
+#### **Issue: "Permission denied" when creating files**
+
+**Fix:** The scripts need write access. Run this once:
+```python
+!mkdir -p /content/bus-site/ai-service/models/saved
+!mkdir -p /content/bus-site/ai-service/evaluation_results
+```
+
+#### **Issue: Cell 9 download fails or times out**
+
+**Fix:** Download files individually:
+```python
+from google.colab import files
+import os
+
+os.chdir('/content/bus-site/ai-service/evaluation_results')
+
+# Download PNG plots
+files.download('demand_model_comparison.png')
+files.download('delay_model_comparison.png')
+files.download('anomaly_model_comparison.png')
+
+# Download CSV tables
+files.download('demand_comparison.csv')
+files.download('delay_comparison.csv')
+files.download('anomaly_comparison.csv')
+
+# Download summary
+files.download('evaluation_summary.json')
+```
+
+#### **Issue: Training takes way longer than expected**
+
+**Common causes:**
+- ❌ GPU NOT enabled (very slow on CPU)
+- ❌ Too much other data on Colab instance
+- ❌ Network latency downloading TensorFlow
+
+**Solution:** 
+1. Check GPU is enabled: Runtime → Change Runtime Type → GPU
+2. Restart runtime if slow: Runtime → Restart all runtimes
+3. Wait for TensorFlow to fully download (shows in Cell 2)
+
+---
+
 ### **📊 What You'll Get From Colab**
 
 After running all cells, you'll have:
@@ -372,6 +447,71 @@ Anomaly Detection:      Ensemble (F1: ~0.85)
 - Performance visualizations
 - Business insights from data analysis
 - Justification for model selection
+
+---
+
+### **🖥️ Local Troubleshooting (Desktop/Server)**
+
+#### **Issue: "FileNotFoundError: demand_dataset.csv not found"**
+
+**Fix:** The scripts auto-detect paths. Make sure you're running from the correct directory:
+```bash
+cd d:\capstone project\bus-site\ai-service\training
+python train_demand_models.py
+```
+
+Or verify files exist:
+```bash
+ls ../data/  # On Linux/Mac
+dir ..\data\  # On Windows
+```
+
+#### **Issue: "numpy.float32 has no attribute 'clip'" in anomaly generation**
+
+**Fix:** This has been fixed in the latest version. If you see this error, update the script:
+```bash
+git pull origin main
+```
+
+#### **Issue: "No module named tensorflow"**
+
+**Fix:** Reinstall dependencies:
+```bash
+pip install -r requirements.txt --upgrade
+```
+
+Or install individually:
+```bash
+pip install tensorflow==2.16.1
+pip install scikit-learn xgboost lightgbm catboost
+```
+
+#### **Issue: Out of memory on local machine**
+
+**Fix:** Run scripts one at a time and use CPU:
+```bash
+# This will use CPU instead of GPU (slower but uses less memory)
+python training/train_demand_models.py
+
+# Wait for completion, then next:
+python training/train_delay_models.py
+
+python training/train_anomaly_models.py
+```
+
+Or reduce dataset size by editing the generators to use fewer records.
+
+#### **Issue: "Connection refused" when running API**
+
+**Fix:** Make sure port 8000 isn't in use:
+```bash
+# Find process using port 8000
+lsof -i :8000  # On Linux/Mac
+netstat -ano | findstr :8000  # On Windows
+
+# Kill process and try again
+python -m uvicorn main:app --port 8001  # Use different port
+```
 
 ---
 

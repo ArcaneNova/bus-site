@@ -26,9 +26,30 @@ logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────────────────────────────────
 
-ROUTES_CSV = os.path.join(os.path.dirname(__file__), "../../routes.csv")
-STAGES_CSV = os.path.join(os.path.dirname(__file__), "../../stages.csv")
-OUT_DIR = os.path.join(os.path.dirname(__file__), "../data")
+# Resolve paths - works in both local and Colab environments
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(script_dir)  # ai-service/
+workspace_root = os.path.dirname(project_root)  # bus-site/
+
+# Try multiple possible paths for routes/stages CSV
+ROUTES_CSV = None
+STAGES_CSV = None
+
+for possible_root in [
+    workspace_root,
+    "/content/bus-site",
+]:
+    routes_path = os.path.join(possible_root, "routes.csv")
+    stages_path = os.path.join(possible_root, "stages.csv")
+    if os.path.exists(routes_path) and os.path.exists(stages_path):
+        ROUTES_CSV = routes_path
+        STAGES_CSV = stages_path
+        break
+
+if ROUTES_CSV is None or STAGES_CSV is None:
+    raise FileNotFoundError("❌ routes.csv or stages.csv not found in workspace root")
+
+OUT_DIR = os.path.join(project_root, "data")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Configuration
@@ -459,7 +480,7 @@ def generate_anomaly_dataset(routes, stages_df):
                     # Normal patterns
                     weather_effect = WEATHER_DELAY_FACTOR.get(weather, 0) / 10
                     speed_kmh = normal_speed * (1 - weather_effect)
-                    delay_minutes = np.random.exponential(3).clip(0, 10)
+                    delay_minutes = float(np.array([np.random.exponential(3)]).clip(0, 10)[0])
                     passenger_load = np.random.uniform(30, 90)
                 
                 records.append({

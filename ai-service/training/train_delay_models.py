@@ -46,8 +46,25 @@ logger = logging.getLogger(__name__)
 
 # ─────────────────────────────────────────────────────────────────────────
 
-DATA_PATH = os.path.join(os.path.dirname(__file__), "../data/delay_dataset.csv")
-SAVE_DIR = os.path.join(os.path.dirname(__file__), "../models/saved")
+# Resolve paths - works in both local and Colab environments
+script_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(script_dir)  # ai-service/
+
+# Try multiple possible data paths
+DATA_PATH = None
+for possible_path in [
+    os.path.join(project_root, "data/delay_dataset.csv"),
+    "/content/bus-site/ai-service/data/delay_dataset.csv",
+    "delay_dataset.csv",
+]:
+    if os.path.exists(possible_path):
+        DATA_PATH = possible_path
+        break
+
+if DATA_PATH is None:
+    raise FileNotFoundError("❌ delay_dataset.csv not found in any expected location")
+
+SAVE_DIR = os.path.join(project_root, "models/saved")
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 FEATURES = [
