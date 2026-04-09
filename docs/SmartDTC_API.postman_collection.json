@@ -1,0 +1,719 @@
+{
+  "info": {
+    "_postman_id": "smartdtc-api-collection-v1",
+    "name": "SmartDTC API",
+    "description": "Complete API reference for the SmartDTC AI-Driven Bus Scheduling & Management System.\n\n**Base URL** (Backend): `{{baseUrl}}`  \n**AI Service URL**: `{{aiUrl}}`\n\n## Quick Start\n1. Run `POST Auth/Login` — the token is saved automatically to `{{token}}`\n2. All protected endpoints read from `{{token}}` via the collection-level auth header\n\n## Roles\n- `passenger` — read-only tracking + rating\n- `driver` — active trip management\n- `dispatcher` — schedule + demand management\n- `admin` — full access including reports, driver/bus assignment, AI retrain",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000/api/v1", "type": "string" },
+    { "key": "aiUrl",   "value": "http://localhost:8000",         "type": "string" },
+    { "key": "token",   "value": "",                               "type": "string" },
+    { "key": "routeId", "value": "64f1a2b3c4d5e6f7a8b9c0d1",     "type": "string" },
+    { "key": "busId",   "value": "64f1a2b3c4d5e6f7a8b9c0d2",     "type": "string" },
+    { "key": "driverId","value": "64f1a2b3c4d5e6f7a8b9c0d3",     "type": "string" },
+    { "key": "scheduleId","value": "64f1a2b3c4d5e6f7a8b9c0d4",   "type": "string" },
+    { "key": "tripId",  "value": "64f1a2b3c4d5e6f7a8b9c0d5",     "type": "string" }
+  ],
+  "auth": {
+    "type": "bearer",
+    "bearer": [{ "key": "token", "value": "{{token}}", "type": "string" }]
+  },
+  "item": [
+    {
+      "name": "Auth",
+      "description": "User authentication and token management.",
+      "item": [
+        {
+          "name": "Register",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/register", "host": ["{{baseUrl}}"], "path": ["auth","register"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Test Admin\",\n  \"email\": \"admin@smartdtc.in\",\n  \"password\": \"Admin@1234\",\n  \"role\": \"admin\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Login",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "const json = pm.response.json();",
+                  "if (json.token) { pm.collectionVariables.set('token', json.token); }",
+                  "pm.test('Status 200', () => pm.response.to.have.status(200));",
+                  "pm.test('Token present', () => pm.expect(json.token).to.be.a('string'));"
+                ]
+              }
+            }
+          ],
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/login", "host": ["{{baseUrl}}"], "path": ["auth","login"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"admin@smartdtc.in\",\n  \"password\": \"Admin@1234\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Profile",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/auth/me", "host": ["{{baseUrl}}"], "path": ["auth","me"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Refresh Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/auth/refresh", "host": ["{{baseUrl}}"], "path": ["auth","refresh"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"refreshToken\": \"<your_refresh_token>\" }"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Logout",
+          "request": {
+            "method": "POST",
+            "url": { "raw": "{{baseUrl}}/auth/logout", "host": ["{{baseUrl}}"], "path": ["auth","logout"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Routes",
+      "description": "Bus route CRUD operations.",
+      "item": [
+        {
+          "name": "List All Routes",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/routes?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["routes"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Route by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/routes/{{routeId}}", "host": ["{{baseUrl}}"], "path": ["routes","{{routeId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Route",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/routes", "host": ["{{baseUrl}}"], "path": ["routes"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeNumber\": \"DTC-101\",\n  \"name\": \"ISBT – Nehru Place\",\n  \"origin\": \"ISBT Kashmere Gate\",\n  \"destination\": \"Nehru Place\",\n  \"stages\": [\"64f000000000000000000001\", \"64f000000000000000000002\"],\n  \"totalDistance\": 18.5,\n  \"estimatedDuration\": 55\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Route",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/routes/{{routeId}}", "host": ["{{baseUrl}}"], "path": ["routes","{{routeId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"estimatedDuration\": 60, \"isActive\": true }"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete Route",
+          "request": {
+            "method": "DELETE",
+            "url": { "raw": "{{baseUrl}}/routes/{{routeId}}", "host": ["{{baseUrl}}"], "path": ["routes","{{routeId}}"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Buses",
+      "description": "Bus fleet management.",
+      "item": [
+        {
+          "name": "List Buses",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/buses?status=active",
+              "host": ["{{baseUrl}}"],
+              "path": ["buses"],
+              "query": [{ "key": "status", "value": "active" }]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Bus",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/buses/{{busId}}", "host": ["{{baseUrl}}"], "path": ["buses","{{busId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Bus",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/buses", "host": ["{{baseUrl}}"], "path": ["buses"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"registrationNumber\": \"DL 1P 0001\",\n  \"model\": \"Tata Starbus Ultra\",\n  \"capacity\": 55,\n  \"type\": \"ordinary\",\n  \"status\": \"active\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Drivers",
+      "description": "Driver management including bus assignment.",
+      "item": [
+        {
+          "name": "List Drivers",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/drivers?page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["drivers"],
+              "query": [
+                { "key": "page", "value": "1" },
+                { "key": "limit", "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Driver",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/drivers/{{driverId}}", "host": ["{{baseUrl}}"], "path": ["drivers","{{driverId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Driver",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/drivers", "host": ["{{baseUrl}}"], "path": ["drivers"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"Rajesh Kumar\",\n  \"licenseNumber\": \"DL-0119850005555\",\n  \"phone\": \"9876543210\",\n  \"licenseExpiry\": \"2028-12-31\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Bus to Driver",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/drivers/{{driverId}}/assign", "host": ["{{baseUrl}}"], "path": ["drivers","{{driverId}}","assign"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"busId\": \"{{busId}}\" }"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Assign Route to Driver",
+          "request": {
+            "method": "PATCH",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/drivers/{{driverId}}/assign-route", "host": ["{{baseUrl}}"], "path": ["drivers","{{driverId}}","assign-route"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"routeId\": \"{{routeId}}\" }"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Schedule",
+      "description": "Trip schedule management including AI-generated schedules.",
+      "item": [
+        {
+          "name": "List Schedules",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/schedule?routeId={{routeId}}&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["schedule"],
+              "query": [
+                { "key": "routeId", "value": "{{routeId}}" },
+                { "key": "page",    "value": "1" },
+                { "key": "limit",   "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Schedule by ID",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/schedule/{{scheduleId}}", "host": ["{{baseUrl}}"], "path": ["schedule","{{scheduleId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Create Schedule (Manual)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/schedule", "host": ["{{baseUrl}}"], "path": ["schedule"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeId\": \"{{routeId}}\",\n  \"busId\":   \"{{busId}}\",\n  \"driverId\": \"{{driverId}}\",\n  \"departureTime\": \"2025-06-10T07:30:00.000Z\",\n  \"arrivalTime\":   \"2025-06-10T08:30:00.000Z\"\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Update Schedule",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/schedule/{{scheduleId}}", "host": ["{{baseUrl}}"], "path": ["schedule","{{scheduleId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"status\": \"completed\" }"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate AI Schedule",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/schedule/generate-ai", "host": ["{{baseUrl}}"], "path": ["schedule","generate-ai"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeIds\": [\"{{routeId}}\"],\n  \"date\": \"2025-06-10\",\n  \"fleetSize\": 8,\n  \"startHour\": 5,\n  \"endHour\": 23\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Apply AI Schedule",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/schedule/generate-ai/apply", "host": ["{{baseUrl}}"], "path": ["schedule","generate-ai","apply"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeId\": \"{{routeId}}\",\n  \"busId\": \"{{busId}}\",\n  \"driverId\": \"{{driverId}}\",\n  \"date\": \"2025-06-10\",\n  \"slots\": [\n    { \"departure_min\": 330, \"demand_score\": 45 },\n    { \"departure_min\": 375, \"demand_score\": 68 }\n  ]\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Demand",
+      "description": "Passenger demand data and heatmap.",
+      "item": [
+        {
+          "name": "List Demand Records",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/demand?routeId={{routeId}}&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["demand"],
+              "query": [
+                { "key": "routeId", "value": "{{routeId}}" },
+                { "key": "page",    "value": "1" },
+                { "key": "limit",   "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Demand Heatmap",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/demand/heatmap?routeId={{routeId}}&date=2025-06-10",
+              "host": ["{{baseUrl}}"],
+              "path": ["demand","heatmap"],
+              "query": [
+                { "key": "routeId", "value": "{{routeId}}" },
+                { "key": "date",    "value": "2025-06-10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Predict Demand (AI Proxy)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/demand/predict", "host": ["{{baseUrl}}"], "path": ["demand","predict"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"routeId\": \"{{routeId}}\",\n  \"date\": \"2025-06-10\",\n  \"hour\": 8,\n  \"isWeekend\": false,\n  \"isHoliday\": false,\n  \"weatherCode\": 0\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Record Actual Demand",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/demand/{{tripId}}/actual", "host": ["{{baseUrl}}"], "path": ["demand","{{tripId}}","actual"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"actualCount\": 47 }"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Tracking",
+      "description": "Real-time bus GPS tracking.",
+      "item": [
+        {
+          "name": "List Live Positions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/tracking", "host": ["{{baseUrl}}"], "path": ["tracking"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Bus Position",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/tracking/bus/{{busId}}", "host": ["{{baseUrl}}"], "path": ["tracking","bus","{{busId}}"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Get Route Positions",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/tracking/route/{{routeId}}", "host": ["{{baseUrl}}"], "path": ["tracking","route","{{routeId}}"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Alerts",
+      "description": "System alerts management.",
+      "item": [
+        {
+          "name": "List Alerts",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/alerts?severity=critical&page=1&limit=20",
+              "host": ["{{baseUrl}}"],
+              "path": ["alerts"],
+              "query": [
+                { "key": "severity", "value": "critical" },
+                { "key": "page",     "value": "1" },
+                { "key": "limit",    "value": "20" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Acknowledge Alert",
+          "request": {
+            "method": "PATCH",
+            "url": { "raw": "{{baseUrl}}/alerts/:alertId/acknowledge", "host": ["{{baseUrl}}"], "path": ["alerts",":alertId","acknowledge"] }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reports",
+      "description": "Operational reports and exports. Admin/Dispatcher only.",
+      "item": [
+        {
+          "name": "Summary Report",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reports/summary?from=2025-06-01&to=2025-06-10",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports","summary"],
+              "query": [
+                { "key": "from", "value": "2025-06-01" },
+                { "key": "to",   "value": "2025-06-10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Daily Report",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reports/daily?date=2025-06-10&routeId={{routeId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports","daily"],
+              "query": [
+                { "key": "date",    "value": "2025-06-10" },
+                { "key": "routeId", "value": "{{routeId}}" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Export Excel",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reports/export/excel?from=2025-06-01&to=2025-06-10",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports","export","excel"],
+              "query": [
+                { "key": "from", "value": "2025-06-01" },
+                { "key": "to",   "value": "2025-06-10" }
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Export PDF",
+          "request": {
+            "method": "GET",
+            "url": {
+              "raw": "{{baseUrl}}/reports/export/pdf?from=2025-06-01&to=2025-06-10",
+              "host": ["{{baseUrl}}"],
+              "path": ["reports","export","pdf"],
+              "query": [
+                { "key": "from", "value": "2025-06-01" },
+                { "key": "to",   "value": "2025-06-10" }
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Mobile",
+      "description": "Mobile app specific endpoints (driver & passenger apps).",
+      "item": [
+        {
+          "name": "Register Push Token",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/mobile/push-token", "host": ["{{baseUrl}}"], "path": ["mobile","push-token"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{ \"token\": \"ExponentPushToken[xxxxxxxxxxxxxxxxxxxxxx]\" }"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Driver Active Trips",
+          "request": {
+            "method": "GET",
+            "url": { "raw": "{{baseUrl}}/mobile/driver/trips", "host": ["{{baseUrl}}"], "path": ["mobile","driver","trips"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Update GPS Position",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/mobile/driver/position", "host": ["{{baseUrl}}"], "path": ["mobile","driver","position"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"busId\": \"{{busId}}\",\n  \"routeId\": \"{{routeId}}\",\n  \"latitude\": 28.6448,\n  \"longitude\": 77.2167,\n  \"speed\": 32.5,\n  \"heading\": 180\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Submit Trip Rating",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/mobile/trips/{{tripId}}/rating", "host": ["{{baseUrl}}"], "path": ["mobile","trips","{{tripId}}","rating"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"overallRating\": 4,\n  \"driverRating\": 5,\n  \"comfortRating\": 3,\n  \"tags\": [\"On Time\", \"Clean Bus\"],\n  \"comment\": \"Good service, driver was punctual.\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "AI Service",
+      "description": "Direct calls to the FastAPI AI microservice (port 8000).",
+      "item": [
+        {
+          "name": "Health Check",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "GET",
+            "url": { "raw": "{{aiUrl}}/health", "host": ["{{aiUrl}}"], "path": ["health"] }
+          },
+          "response": []
+        },
+        {
+          "name": "Predict Demand",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{aiUrl}}/predict/demand", "host": ["{{aiUrl}}"], "path": ["predict","demand"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": \"{{routeId}}\",\n  \"date\": \"2025-06-10\",\n  \"hour\": 8,\n  \"is_weekend\": false,\n  \"is_holiday\": false,\n  \"weather_code\": 0,\n  \"avg_temp\": 32.0,\n  \"historical_avg\": 120\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Predict Delay",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{aiUrl}}/predict/delay", "host": ["{{aiUrl}}"], "path": ["predict","delay"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"schedule_id\": \"{{scheduleId}}\",\n  \"route_id\": \"{{routeId}}\",\n  \"bus_id\": \"{{busId}}\",\n  \"hour\": 8,\n  \"day_of_week\": 1,\n  \"weather_code\": 0,\n  \"load_pct\": 65.0,\n  \"avg_speed\": 28.0,\n  \"distance_remaining\": 12.5,\n  \"stops_remaining\": 8\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Detect Anomaly",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{aiUrl}}/detect/anomaly", "host": ["{{aiUrl}}"], "path": ["detect","anomaly"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"bus_id\": \"{{busId}}\",\n  \"route_id\": \"{{routeId}}\",\n  \"speed\": 2.5,\n  \"delay_minutes\": 45,\n  \"load_pct\": 98.0,\n  \"engine_temp\": 105.0,\n  \"hour\": 8\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Predict ETA",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{aiUrl}}/predict/eta", "host": ["{{aiUrl}}"], "path": ["predict","eta"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": \"{{routeId}}\",\n  \"bus_id\": \"{{busId}}\",\n  \"distance_km\": 12.5,\n  \"current_speed\": 28.0,\n  \"stops_remaining\": 8,\n  \"hour\": 8,\n  \"day_of_week\": 1,\n  \"weather_code\": 0,\n  \"load_pct\": 65.0\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Optimise Headway",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{aiUrl}}/optimize/headway", "host": ["{{aiUrl}}"], "path": ["optimize","headway"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": \"{{routeId}}\",\n  \"date\": \"2025-06-10\",\n  \"fleet_size\": 8,\n  \"is_weekend\": false,\n  \"is_holiday\": false,\n  \"start_hour\": 5,\n  \"end_hour\": 23,\n  \"population_size\": 80,\n  \"generations\": 100\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Generate Schedule (Legacy)",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{aiUrl}}/schedule/generate", "host": ["{{aiUrl}}"], "path": ["schedule","generate"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"route_id\": \"{{routeId}}\",\n  \"date\": \"2025-06-10\",\n  \"fleet_size\": 5\n}"
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Trigger Model Retrain",
+          "request": {
+            "auth": { "type": "noauth" },
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{aiUrl}}/admin/retrain", "host": ["{{aiUrl}}"], "path": ["admin","retrain"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"models\": [\"demand\", \"delay\", \"eta\", \"anomaly\"],\n  \"triggered_by\": \"admin@smartdtc.in\"\n}"
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}

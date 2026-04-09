@@ -1,0 +1,243 @@
+import { useState, useRef } from 'react';
+import {
+  View,
+  Text,
+  StyleSheet,
+  TouchableOpacity,
+  Alert,
+  Animated,
+  TextInput,
+} from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import Toast from 'react-native-toast-message';
+import * as Location from 'expo-location';
+import { getSocket } from '@/lib/socket';
+import { useAuthStore } from '@/store/authStore';
+import api from '@/lib/api';
+
+const SOS_TYPES = [
+  { key: 'breakdown', label: 'Bus Breakdown', icon: 'build-outline', color: '#F59E0B' },
+  { key: 'accident', label: 'Accident', icon: 'car-crash', color: '#EF4444' },
+  { key: 'medical', label: 'Medical Emergency', icon: 'medkit-outline', color: '#EF4444' },
+  { key: 'other', label: 'Other Emergency', icon: 'alert-circle-outline', color: '#6B7280' },
+];
+
+export default function SOSScreen() {
+  const { user } = useAuthStore();
+  const [selectedType, setSelectedType] = useState('');
+  const [message, setMessage] = useState('');
+  const [sending, setSending] = useState(false);
+  const [sent, setSent] = useState(false);
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+
+  const pulseSOS = () => {
+    Animated.sequence([
+      Animated.timing(scaleAnim, { toValue: 1.1, duration: 150, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 0.95, duration: 150, useNativeDriver: true }),
+      Animated.timing(scaleAnim, { toValue: 1, duration: 150, useNativeDriver: true }),
+    ]).start();
+  };
+
+  const sendSOS = async () => {
+    if (!selectedType) {
+      Toast.show({ type: 'error', text1: 'Please select the type of emergency.' });
+      return;
+    }
+
+    Alert.alert(
+      '🚨 Send SOS Alert',
+      `This will immediately alert all admins and dispatch support.\n\nType: ${selectedType}\n\nAre you sure?`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Send SOS',
+          style: 'destructive',
+          onPress: async () => {
+            setSending(true);
+            pulseSOS();
+
+            try {
+              const { status } = await Location.requestForegroundPermissionsAsync();
+              let latitude = 28.6139;
+              let longitude = 77.2090;
+
+              if (status === 'granted') {
+                const loc = await Location.getCurrentPositionAsync({});
+                latitude = loc.coords.latitude;
+                longitude = loc.coords.longitude;
+              }
+
+              // Emit via socket
+              const socket = getSocket();
+              socket.emit('driver:sos', {
+                type: selectedType,
+                message: message || `${selectedType} emergency reported by driver`,
+                latitude,
+                longitude,
+              });
+
+              // Also create alert via REST API
+              await api.post('/alerts', {
+                type: selectedType === 'medical' ? 'other' : selectedType,
+                severity: 'critical',
+                title: `SOS: ${selectedType}`,
+                message: message || `Emergency alert from driver ${user?.name}`,
+                location: { coordinates: [longitude, latitude] },
+              });
+
+              setSent(true);
+              Toast.show({ type: 'success', text1: 'SOS sent! Help is on the way.' });
+            } catch {
+              Toast.show({ type: 'error', text1: 'Failed to send SOS. Please call 112.' });
+            } finally {
+              setSending(false);
+            }
+          },
+        },
+      ]
+    );
+  };
+
+  if (sent) {
+    return (
+      <View style={styles.sentContainer}>
+        <Ionicons name="checkmark-circle" size={80} color="#10B981" />
+        <Text style={styles.sentTitle}>SOS Sent!</Text>
+        <Text style={styles.sentSub}>Admins and dispatch have been alerted.</Text>
+        <Text style={styles.sentSub}>Help is on its way.</Text>
+        <TouchableOpacity style={styles.resetButton} onPress={() => { setSent(false); setSelectedType(''); setMessage(''); }}>
+          <Text style={styles.resetButtonText}>Send Another</Text>
+        </TouchableOpacity>
+        <Text style={styles.emergencyNote}>Emergency? Call 112</Text>
+      </View>
+    );
+  }
+
+  return (
+    <View style={styles.container}>
+      <View style={styles.warningBanner}>
+        <Ionicons name="warning" size={20} color="#92400E" />
+        <Text style={styles.warningText}>Use only in genuine emergencies</Text>
+      </View>
+
+      {/* SOS Button */}
+      <View style={styles.sosSection}>
+        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+          <TouchableOpacity
+            style={[styles.sosButton, sending && styles.sosButtonSending]}
+            onPress={sendSOS}
+            disabled={sending}
+          >
+            <Ionicons name="alert-circle" size={40} color="#fff" />
+            <Text style={styles.sosButtonText}>SOS</Text>
+          </TouchableOpacity>
+        </Animated.View>
+        <Text style={styles.sosHint}>Tap to send emergency alert</Text>
+      </View>
+
+      {/* Emergency Type Selection */}
+      <View style={styles.typeSection}>
+        <Text style={styles.sectionTitle}>Emergency Type</Text>
+        <View style={styles.typeGrid}>
+          {SOS_TYPES.map((type) => (
+            <TouchableOpacity
+              key={type.key}
+              style={[styles.typeCard, selectedType === type.key && { borderColor: type.color, borderWidth: 2 }]}
+              onPress={() => setSelectedType(type.key)}
+            >
+              <Ionicons name={type.icon as any} size={24} color={type.color} />
+              <Text style={styles.typeLabel}>{type.label}</Text>
+              {selectedType === type.key && (
+                <Ionicons name="checkmark-circle" size={18} color={type.color} style={styles.checkIcon} />
+              )}
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      {/* Additional Message */}
+      <View style={styles.messageSection}>
+        <Text style={styles.sectionTitle}>Additional Details (optional)</Text>
+        <TextInput
+          style={styles.messageInput}
+          placeholder="Describe the emergency..."
+          placeholderTextColor="#9CA3AF"
+          value={message}
+          onChangeText={setMessage}
+          multiline
+          numberOfLines={3}
+        />
+      </View>
+
+      <Text style={styles.emergencyNote}>For life-threatening emergencies, call 112 immediately.</Text>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  container: { flex: 1, backgroundColor: '#F9FAFB' },
+  warningBanner: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#FEF3C7',
+    padding: 12,
+    gap: 8,
+    justifyContent: 'center',
+  },
+  warningText: { color: '#92400E', fontWeight: '600', fontSize: 14 },
+  sosSection: { alignItems: 'center', paddingVertical: 32 },
+  sosButton: {
+    width: 120,
+    height: 120,
+    borderRadius: 60,
+    backgroundColor: '#EF4444',
+    justifyContent: 'center',
+    alignItems: 'center',
+    shadowColor: '#EF4444',
+    shadowOpacity: 0.5,
+    shadowRadius: 20,
+    elevation: 8,
+  },
+  sosButtonSending: { backgroundColor: '#9CA3AF' },
+  sosButtonText: { color: '#fff', fontSize: 20, fontWeight: '900', marginTop: 4 },
+  sosHint: { color: '#9CA3AF', fontSize: 14, marginTop: 12 },
+  typeSection: { paddingHorizontal: 16, marginBottom: 16 },
+  sectionTitle: { fontSize: 16, fontWeight: '700', color: '#111827', marginBottom: 12 },
+  typeGrid: { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
+  typeCard: {
+    width: '47%',
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 14,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    position: 'relative',
+    gap: 8,
+  },
+  typeLabel: { fontSize: 13, fontWeight: '600', color: '#374151', textAlign: 'center' },
+  checkIcon: { position: 'absolute', top: 6, right: 6 },
+  messageSection: { paddingHorizontal: 16, marginBottom: 16 },
+  messageInput: {
+    borderWidth: 1,
+    borderColor: '#D1D5DB',
+    borderRadius: 10,
+    padding: 12,
+    fontSize: 14,
+    color: '#111827',
+    backgroundColor: '#fff',
+    textAlignVertical: 'top',
+  },
+  emergencyNote: { textAlign: 'center', color: '#9CA3AF', fontSize: 13, marginTop: 8 },
+  sentContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, padding: 32 },
+  sentTitle: { fontSize: 28, fontWeight: '700', color: '#10B981' },
+  sentSub: { fontSize: 16, color: '#6B7280', textAlign: 'center' },
+  resetButton: {
+    marginTop: 24,
+    backgroundColor: '#003087',
+    paddingHorizontal: 24,
+    paddingVertical: 12,
+    borderRadius: 10,
+  },
+  resetButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+});

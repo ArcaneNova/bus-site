@@ -1,0 +1,78 @@
+{
+  "expo": {
+    "name": "SmartDTC",
+    "slug": "smartdtc",
+    "version": "1.0.0",
+    "sdkVersion": "52.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "scheme": "smartdtc",
+    "userInterfaceStyle": "light",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#003087"
+    },
+    "assetBundlePatterns": [
+      "**/*"
+    ],
+    "ios": {
+      "supportsTablet": false,
+      "bundleIdentifier": "in.dtc.smartdtc",
+      "buildNumber": "1",
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "SmartDTC needs location access to track bus positions.",
+        "NSLocationAlwaysUsageDescription": "SmartDTC needs background location for driver GPS reporting.",
+        "NSCameraUsageDescription": "SmartDTC needs camera access for profile photo.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "SmartDTC needs location for real-time tracking."
+      }
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#003087"
+      },
+      "package": "in.dtc.smartdtc",
+      "versionCode": 1,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "ACCESS_BACKGROUND_LOCATION",
+        "CAMERA",
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "INTERNET"
+      ]
+    },
+    "web": {
+      "favicon": "./assets/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Allow SmartDTC to use your location for live tracking."
+        }
+      ],
+      [
+        "expo-notifications",
+        {
+          "icon": "./assets/notification-icon.png",
+          "color": "#003087"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow SmartDTC to use your camera."
+        }
+      ],
+      "expo-asset"
+    ],
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

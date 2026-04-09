@@ -1,0 +1,2268 @@
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║     AI-DRIVEN AUTOMATED BUS SCHEDULING & ROUTE MANAGEMENT SYSTEM — DTC DELHI       ║
+║                        FULL PROJECT PLAN (FINAL YEAR CAPSTONE)                      ║
+║         Tech Stack: Next.js · Node.js · MongoDB · AI/ML · React Native             ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+
+Date: February 25, 2026
+Dataset: 569 DTC Bus Routes | 14,248 Stop Stages with GPS Coordinates
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1: PROJECT OVERVIEW
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Project Name   : SmartDTC — AI-Driven Bus Scheduling & Route Management System
+Organization   : Delhi Transport Corporation (DTC)
+Objective      : Replace static bus timetables with a real-time, AI-powered scheduling
+                 system that predicts demand, dynamically adjusts schedules, tracks
+                 fleet live, and optimizes routes.
+
+Key Innovation :
+  - ML-based passenger demand prediction (LSTM model)
+  - Intelligent dynamic scheduling engine (Greedy + Genetic Algorithm)
+  - Real-time GPS bus tracking with WebSocket updates
+  - Role-based system: Admin · Dispatcher · Driver · Passenger
+  - Full data import from real DTC CSV datasets (569 routes, 14,248 stages)
+  - Native mobile apps (React Native) for Drivers and Passengers (Android + iOS)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2: TECH STACK (FINAL DECISIONS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FRONTEND
+  - Next.js 14 (App Router)          → Main web application (Admin + Passenger portal)
+  - Tailwind CSS                     → UI styling
+  - shadcn/ui                        → Component library
+  - Leaflet.js / React-Leaflet       → Interactive maps (free, OpenStreetMap tiles)
+  - Socket.io-client                 → Real-time bus position updates
+  - Recharts / Chart.js              → Analytics & demand graphs
+  - React Hook Form + Zod            → Form validation
+  - NextAuth.js                      → Authentication (JWT + sessions)
+
+BACKEND
+  - Node.js + Express.js             → REST API server
+  - Socket.io                        → WebSocket server for real-time tracking
+  - Node-cron                        → Scheduled jobs (demand prediction, alerts)
+  - Axios                            → HTTP calls to Python AI microservice
+  - csv-parser                       → Import routes.csv & stages.csv into MongoDB
+  - bcryptjs + jsonwebtoken          → Auth security
+  - Multer                           → File uploads (profile images, reports)
+
+DATABASE
+  - MongoDB (Atlas or self-hosted)   → Primary database
+  - Mongoose                         → ODM (Object Document Mapping)
+  - Redis (optional / phase 2)       → Cache for real-time bus positions
+
+AI / ML
+  - Python 3.11 + FastAPI            → AI microservice (separate process)
+  - TensorFlow / Keras               → LSTM demand prediction model
+  - Pandas + NumPy                   → Data preprocessing
+  - Scikit-learn                     → Feature engineering, scaling
+  - Joblib                           → Save/load trained models
+
+MAPS & GEOSPATIAL
+  - Leaflet.js                       → Map rendering (free)
+  - OpenStreetMap                    → Map tiles (free)
+  - OSRM / OpenRouteService API      → Route calculation, ETA (free)
+  - GeoJSON                          → Route path storage
+
+REAL-TIME
+  - Socket.io                        → GPS position streaming
+  - GPS Simulator (Node.js script)   → For demo: simulates bus movement along route
+
+MOBILE APP (React Native — Expo)
+  - Expo (Managed Workflow)          → Cross-platform Android + iOS build
+  - React Native Maps                → Native map with live bus markers
+  - Expo Location                    → Background GPS tracking (driver)
+  - Expo Notifications               → Push notifications (FCM / APNs)
+  - Socket.io-client                 → Real-time WebSocket connection
+  - React Navigation (Stack + Tab)   → App navigation
+  - Zustand                          → Lightweight global state management
+  - Axios                            → API calls to backend
+  - AsyncStorage                     → Persistent token/session storage
+  - Expo SecureStore                 → Secure JWT token storage
+  - React Native Paper               → Material UI component library
+  - React Native Reanimated          → Smooth animations
+  - Expo Camera (optional)           → QR code scan for bus boarding
+
+DEPLOYMENT
+  - Vercel                           → Next.js frontend deployment
+  - Railway / Render                 → Node.js backend deployment
+  - MongoDB Atlas                    → Cloud database (free tier)
+  - PythonAnywhere / Render          → Python AI service
+  - GitHub Actions                   → CI/CD pipeline
+  - Expo EAS Build                   → Build Android APK / iOS IPA
+  - Google Play Store (internal)     → Android distribution
+  - Firebase Cloud Messaging (FCM)   → Push notification delivery
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3: FULL FOLDER STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+bus-site/
+├── frontend/                          ← Next.js App
+│   ├── app/
+│   │   ├── (auth)/
+│   │   │   ├── login/page.tsx
+│   │   │   └── register/page.tsx
+│   │   ├── admin/
+│   │   │   ├── dashboard/page.tsx
+│   │   │   ├── routes/page.tsx
+│   │   │   ├── routes/[id]/page.tsx
+│   │   │   ├── buses/page.tsx
+│   │   │   ├── drivers/page.tsx
+│   │   │   ├── schedule/page.tsx
+│   │   │   ├── tracking/page.tsx
+│   │   │   ├── demand/page.tsx
+│   │   │   ├── alerts/page.tsx
+│   │   │   └── reports/page.tsx
+│   │   ├── passenger/
+│   │   │   ├── search/page.tsx
+│   │   │   ├── tracking/page.tsx
+│   │   │   └── alerts/page.tsx
+│   │   ├── driver/
+│   │   │   ├── dashboard/page.tsx
+│   │   │   └── route/page.tsx
+│   │   ├── api/                       ← Next.js API routes (proxy calls)
+│   │   └── layout.tsx
+│   ├── components/
+│   │   ├── maps/
+│   │   │   ├── BusMap.tsx             ← Live tracking map
+│   │   │   ├── RouteMap.tsx           ← Route visualizer
+│   │   │   └── HeatmapLayer.tsx       ← Demand heatmap
+│   │   ├── admin/
+│   │   │   ├── DashboardStats.tsx
+│   │   │   ├── ScheduleTable.tsx
+│   │   │   ├── AlertPanel.tsx
+│   │   │   └── BusAssignModal.tsx
+│   │   ├── passenger/
+│   │   │   ├── RouteSearch.tsx
+│   │   │   ├── BusCard.tsx
+│   │   │   └── ETABadge.tsx
+│   │   └── shared/
+│   │       ├── Navbar.tsx
+│   │       ├── Sidebar.tsx
+│   │       └── Loader.tsx
+│   ├── hooks/
+│   │   ├── useSocket.ts               ← WebSocket hook
+│   │   ├── useGeolocation.ts
+│   │   └── useBusTracking.ts
+│   ├── lib/
+│   │   ├── api.ts                     ← Axios API client
+│   │   ├── auth.ts                    ← NextAuth config
+│   │   └── utils.ts
+│   ├── types/
+│   │   └── index.ts                   ← TypeScript interfaces
+│   ├── public/
+│   ├── .env.local
+│   ├── next.config.js
+│   ├── tailwind.config.js
+│   └── package.json
+│
+├── backend/                           ← Node.js Express Server
+│   ├── src/
+│   │   ├── config/
+│   │   │   ├── db.js                  ← MongoDB connection
+│   │   │   └── socket.js              ← Socket.io setup
+│   │   ├── models/
+│   │   │   ├── Route.js
+│   │   │   ├── Stage.js
+│   │   │   ├── Bus.js
+│   │   │   ├── Driver.js
+│   │   │   ├── Schedule.js
+│   │   │   ├── BusPosition.js
+│   │   │   ├── PassengerDemand.js
+│   │   │   ├── Alert.js
+│   │   │   └── User.js
+│   │   ├── routes/
+│   │   │   ├── auth.routes.js
+│   │   │   ├── route.routes.js
+│   │   │   ├── stage.routes.js
+│   │   │   ├── bus.routes.js
+│   │   │   ├── driver.routes.js
+│   │   │   ├── schedule.routes.js
+│   │   │   ├── tracking.routes.js
+│   │   │   ├── demand.routes.js
+│   │   │   ├── alert.routes.js
+│   │   │   └── report.routes.js
+│   │   ├── controllers/
+│   │   │   ├── auth.controller.js
+│   │   │   ├── route.controller.js
+│   │   │   ├── bus.controller.js
+│   │   │   ├── driver.controller.js
+│   │   │   ├── schedule.controller.js
+│   │   │   ├── tracking.controller.js
+│   │   │   ├── demand.controller.js
+│   │   │   ├── alert.controller.js
+│   │   │   └── report.controller.js
+│   │   ├── middleware/
+│   │   │   ├── auth.middleware.js     ← JWT verification
+│   │   │   ├── role.middleware.js     ← Role-based access
+│   │   │   └── error.middleware.js
+│   │   ├── services/
+│   │   │   ├── scheduler.service.js   ← Scheduling engine
+│   │   │   ├── demand.service.js      ← Calls Python AI API
+│   │   │   ├── gps.simulator.js       ← Simulates bus GPS movement
+│   │   │   ├── alert.service.js       ← Alert generation logic
+│   │   │   └── route.optimizer.js     ← Dijkstra / A* routing
+│   │   ├── scripts/
+│   │   │   └── importData.js          ← Import routes.csv + stages.csv to MongoDB
+│   │   ├── jobs/
+│   │   │   ├── demandPrediction.job.js
+│   │   │   └── scheduleOptimize.job.js
+│   │   ├── utils/
+│   │   │   ├── haversine.js           ← Distance calculation
+│   │   │   ├── etaCalculator.js
+│   │   │   └── logger.js
+│   │   └── app.js                     ← Express app entry
+│   ├── .env
+│   └── package.json
+│
+├── ai-service/                        ← Python FastAPI AI Microservice
+│   ├── main.py                        ← FastAPI app
+│   ├── models/
+│   │   ├── lstm_model.py              ← LSTM demand model
+│   │   └── scheduler_ai.py            ← Scheduling suggestions
+│   ├── data/
+│   │   ├── routes.csv                 ← Copied from dataset
+│   │   ├── stages.csv
+│   │   └── synthetic_demand.csv       ← Generated training data
+│   ├── training/
+│   │   └── train_lstm.py              ← Model training script
+│   ├── saved_models/
+│   │   └── demand_model.h5
+│   ├── requirements.txt
+│   └── README.md
+│
+├── mobile-app/                        ← React Native (Expo) — Driver & Passenger App
+│   ├── app/                           ← Expo Router file-based navigation
+│   │   ├── (auth)/
+│   │   │   ├── login.tsx
+│   │   │   └── register.tsx
+│   │   ├── (driver)/
+│   │   │   ├── _layout.tsx            ← Tab navigator for driver
+│   │   │   ├── index.tsx              ← Driver Home (today's duty)
+│   │   │   ├── map.tsx                ← Navigation map + live position
+│   │   │   ├── schedule.tsx           ← Driver's schedule list
+│   │   │   ├── alerts.tsx             ← Alerts & messages from admin
+│   │   │   └── profile.tsx            ← Driver profile & settings
+│   │   ├── (passenger)/
+│   │   │   ├── _layout.tsx            ← Tab navigator for passenger
+│   │   │   ├── index.tsx              ← Passenger Home (search + nearby)
+│   │   │   ├── search.tsx             ← Route search (from → to)
+│   │   │   ├── track.tsx              ← Live bus tracking map
+│   │   │   ├── stops.tsx              ← Nearby stops (uses GPS)
+│   │   │   ├── favourites.tsx         ← Saved routes & stops
+│   │   │   ├── alerts.tsx             ← Service alerts & disruptions
+│   │   │   └── profile.tsx            ← Passenger profile
+│   │   └── _layout.tsx                ← Root layout (auth check)
+│   ├── components/
+│   │   ├── maps/
+│   │   │   ├── LiveBusMap.tsx         ← React Native Maps live tracking
+│   │   │   ├── DriverNavMap.tsx       ← Turn-by-turn style driver map
+│   │   │   └── NearbyStopsMap.tsx     ← Stops around user location
+│   │   ├── driver/
+│   │   │   ├── TripCard.tsx           ← Today's trip summary card
+│   │   │   ├── NextStopBanner.tsx     ← Sticky banner showing next stop
+│   │   │   ├── SpeedIndicator.tsx     ← Current speed display
+│   │   │   └── EmergencyButton.tsx    ← SOS / emergency report button
+│   │   ├── passenger/
+│   │   │   ├── BusArrivalCard.tsx     ← Upcoming bus with ETA + crowd
+│   │   │   ├── RouteResultCard.tsx    ← Search result item
+│   │   │   ├── CrowdBadge.tsx         ← Low/Medium/High crowd indicator
+│   │   │   ├── StopCard.tsx           ← Stop info with routes list
+│   │   │   └── FavouriteButton.tsx    ← Save/unsave route or stop
+│   │   └── shared/
+│   │       ├── Header.tsx
+│   │       ├── LoadingOverlay.tsx
+│   │       ├── NotificationBell.tsx
+│   │       ├── AlertBanner.tsx
+│   │       └── BottomSheet.tsx
+│   ├── hooks/
+│   │   ├── useSocket.ts               ← Socket.io connection hook
+│   │   ├── useDriverGPS.ts            ← Background GPS emit (driver)
+│   │   ├── useNearbyStops.ts          ← Geolocation + nearby API call
+│   │   └── usePushNotifications.ts    ← Expo push notification setup
+│   ├── store/
+│   │   ├── authStore.ts               ← Zustand: user, token, role
+│   │   ├── driverStore.ts             ← Zustand: assigned bus, route, status
+│   │   └── passengerStore.ts          ← Zustand: favourites, tracked bus
+│   ├── services/
+│   │   ├── api.ts                     ← Axios instance with auth header
+│   │   ├── socket.ts                  ← Socket.io client singleton
+│   │   └── notifications.ts           ← Push notification registration
+│   ├── constants/
+│   │   ├── colors.ts
+│   │   └── config.ts                  ← API_URL, SOCKET_URL
+│   ├── utils/
+│   │   ├── storage.ts                 ← SecureStore token helpers
+│   │   └── formatters.ts              ← Time, distance formatters
+│   ├── assets/
+│   │   ├── icons/
+│   │   └── images/
+│   ├── app.json                       ← Expo config
+│   ├── eas.json                       ← EAS Build config
+│   ├── .env                           ← API_URL, SOCKET_URL
+│   └── package.json
+│
+├── data/
+│   ├── routes.csv                     ← Original dataset (569 routes)
+│   └── stages.csv                     ← Original dataset (14,248 stages)
+│
+└── README.md
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4: MONGODB DATABASE SCHEMA (MONGOOSE MODELS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4.1  User
+─────────
+{
+  _id, name, email, password (hashed), role: [admin|dispatcher|driver|passenger],
+  phone, profileImage, createdAt, isActive
+}
+
+4.2  Route
+──────────
+{
+  _id,
+  url_route_id: Number,          ← from routes.csv (e.g. 7000)
+  route_name: String,            ← e.g. "427"
+  start_stage: String,           ← e.g. "Nizamuddin Railway Station"
+  end_stage: String,             ← e.g. "Mehrauli"
+  distance_km: Number,           ← e.g. 19
+  url: String,                   ← source URL
+  total_stages: Number,
+  isActive: Boolean,
+  createdAt, updatedAt
+}
+
+4.3  Stage
+──────────
+{
+  _id,
+  url_route_id: Number,          ← Foreign key to Route
+  seq: Number,                   ← Stop sequence on route
+  stage_id: Number,              ← Unique stop ID
+  stage_name: String,
+  location: {
+    type: "Point",
+    coordinates: [longitude, latitude]   ← GeoJSON for geospatial queries
+  },
+  createdAt
+}
+Index: { location: "2dsphere" }  ← Enables proximity search
+
+4.4  Bus
+────────
+{
+  _id, busNumber, registrationNo, model, capacity,
+  type: [AC|non-AC|electric],
+  status: [active|idle|maintenance|retired],
+  currentRoute: ObjectId(Route),
+  currentDriver: ObjectId(Driver),
+  lastPosition: { lat, lng, speed, timestamp },
+  fuelLevel, mileage, createdAt
+}
+
+4.5  Driver
+───────────
+{
+  _id, userId: ObjectId(User), licenseNo, experience,
+  assignedBus: ObjectId(Bus), assignedRoute: ObjectId(Route),
+  status: [on-duty|off-duty|on-leave], rating, createdAt
+}
+
+4.6  Schedule
+─────────────
+{
+  _id,
+  route: ObjectId(Route),
+  bus: ObjectId(Bus),
+  driver: ObjectId(Driver),
+  departureTime: Date,
+  estimatedArrivalTime: Date,
+  frequency_minutes: Number,
+  type: [regular|peak|express|emergency],
+  generatedBy: [manual|ai-auto|admin],
+  status: [scheduled|in-progress|completed|cancelled],
+  date: Date,
+  createdAt
+}
+
+4.7  BusPosition (Real-time)
+────────────────────────────
+{
+  _id,
+  bus: ObjectId(Bus),
+  route: ObjectId(Route),
+  location: { type: "Point", coordinates: [lng, lat] },
+  speed: Number,                 ← km/h
+  heading: Number,               ← degrees
+  nextStage: ObjectId(Stage),
+  etaNextStage: Date,
+  delay_minutes: Number,
+  timestamp: Date,
+  isSimulated: Boolean
+}
+TTL Index: { timestamp: 1 }, expireAfterSeconds: 3600
+
+4.8  PassengerDemand (AI Predictions)
+──────────────────────────────────────
+{
+  _id,
+  route: ObjectId(Route),
+  stage: ObjectId(Stage),
+  predictedAt: Date,
+  forDate: Date,
+  hour: Number,                  ← 0-23
+  predictedCount: Number,
+  actualCount: Number,           ← filled after event
+  crowdLevel: [low|medium|high|critical],
+  weather: String,
+  isWeekend: Boolean,
+  isHoliday: Boolean
+}
+
+4.9  Alert
+──────────
+{
+  _id,
+  type: [delay|overcrowding|breakdown|route-change|traffic],
+  severity: [info|warning|critical],
+  route: ObjectId(Route),
+  bus: ObjectId(Bus),
+  message: String,
+  resolvedAt: Date,
+  isResolved: Boolean,
+  createdAt
+}
+
+4.10 Analytics (Aggregated Daily Report)
+─────────────────────────────────────────
+{
+  _id,
+  date: Date,
+  route: ObjectId(Route),
+  totalTrips, completedTrips, cancelledTrips,
+  avgDelayMinutes, avgPassengerLoad,
+  peakHour: Number,
+  fuelConsumed, costSaved,
+  onTimePerformance: Number      ← percentage
+}
+
+4.11 PushToken (Mobile Notification Tokens)
+────────────────────────────────────────────
+{
+  _id,
+  user: ObjectId(User),
+  expoPushToken: String,         ← Expo push token (FCM/APNs)
+  platform: [android|ios],
+  isActive: Boolean,
+  createdAt, updatedAt
+}
+
+4.12 Favourite (Passenger Saved Routes/Stops)
+──────────────────────────────────────────────
+{
+  _id,
+  user: ObjectId(User),
+  type: [route|stop],
+  refId: ObjectId,               ← ObjectId of Route or Stage
+  label: String,                 ← Custom label (e.g. "Home to Office")
+  createdAt
+}
+
+4.13 TripHistory (Driver Completed Trips)
+──────────────────────────────────────────
+{
+  _id,
+  driver: ObjectId(Driver),
+  bus: ObjectId(Bus),
+  route: ObjectId(Route),
+  schedule: ObjectId(Schedule),
+  startTime: Date,
+  endTime: Date,
+  distanceCovered: Number,
+  stopsCompleted: Number,
+  avgSpeed: Number,
+  delayMinutes: Number,
+  incidents: [String],
+  status: [completed|incomplete|emergency-stopped]
+}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5: COMPLETE REST API DESIGN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BASE URL: /api/v1
+
+── AUTH ──────────────────────────────────────────────────────────────
+POST   /api/v1/auth/register         → Register new user
+POST   /api/v1/auth/login            → Login (returns JWT)
+POST   /api/v1/auth/logout           → Logout
+GET    /api/v1/auth/me               → Get current user profile
+PUT    /api/v1/auth/me               → Update profile
+POST   /api/v1/auth/forgot-password  → Send reset email
+POST   /api/v1/auth/reset-password   → Reset with token
+
+── ROUTES ────────────────────────────────────────────────────────────
+GET    /api/v1/routes                → List all routes (paginated, search)
+POST   /api/v1/routes                → Create route [admin]
+GET    /api/v1/routes/:id            → Get route detail
+PUT    /api/v1/routes/:id            → Update route [admin]
+DELETE /api/v1/routes/:id            → Delete route [admin]
+GET    /api/v1/routes/:id/stages     → Get all stops on a route
+GET    /api/v1/routes/:id/schedule   → Get today's schedule for route
+GET    /api/v1/routes/:id/demand     → Get demand predictions for route
+GET    /api/v1/routes/search?from=X&to=Y → Find routes between two stops
+GET    /api/v1/routes/:id/buses      → Get buses currently on route
+
+── STAGES / STOPS ────────────────────────────────────────────────────
+GET    /api/v1/stages                → List all stops
+GET    /api/v1/stages/:id            → Get stop detail
+GET    /api/v1/stages/nearby?lat=X&lng=Y&radius=500 → Stops within radius
+GET    /api/v1/stages/:id/routes     → Which routes pass through a stop
+GET    /api/v1/stages/:id/arrivals   → Upcoming buses at this stop (ETA)
+
+── BUSES ─────────────────────────────────────────────────────────────
+GET    /api/v1/buses                 → List all buses [admin]
+POST   /api/v1/buses                 → Add new bus [admin]
+GET    /api/v1/buses/:id             → Bus details
+PUT    /api/v1/buses/:id             → Update bus [admin]
+DELETE /api/v1/buses/:id             → Remove bus [admin]
+GET    /api/v1/buses/:id/position    → Current GPS position
+GET    /api/v1/buses/live            → All buses with live positions [admin]
+PUT    /api/v1/buses/:id/assign      → Assign to route + driver [admin]
+GET    /api/v1/buses/:id/history     → Position history
+
+── DRIVERS ───────────────────────────────────────────────────────────
+GET    /api/v1/drivers               → List all drivers [admin]
+POST   /api/v1/drivers               → Add driver [admin]
+GET    /api/v1/drivers/:id           → Driver profile
+PUT    /api/v1/drivers/:id           → Update driver [admin]
+GET    /api/v1/drivers/:id/schedule  → Driver's schedule
+PUT    /api/v1/drivers/:id/status    → Update status (on-duty/off)
+GET    /api/v1/drivers/available     → Available drivers [admin]
+
+── SCHEDULING ────────────────────────────────────────────────────────
+GET    /api/v1/schedule              → All schedules (date filter)
+POST   /api/v1/schedule              → Create schedule [admin]
+PUT    /api/v1/schedule/:id          → Update schedule [admin]
+DELETE /api/v1/schedule/:id          → Cancel schedule [admin]
+POST   /api/v1/schedule/generate     → AI auto-generate schedules [admin]
+POST   /api/v1/schedule/optimize     → Re-optimize existing schedule [admin]
+GET    /api/v1/schedule/today        → Today's full schedule
+POST   /api/v1/schedule/emergency    → Create emergency schedule [admin]
+
+── REAL-TIME TRACKING ────────────────────────────────────────────────
+GET    /api/v1/tracking/live         → All live bus positions
+GET    /api/v1/tracking/:busId       → Single bus live position
+POST   /api/v1/tracking/update       → GPS update from bus/simulator [driver]
+GET    /api/v1/tracking/route/:routeId → All buses on a specific route
+GET    /api/v1/tracking/eta/:busId   → ETA to each remaining stop
+
+── DEMAND PREDICTION ─────────────────────────────────────────────────
+GET    /api/v1/demand/predict?routeId=X&date=Y&hour=Z  → Get prediction
+POST   /api/v1/demand/record         → Record actual passenger count
+GET    /api/v1/demand/heatmap?date=Y → Demand heatmap data for all stops
+GET    /api/v1/demand/peak-routes    → Top 10 high-demand routes today
+GET    /api/v1/demand/history/:routeId → Historical demand for route
+
+── ALERTS ────────────────────────────────────────────────────────────
+GET    /api/v1/alerts                → All alerts (admin)
+POST   /api/v1/alerts                → Create manual alert
+GET    /api/v1/alerts/active         → Only unresolved alerts
+PUT    /api/v1/alerts/:id/resolve    → Mark resolved [admin]
+GET    /api/v1/alerts/route/:routeId → Alerts for specific route
+DELETE /api/v1/alerts/:id            → Delete alert [admin]
+
+── REPORTS & ANALYTICS ───────────────────────────────────────────────
+GET    /api/v1/reports/daily?date=X         → Daily ops report
+GET    /api/v1/reports/route/:id?period=7d  → Route performance
+GET    /api/v1/reports/fleet                → Fleet utilization
+GET    /api/v1/reports/demand-accuracy      → Prediction vs actual
+GET    /api/v1/reports/on-time-performance  → OTP stats
+GET    /api/v1/reports/export?type=pdf      → Export report [admin]
+
+── PASSENGER PUBLIC ──────────────────────────────────────────────────
+GET    /api/v1/public/routes/search?from=X&to=Y → Public route search
+GET    /api/v1/public/arrivals?stopId=X          → Next buses at stop
+GET    /api/v1/public/route/:id/track            → Public tracking link
+GET    /api/v1/public/alerts                     → Public service alerts
+
+── MOBILE — DRIVER APP ───────────────────────────────────────────────
+GET    /api/v1/mobile/driver/duty-today          → Today's assigned trip & route [driver]
+GET    /api/v1/mobile/driver/route-stages        → Ordered stop list for assigned route [driver]
+POST   /api/v1/mobile/driver/start-trip          → Mark trip started [driver]
+POST   /api/v1/mobile/driver/end-trip            → Mark trip completed [driver]
+POST   /api/v1/mobile/driver/arrive-stop         → Mark arrival at a stop [driver]
+POST   /api/v1/mobile/driver/report-emergency    → Report breakdown/incident [driver]
+GET    /api/v1/mobile/driver/trip-history        → Past trips list [driver]
+PUT    /api/v1/mobile/driver/status              → Toggle on-duty / off-duty [driver]
+GET    /api/v1/mobile/driver/notifications       → Driver alerts & messages
+
+── MOBILE — PASSENGER APP ────────────────────────────────────────────
+GET    /api/v1/mobile/passenger/nearby-stops?lat=X&lng=Y&r=500 → Stops within radius
+GET    /api/v1/mobile/passenger/arrivals?stopId=X              → Next 5 buses at stop
+GET    /api/v1/mobile/passenger/search?from=X&to=Y             → Route search
+GET    /api/v1/mobile/passenger/track/:busId                   → Live bus position
+POST   /api/v1/mobile/passenger/favourites                     → Save route or stop
+GET    /api/v1/mobile/passenger/favourites                     → List saved items
+DELETE /api/v1/mobile/passenger/favourites/:id                 → Remove saved item
+POST   /api/v1/mobile/passenger/set-alert                      → Alert when bus is Xmin away
+GET    /api/v1/mobile/passenger/alerts                         → Service disruption alerts
+GET    /api/v1/mobile/passenger/crowd/:routeId?hour=X          → Crowd prediction for route
+
+── MOBILE — SHARED ───────────────────────────────────────────────────
+POST   /api/v1/mobile/push-token                → Register Expo push token
+DELETE /api/v1/mobile/push-token                → Unregister on logout
+GET    /api/v1/mobile/app-config                → App version, feature flags, API URLs
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 6: WEBSOCKET (SOCKET.IO) EVENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+SERVER → CLIENT EVENTS (emit to client):
+  bus:position_update     → { busId, lat, lng, speed, delay, nextStop, eta }
+  bus:delay_alert         → { busId, routeId, delayMinutes, reason }
+  bus:arrived             → { busId, stageId, stageName, timestamp }
+  schedule:updated        → { scheduleId, changes }
+  alert:new               → { alertId, type, severity, message }
+  demand:spike_detected   → { routeId, stageName, predictedCount }
+  admin:dashboard_refresh → { stats: { ... } }
+
+CLIENT → SERVER EVENTS (emit from client):
+  driver:gps_update       → { busId, lat, lng, speed, heading }
+  admin:subscribe_route   → { routeId }
+  passenger:track_bus     → { busId }
+  admin:subscribe_all     → subscribe to all bus updates
+
+ROOMS:
+  "route:{routeId}"       → Admins & passengers tracking specific route
+  "bus:{busId}"           → Anyone tracking a specific bus
+  "admin-dashboard"       → Admin-only global updates
+  "driver:{driverId}"     → Driver-specific instructions
+  "passenger:{userId}"    → Personal alerts for a logged-in passenger
+
+MOBILE-SPECIFIC EVENTS:
+  SERVER → DRIVER APP:
+    driver:new_instruction   → { message, type } (e.g. speed warning, reroute)
+    driver:schedule_change   → { scheduleId, newTime, reason }
+    driver:emergency_ack     → { alertId, dispatchedHelp }
+
+  DRIVER APP → SERVER:
+    driver:trip_started      → { scheduleId, busId, timestamp }
+    driver:trip_ended        → { scheduleId, timestamp }
+    driver:arrived_stop      → { busId, stageId, timestamp }
+    driver:sos               → { busId, lat, lng, reason }
+
+  SERVER → PASSENGER APP:
+    passenger:bus_approaching → { busId, routeId, etaMinutes, stopId }
+    passenger:alert_broadcast → { message, severity, affectedRoutes[] }
+    passenger:crowd_update    → { routeId, stageId, crowdLevel }
+
+  PASSENGER APP → SERVER:
+    passenger:set_watch_stop → { stopId, busId, alertThresholdMinutes }
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 7: FEATURE MODULES — DETAILED BREAKDOWN
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+MODULE 1: DATA IMPORT (routes.csv + stages.csv)
+────────────────────────────────────────────────
+Script: backend/src/scripts/importData.js
+Steps:
+  1. Read routes.csv using csv-parser → insert 569 Route documents to MongoDB
+  2. Read stages.csv → insert 14,248 Stage documents with GeoJSON coordinates
+  3. Link each Stage to its Route via url_route_id
+  4. Compute total_stages per route and update Route document
+  5. Build geospatial index on Stage.location for proximity search
+
+Key Feature Enabled:
+  - "Find buses near me" (uses 2dsphere index)
+  - Route path visualization on map (polyline from sorted stages)
+  - Stop-to-stop distance calculations (haversine formula)
+
+──────────────────────────────────────────────────────────────────────
+
+MODULE 2: ADMIN DASHBOARD
+──────────────────────────
+Page: /admin/dashboard
+Real-time Stats Cards:
+  - Total active buses | Buses on route | Delayed buses
+  - Active routes today | Scheduled trips | Alerts count
+  - Avg. on-time performance (%)
+  - Fleet utilization %
+
+Charts (Recharts):
+  - Hourly demand bar chart (all routes combined)
+  - Delay trend line chart (7-day rolling)
+  - Route performance pie chart (on-time vs delayed vs cancelled)
+  - Peak-hour heatmap grid (hour × day of week)
+
+Quick Actions Panel:
+  - Generate Today's Schedule (triggers AI scheduling)
+  - Add Emergency Bus to Route
+  - Broadcast Alert to Passengers
+  - Force Refresh All GPS
+
+Map Panel (Leaflet):
+  - All active buses shown as colored markers (green=on-time, red=delayed)
+  - Click bus → bus details popup (route, driver, speed, ETA next stop)
+  - Route path overlay for selected route
+
+Demand Alert Panel:
+  - Auto-generated alerts: "Route 427 – High demand at Mehrauli stop at 8AM"
+  - "Suggest extra bus" button → auto-creates emergency schedule
+
+──────────────────────────────────────────────────────────────────────
+
+MODULE 3: ROUTE MANAGEMENT
+───────────────────────────
+Pages: /admin/routes, /admin/routes/[id]
+Features:
+  - Table view of all 569 DTC routes (searchable, filterable by distance/start)
+  - Route detail page: full stop list with sequence, GPS coordinates
+  - Add new route form
+  - Edit route (name, stops, distance)
+  - Activate/Deactivate route
+  - View route on map (polyline from stages)
+  - See demand forecast per stop on route
+  - View all scheduled trips on route for today
+  - Delete route (soft-delete, archival)
+
+Passenger-facing Route Search:
+  - Input: "From" stop + "To" stop
+  - Algorithm: Check all routes that pass through both stops in correct sequence
+  - Output: Matching routes with next departure time, ETA, crowding level
+
+──────────────────────────────────────────────────────────────────────
+
+MODULE 4: BUS & FLEET MANAGEMENT
+──────────────────────────────────
+Page: /admin/buses
+Features:
+  - Add bus: registration, model, capacity, type (AC/non-AC/electric)
+  - Assign bus to route + driver
+  - View bus status: active/idle/maintenance
+  - Maintenance tracking: mileage, last service, fuel level
+  - View GPS history of a bus (replay path)
+  - Bus utilization report
+
+──────────────────────────────────────────────────────────────────────
+
+MODULE 5: DRIVER MANAGEMENT
+─────────────────────────────
+Page: /admin/drivers
+Features:
+  - Add/edit driver profiles
+  - Assign driver to bus and route
+  - View driver schedule (weekly view)
+  - Track driver duty hours (compliance)
+  - Driver performance: on-time rating, trips completed
+
+Driver App View (/driver/dashboard):
+  - Login → see assigned route for today
+  - Map showing current position + next stop highlighted
+  - Alert: "Delay detected - suggested action: take alternate path"
+  - "Report Emergency" button → triggers critical alert
+  - GPS position auto-send every 10 seconds (via WebSocket)
+
+──────────────────────────────────────────────────────────────────────
+
+MODULE 12: REACT NATIVE DRIVER APP
+────────────────────────────────────
+Platform: Android + iOS (Expo Managed Workflow)
+Target User: DTC Bus Drivers
+
+SCREEN 1 — Login
+  - Email + password login (JWT stored in Expo SecureStore)
+  - Biometric unlock (Face ID / Fingerprint) on subsequent opens
+  - Auto-redirect based on role (driver → driver tabs)
+
+SCREEN 2 — Home / Duty Dashboard
+  - Today's assigned trip card:
+      Bus Number | Route Name | Start Time | Status
+  - Duty status toggle: "Go On Duty" / "End Duty" button
+  - Start Trip button → sends driver:trip_started socket event
+  - Current duty hours counter
+  - Mini alert banner (any admin messages)
+
+SCREEN 3 — Navigation Map (Core Feature)
+  - React Native Maps with live GPS pin (driver's current position)
+  - Route polyline drawn from Stage coordinates (all stops)
+  - Stops shown as numbered markers along route
+  - Current stop highlighted in BLUE
+  - Next stop highlighted in GREEN with ETA badge
+  - Completed stops greyed out
+  - "Arrived at Stop" button → POST /driver/arrive-stop
+  - Auto GPS emit every 5 seconds via Socket.io (background)
+  - Speed indicator (km/h) at bottom of screen
+  - Delay warning banner when behind schedule > 5 min
+  - Admin instruction toast (e.g. "Slow down — school zone ahead")
+
+SCREEN 4 — Schedule
+  - List of all trips assigned for today + tomorrow
+  - Each trip: Route | Bus | Departure | Status badge
+  - Tap trip → see full route stop list
+  - Past trips greyed, current trip highlighted, future trips normal
+
+SCREEN 5 — Alerts & Messages
+  - Notifications from admin (schedule changes, instructions)
+  - System alerts (delay detected, overcrowding on next stop)
+  - Read/unread status, timestamp
+  - Push notification support (Expo Notifications / FCM)
+
+SCREEN 6 — Emergency / SOS
+  - Big red "SOS" button (always accessible from nav bar)
+  - Sends driver:sos socket event with current GPS coordinates
+  - Options: Breakdown | Accident | Medical | Security
+  - Text input for details
+  - Auto-calls dispatch (tel: link)
+  - Confirmation: "Alert sent to DTC Control Room"
+
+SCREEN 7 — Trip History
+  - Past 30 days of completed trips
+  - Each trip: Route | Date | Start-End time | Delay | Stops completed
+  - Monthly summary: total trips, avg delay, on-time %
+
+SCREEN 8 — Profile & Settings
+  - View name, license number, assigned bus
+  - Change password
+  - Notification preferences
+  - App version info
+  - Logout
+
+Background GPS Logic:
+  - Expo Location.startLocationUpdatesAsync() → background task
+  - Every 5 seconds: emit driver:gps_update via Socket.io
+  - If app is in background: still runs via Expo TaskManager
+  - Stop tracking when driver:trip_ended is emitted
+
+──────────────────────────────────────────────────────────────────────
+
+MODULE 13: REACT NATIVE PASSENGER APP
+───────────────────────────────────────
+Platform: Android + iOS (Expo Managed Workflow)
+Target User: DTC Bus Passengers
+Note: Core features work WITHOUT login; account enables favourites + alerts
+
+SCREEN 1 — Home
+  - Search bar: "Where do you want to go?"
+  - "Nearby Stops" section: top 5 stops within 500m (uses device GPS)
+  - "Your Favourites" section: saved routes/stops (if logged in)
+  - Live service alert banner (if active disruptions)
+  - Quick access: [Search Routes] [Track Bus] [Nearby Stops] [Alerts]
+
+SCREEN 2 — Route Search
+  - From: auto-filled with nearest stop OR manual type (autocomplete)
+  - To: type stop name (autocomplete from 14,248 stages)
+  - Shows matching routes with:
+      Route No | Direction | Next Bus | ETA | Crowd Level badge
+  - Tap route → Route Detail screen
+  - Sort: by departure time | by distance | by crowd level
+  - Filter: AC only | Direct only
+
+SCREEN 3 — Route Detail
+  - Route name, start → end
+  - List of all stops in sequence
+  - User's boarding stop highlighted
+  - ETA to each stop (live, updates via WebSocket)
+  - Crowd level per stop (color coded)
+  - "Track This Bus" button → goes to Live Map
+  - "Set Arrival Alert" → notify when bus is X minutes away
+  - Share route (deep link)
+
+SCREEN 4 — Live Bus Tracking Map
+  - React Native Maps centered on Delhi
+  - Live bus marker (animated, moves smoothly every 5 sec)
+  - Route polyline displayed
+  - User's current position (blue dot)
+  - Stops shown as markers; tap stop → ETA popup
+  - Bottom sheet: Bus info (Route | Speed | Next Stop | ETA)
+  - Crowd badge at bottom (Low / Medium / High / Critical)
+  - If bus arrives at user's stop → push notification
+
+SCREEN 5 — Nearby Stops
+  - Uses device GPS (Expo Location)
+  - Map + list view toggle
+  - Shows stops within 1km radius
+  - Each stop: name, distance, upcoming buses with ETA
+  - Tap stop → Stop Detail (all routes through it + next arrivals)
+
+SCREEN 6 — Stop Detail
+  - Stop name and location on mini map
+  - All routes passing through this stop
+  - Next 5 buses (route no, ETA, crowd level, bus type AC/non-AC)
+  - Live countdown: "Bus 427 arriving in 3 min"
+  - "Save Stop" button (star/favourite)
+  - Real-time updates via Socket.io subscription
+
+SCREEN 7 — Set Arrival Alert
+  - Choose stop + bus/route
+  - Alert threshold: 2 min | 5 min | 10 min | Custom
+  - Push notification fires when bus is that many minutes away
+  - Managed via backend /passenger/set-alert endpoint
+  - Works even when app is in background
+
+SCREEN 8 — Favourites
+  - Saved routes (e.g. "Home to Office → Route 427")
+  - Saved stops (e.g. "Mehrauli Stop")
+  - Tap favourite route → instantly see next bus for that route
+  - Tap favourite stop → go to Stop Detail
+  - Add / Remove from any screen
+
+SCREEN 9 — Service Alerts
+  - Full list of active disruptions (delays, diversions, cancellations)
+  - Filter by route number
+  - Push notifications for alerts on saved routes
+  - Severity color coding: Blue (info) | Yellow (warning) | Red (critical)
+
+SCREEN 10 — Profile / Account
+  - Guest mode: search, track, view alerts (no login required)
+  - Logged-in: favourites sync, arrival alerts, notification settings
+  - Login / Register screen
+  - Notification preferences (which alert types to receive)
+  - Language preference (English / Hindi — future scope)
+  - Logout
+
+──────────────────────────────────────────────────────────────────────
+
+MODULE 6: SMART SCHEDULING ENGINE
+───────────────────────────────────
+File: backend/src/services/scheduler.service.js
+
+Input:
+  - All routes
+  - Available buses
+  - Available drivers
+  - AI demand predictions per route/hour
+  - Peak hour config (7-10AM, 5-8PM)
+  - Current alerts/disruptions
+
+Algorithm — Multi-step Process:
+  Step 1: DEMAND CLASSIFICATION
+    - Query PassengerDemand for each route for next 24 hours
+    - Classify: LOW (<20 pax), MEDIUM (20-80), HIGH (80-150), CRITICAL (>150)
+
+  Step 2: FREQUENCY ASSIGNMENT (Greedy)
+    - CRITICAL demand  → bus every 5-7 minutes
+    - HIGH demand      → bus every 10-12 minutes
+    - MEDIUM demand    → bus every 15-20 minutes
+    - LOW demand       → bus every 30-40 minutes
+
+  Step 3: BUS ASSIGNMENT
+    - Sort routes by demand (highest first)
+    - Assign available AC buses to AC-priority routes
+    - Ensure no bus assigned to overlapping time slots
+    - Constraint: driver max 8 hours duty per day
+
+  Step 4: SCHEDULE GENERATION
+    - Create Schedule documents for each trip
+    - Calculate departure times based on frequency
+    - Estimate arrival time = departure + (distance_km / avg_speed) * 60
+
+  Step 5: CONFLICT RESOLUTION
+    - Detect if same driver/bus assigned to conflicting schedules
+    - Re-assign using next available resource
+
+  Step 6: EMERGENCY OVERRIDE (Rule-based)
+    - IF delay > 15 min → generate alert
+    - IF alert type = overcrowding → find idle bus → create emergency schedule
+    - IF bus breakdown → reassign route to nearest idle bus
+
+  Output: Array of Schedule objects saved to MongoDB
+
+──────────────────────────────────────────────────────────────────────
+
+MODULE 7: REAL-TIME GPS TRACKING
+──────────────────────────────────
+File: backend/src/services/gps.simulator.js
+     (For demo — simulates real GPS hardware)
+
+Simulation Logic:
+  - For each active scheduled bus, pick its route's stages (ordered by seq)
+  - Every 5 seconds, move bus along the polyline path (interpolate between stages)
+  - Calculate speed based on time of day (slow during peak hours)
+  - Emit "driver:gps_update" event via Socket.io
+  - Backend receives → saves to BusPosition collection (TTL 1 hour)
+  - Backend emits "bus:position_update" to all subscribed clients
+
+ETA Calculation:
+  etaNextStop = (remainingDistanceToStop / currentSpeed) * 60 (minutes)
+  Adjusted for: traffic factor, historical delay on this route
+
+Delay Detection:
+  IF currentTime > scheduledTimeAtCurrentStop + 5 minutes:
+    → Generate delay alert
+    → Emit bus:delay_alert
+    → Update schedule status
+
+Map Display (Frontend — Leaflet):
+  - Bus marker moves smoothly (marker.setLatLng()) on position update
+  - Color: green (on-time), yellow (slight delay), red (major delay)
+  - Route polyline drawn from Stage coordinates
+  - Current stop highlighted in blue
+  - Next stop highlighted with ETA badge
+  - Popup: Bus No | Route | Speed | Driver | ETA next stop
+
+──────────────────────────────────────────────────────────────────────
+
+MODULE 8: AI DEMAND PREDICTION (Python/LSTM)
+─────────────────────────────────────────────
+File: ai-service/models/lstm_model.py
+File: ai-service/training/train_lstm.py
+
+Data for Training (Synthetic — since real DTC ridership not public):
+  - Generate using: numpy random + seasonal patterns
+  - Features per data point:
+      * Route ID
+      * Stop sequence
+      * Hour of day (0-23)
+      * Day of week (0-6)
+      * Is weekday (bool)
+      * Is holiday (bool)
+      * Weather score (1-5: sunny to heavy rain)
+      * Month
+      * Distance from city center
+      * Historical avg at same time (past 30 days)
+
+LSTM Architecture:
+  Input shape: (sequence_length=24, features=10)
+  Layer 1: LSTM(128, return_sequences=True)
+  Layer 2: Dropout(0.2)
+  Layer 3: LSTM(64)
+  Layer 4: Dense(32, activation='relu')
+  Output: Dense(1)  ← predicted passenger count
+
+Training:
+  - 2 years synthetic data (730 days × 24 hours × top 50 routes)
+  - Train/Val/Test split: 70/15/15
+  - Loss: MAE + MSE combined
+  - Save model as .h5
+
+FastAPI Endpoint:
+  POST /predict
+  Body: { route_id, stop_seq, hour, day_of_week, is_holiday, weather }
+  Response: { predicted_count, crowd_level, confidence }
+
+Node.js → Python Integration:
+  - Node.js jobs/demandPrediction.job.js runs every hour (node-cron)
+  - Calls Python FastAPI for each active route × current hour + next 3 hours
+  - Saves results to PassengerDemand collection in MongoDB
+  - These predictions power: scheduling, alerts, heatmap, dashboard
+
+──────────────────────────────────────────────────────────────────────
+
+MODULE 9: PASSENGER WEB PORTAL
+────────────────────────────────
+Page: /passenger/search
+Features:
+  - Search by: From Stop → To Stop
+  - Shows: Matching routes, Next departure, Crowding level, ETA
+  - "Set Alert": notify me when bus is 10 min away
+
+Page: /passenger/tracking
+Features:
+  - Real-time map: track specific bus live
+  - Arrival time countdown at selected stop
+  - Crowding indicator (Low/Medium/High)
+  - Route overview (remaining stops)
+
+Page: /passenger/alerts (no login required)
+Features:
+  - Service alerts (delays, route changes)
+  - Public banner notifications
+
+──────────────────────────────────────────────────────────────────────
+
+MODULE 10: ANALYTICS & REPORTS
+────────────────────────────────
+Page: /admin/reports
+Reports Available:
+  1. Daily Operations Report
+     - Total trips scheduled vs completed
+     - Average delay, on-time performance
+     - Peak hours analysis
+
+  2. Route Performance Report
+     - Per route: trips, OTP, avg pax load, delay
+     - Best/worst performing routes
+
+  3. Fleet Utilization Report
+     - Each bus: hours active, km covered, fuel used, idle time
+
+  4. Demand Prediction Accuracy
+     - Predicted vs actual passengers (per route, per hour)
+     - Model accuracy score (MAE, MAPE)
+
+  5. Cost Savings Report
+     - Fuel saved by route optimization
+     - Trips avoided in low-demand periods
+     - Estimated cost saved vs old static schedule
+
+  Export: PDF (using puppeteer or pdfkit) | CSV download
+
+──────────────────────────────────────────────────────────────────────
+
+MODULE 11: NOTIFICATIONS & ALERTS SYSTEM
+──────────────────────────────────────────
+Auto-Generated Alerts (backend rule engine):
+  - Bus delayed > 10 minutes on route X
+  - Passenger demand spike detected at stop Y
+  - Bus breakdown reported
+  - Route Z cancelled
+  - Fleet shortage (not enough buses for peak)
+
+Notification Channels:
+  - In-app notification bell (WebSocket push)
+  - Toast messages in admin dashboard
+  - Public alert banner on passenger portal
+  - Email alert for critical events (Nodemailer)
+
+Admin Actions from Alert:
+  - Acknowledge alert
+  - Resolve alert
+  - Dispatch extra bus (one-click)
+  - Broadcast message to passengers
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 8: AUTHENTICATION & AUTHORIZATION
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Roles:
+  ADMIN       → Full access to all modules, reports, scheduling, fleet management
+  DISPATCHER  → View dashboard, manage schedules, respond to alerts
+  DRIVER      → View own schedule, send GPS updates, report emergencies
+  PASSENGER   → Search routes, track buses, view alerts (no login required for basic)
+
+Authentication Flow:
+  1. User POST /auth/login → server verifies credentials
+  2. Server returns JWT (access token, 1 day) + refresh token (7 days, httpOnly cookie)
+  3. Next.js stores access token in memory (not localStorage — security best practice)
+  4. All protected API calls include "Authorization: Bearer <token>" header
+  5. NextAuth.js middleware protects /admin/* and /driver/* routes
+
+Middleware:
+  - auth.middleware.js: verifies JWT on all protected routes
+  - role.middleware.js: checks role before allowing access
+  - Unauthorized → 401, Forbidden → 403
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 9: GEOSPATIAL FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Using MongoDB 2dsphere index on Stage.location:
+
+1. "Find Nearest Stop to My Location"
+   db.stages.find({
+     location: { $near: { $geometry: { type: "Point", coordinates: [lng, lat] },
+                           $maxDistance: 500 } }   // 500 meters
+   })
+
+2. "Find Routes Passing Through Area"
+   → Find all stages within 1km radius of user → Get unique route IDs
+
+3. "Route Path on Map"
+   → Fetch stages of route ordered by seq → Draw Leaflet Polyline
+
+4. "Demand Heatmap"
+   → Each stage is a circle on map, color-coded by crowd level
+   → Use Leaflet.heat plugin
+
+5. "Bus Position Proximity"
+   → Find buses within 2km of a stop for arrival prediction
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 10: DEVELOPMENT PHASES & TIMELINE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+PHASE 1 — Foundation (Week 1-2)
+────────────────────────────────
+  □ Setup Next.js frontend project with Tailwind + shadcn/ui
+  □ Setup Node.js + Express backend
+  □ Connect MongoDB Atlas
+  □ Create all Mongoose models (Section 4)
+  □ Write & run data import script (importData.js)
+      → Import all 569 routes + 14,248 stages from CSV to MongoDB
+  □ Verify data with MongoDB Compass
+  □ Basic auth system (register/login, JWT)
+  □ Folder structure complete
+
+PHASE 2 — Core APIs (Week 3-4)
+────────────────────────────────
+  □ Routes CRUD API + search API
+  □ Stages API + geospatial queries
+  □ Buses CRUD API
+  □ Drivers CRUD API
+  □ Schedule CRUD API
+  □ Auth middleware (JWT + role-based)
+  □ Test all APIs with Postman/Thunder Client
+
+PHASE 3 — Admin Dashboard (Week 5-6)
+──────────────────────────────────────
+  □ Admin dashboard layout (sidebar, navbar)
+  □ Dashboard home: stats cards, charts
+  □ Routes management table + route detail page
+  □ Buses management page
+  □ Drivers management page
+  □ Schedule table view
+  □ All pages connected to backend APIs
+
+PHASE 4 — Real-Time Tracking (Week 7-8)
+──────────────────────────────────────────
+  □ Socket.io server setup
+  □ GPS simulator script (simulates 20+ buses on routes)
+  □ BusPosition model + TTL index
+  □ Tracking API endpoints
+  □ Live map page (Leaflet + Socket.io)
+  □ Bus marker movement on map
+  □ ETA calculation
+  □ Delay detection + alert generation
+  □ Admin tracking page complete
+
+PHASE 5 — AI Demand Prediction (Week 9-10)
+────────────────────────────────────────────
+  □ Generate synthetic demand dataset (Python script)
+  □ Train LSTM model
+  □ Evaluate model (MAE, MAPE)
+  □ Build FastAPI service (predict endpoint)
+  □ Node.js → Python API integration
+  □ Demand prediction cron job (every hour)
+  □ Save predictions to MongoDB
+  □ Demand heatmap page (Leaflet.heat)
+  □ Peak route detection
+
+PHASE 6 — Smart Scheduling Engine (Week 11-12)
+────────────────────────────────────────────────
+  □ Scheduler service (greedy algorithm)
+  □ Auto-schedule generation endpoint
+  □ Peak-hour frequency adjustment
+  □ Emergency bus dispatch logic
+  □ Schedule optimization for fleet
+  □ "Generate Schedule" button in admin UI
+  □ Conflict detection (same bus/driver double booking)
+
+PHASE 7 — Passenger Portal (Week 13)
+──────────────────────────────────────
+  □ Route search UI (from/to stops)
+  □ Passenger live tracking page
+  □ Public alerts banner
+  □ Bus arrival prediction at stop
+  □ Mobile-responsive design
+
+PHASE 8 — Alerts & Notifications (Week 14)
+────────────────────────────────────────────
+  □ Alert rule engine (backend)
+  □ Real-time alert panel in admin dashboard
+  □ Email notifications (Nodemailer)
+  □ In-app notification bell
+  □ Alert management (resolve, broadcast)
+
+PHASE 9 — Reports & Analytics (Week 15)
+─────────────────────────────────────────
+  □ Analytics aggregation queries (MongoDB $group, $match, $project)
+  □ Daily report endpoint
+  □ Route performance charts
+  □ Fleet utilization report
+  □ Demand prediction accuracy comparison
+  □ PDF export with puppeteer
+
+PHASE 10 — Driver App (Week 16)
+─────────────────────────────────
+  □ Driver login flow
+  □ Driver dashboard (assigned route, schedule)
+  □ Navigation map view for driver
+  □ Auto GPS position update (WebSocket emit)
+  □ Emergency report button
+  □ Next stop alert
+
+PHASE 11 — React Native Driver App (Week 17-18)
+─────────────────────────────────────────────────
+  □ Expo project setup (TypeScript, Expo Router, React Native Maps)
+  □ Auth screens (login, secure token storage with SecureStore)
+  □ Driver Home screen (today's duty card, start/end trip)
+  □ Navigation Map screen (route polyline, stop markers, ETA)
+  □ Background GPS tracking (Expo Location + TaskManager)
+  □ Socket.io connection (emit GPS every 5 seconds)
+  □ Arrive at stop button → backend update
+  □ SOS / Emergency button with options
+  □ Alerts & Messages screen (Socket.io push)
+  □ Trip History screen
+  □ Push notification setup (Expo Notifications + FCM)
+  □ Connect all screens to backend API
+
+PHASE 12 — React Native Passenger App (Week 19-20)
+────────────────────────────────────────────────────
+  □ Passenger Home screen (search bar, nearby stops, favourites)
+  □ Route Search screen (from/to autocomplete using 14,248 stages)
+  □ Route Detail screen (stop list, ETA, crowd levels)
+  □ Live Bus Tracking map (React Native Maps + Socket.io)
+  □ Nearby Stops screen (Expo Location + 2dsphere API)
+  □ Stop Detail screen (next 5 arrivals, live countdown)
+  □ Arrival Alert setup (push notification on bus approach)
+  □ Favourites screen (save/unsave routes & stops)
+  □ Service Alerts screen
+  □ Guest mode (core features without login)
+  □ Push notification registration + FCM integration
+  □ UI polish (React Native Paper, animations with Reanimated)
+
+PHASE 13 — Testing & Polish (Week 21-22)
+──────────────────────────────────────────
+  □ End-to-end testing web (Cypress or Playwright)
+  □ Unit tests for scheduling algorithm (Jest)
+  □ Load testing (simulate 500+ socket connections)
+  □ Security audit (helmet.js, rate limiting, input validation)
+  □ Performance optimization (pagination, indexes, caching)
+  □ Mobile app testing on Android emulator + physical device
+  □ UI/UX polish pass (web + mobile)
+  □ Fix cross-platform issues (Android vs iOS)
+
+PHASE 14 — Deployment & Demo (Week 23-24)
+───────────────────────────────────────────
+  □ Deploy frontend → Vercel
+  □ Deploy backend → Railway
+  □ Deploy Python AI service → Render
+  □ MongoDB Atlas production cluster
+  □ Environment variables secured
+  □ CI/CD pipeline (GitHub Actions)
+  □ Build Android APK with Expo EAS Build
+  □ Install APK on demo device
+  □ Demo video recording (web + mobile)
+  □ Research paper / report writing
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 11: ENVIRONMENT VARIABLES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+backend/.env
+────────────
+  NODE_ENV=development
+  PORT=5000
+  MONGO_URI=mongodb+srv://<user>:<pass>@cluster0.mongodb.net/dtc-bus
+  JWT_SECRET=your_super_secret_jwt_key_here
+  JWT_EXPIRES_IN=1d
+  REFRESH_TOKEN_SECRET=your_refresh_secret
+  PYTHON_AI_URL=http://localhost:8000
+  CLIENT_URL=http://localhost:3000
+  EMAIL_HOST=smtp.gmail.com
+  EMAIL_PORT=587
+  EMAIL_USER=your_email@gmail.com
+  EMAIL_PASS=your_app_password
+
+frontend/.env.local
+────────────────────
+  NEXT_PUBLIC_API_URL=http://localhost:5000/api/v1
+  NEXT_PUBLIC_SOCKET_URL=http://localhost:5000
+  NEXTAUTH_SECRET=your_nextauth_secret
+  NEXTAUTH_URL=http://localhost:3000
+
+ai-service/.env
+────────────────
+  MODEL_PATH=./saved_models/demand_model.h5
+  PORT=8000
+
+mobile-app/.env
+────────────────
+  EXPO_PUBLIC_API_URL=https://your-backend.railway.app/api/v1
+  EXPO_PUBLIC_SOCKET_URL=https://your-backend.railway.app
+  EXPO_PUBLIC_MAPS_PROVIDER=google        ← or 'osm' for OpenStreetMap
+  GOOGLE_MAPS_API_KEY=your_google_maps_key_here
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 12: KEY PACKAGES (npm)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+BACKEND (Node.js):
+  express, mongoose, socket.io, cors, dotenv, bcryptjs,
+  jsonwebtoken, cookie-parser, csv-parser, node-cron,
+  nodemailer, multer, helmet, express-rate-limit,
+  express-validator, morgan, puppeteer, winston,
+  @turf/turf (for geospatial calculations), axios,
+  expo-server-sdk (Expo push notifications from backend)
+
+FRONTEND (Next.js):
+  next, react, react-dom, typescript, tailwindcss,
+  @radix-ui/react-* (shadcn), next-auth, axios,
+  socket.io-client, leaflet, react-leaflet,
+  leaflet.heat, recharts, react-hook-form, zod,
+  @hookform/resolvers, date-fns, lucide-react,
+  react-hot-toast, @tanstack/react-query
+
+MOBILE APP (React Native / Expo):
+  expo, expo-router, react-native, typescript,
+  expo-location, expo-task-manager, expo-notifications,
+  expo-secure-store, expo-camera,
+  react-native-maps, react-native-reanimated,
+  react-native-paper, @react-navigation/native,
+  socket.io-client, axios, zustand,
+  @react-native-async-storage/async-storage,
+  react-hook-form, zod, @hookform/resolvers,
+  date-fns, lucide-react-native,
+  react-native-safe-area-context, react-native-screens
+
+PYTHON (AI Service):
+  fastapi, uvicorn, tensorflow, keras, pandas,
+  numpy, scikit-learn, joblib, python-dotenv,
+  pydantic, httpx
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 13: SECURITY BEST PRACTICES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✓ Helmet.js — sets secure HTTP headers
+  ✓ express-rate-limit — prevent brute force (max 100 req/15min)
+  ✓ express-validator — input sanitization & validation on all routes
+  ✓ bcryptjs (saltRounds=12) — password hashing
+  ✓ JWT stored in memory (access) + httpOnly cookie (refresh)
+  ✓ CORS configured to allow only frontend origin
+  ✓ MongoDB injection prevention via Mongoose schema strict mode
+  ✓ Environment variables — never hardcode secrets
+  ✓ Role-based middleware on every protected route
+  ✓ HTTPS enforced in production
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 14: PERFORMANCE OPTIMIZATIONS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Database:
+  ✓ Index on Stage.location (2dsphere)
+  ✓ Index on Route.url_route_id
+  ✓ Index on Schedule { date, route, status }
+  ✓ Index on BusPosition { bus, timestamp } with TTL
+  ✓ Pagination on all list endpoints (limit/page query params)
+  ✓ MongoDB aggregation pipelines (avoid N+1 queries)
+  ✓ Lean queries for read-only endpoints (.lean())
+
+Backend:
+  ✓ Compression middleware (gzip)
+  ✓ Node-cache for static data (routes list cached 5 min)
+  ✓ Socket.io rooms (only emit to relevant clients)
+  ✓ GPS updates batched every 5 seconds (not on every frame)
+
+Frontend:
+  ✓ React Query for API caching & background refresh
+  ✓ Next.js Image optimization
+  ✓ Dynamic imports (map component loaded client-side only)
+  ✓ Debounce on route search input
+  ✓ Lazy loading for heavy chart components
+  ✓ ISR (Incremental Static Regeneration) for public route pages
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 15: RESEARCH PAPER METRICS TO SHOWCASE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Metric 1: Average passenger waiting time
+    → Before system: static 30-min schedule average wait = 15 min
+    → After AI scheduling: dynamic schedule average wait = X min
+    → Improvement: Y%
+
+  Metric 2: On-Time Performance (OTP)
+    → Track % of trips arriving within ±5 min of scheduled time
+    → Show improvement over simulated baseline
+
+  Metric 3: Fleet Utilization
+    → Before: same frequency all day (buses underused at 2AM)
+    → After: buses removed in low demand → X% cost saved
+
+  Metric 4: Demand Prediction Accuracy
+    → LSTM model MAPE (Mean Absolute Percentage Error) < 10%
+    → Show training curve (loss graph)
+
+  Metric 5: Overcrowding Reduction
+    → AI detects spike → dispatches extra bus → crowd level drops
+    → Simulate before/after comparison
+
+  Metric 6: Delay Reduction
+    → Rule-based rescheduling reduces cascading delays by X%
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 16: DEMO SCRIPT (For Presentation)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Demo Flow (15 minutes):
+
+  1. [2 min] Admin Dashboard Overview
+     → Show live stats: X buses active, Y routes, Z alerts
+     → Show demand heatmap for Delhi
+
+  2. [2 min] AI Schedule Generation
+     → Click "Generate Schedule for Today"
+     → System predicts demand → generates schedule
+     → Show: Route 427 (peak hour) → bus every 7 min
+     → Show: Route 61 (low demand) → bus every 35 min
+
+  3. [3 min] Live Bus Tracking
+     → Open tracking map
+     → 10+ buses moving in real-time on Delhi map
+     → Click one bus → popup: route, speed, ETA to next stop
+     → One bus "delays" → alert fires → dashboard shows red indicator
+
+  4. [2 min] Emergency Response
+     → Alert: "Route 236 — overcrowding at Anand Vihar ISBT"
+     → Admin clicks "Dispatch Extra Bus"
+     → New bus appears on map, crowd alert resolves
+
+  5. [2 min] Passenger Portal
+     → Search "Anand Vihar → Mehrauli"
+     → System shows 3 matching routes, next departures, crowd levels
+     → Track bus live as passenger
+
+  6. [2 min] Analytics & Reports
+     → Show demand prediction accuracy chart
+     → Show OTP report: 87% on-time vs baseline 65%
+     → Show cost savings estimate
+
+  7. [2 min] AI Model Deep Dive
+     → Show LSTM training curve (Python notebook)
+     → Live prediction: input time/route → model outputs demand
+     → Explain how this drives the scheduler
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 17: SETUP COMMANDS (Quick Start)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# 1. Clone & setup
+git clone <repo>
+cd bus-site
+
+# 2. Backend
+cd backend
+npm install
+cp .env.example .env       ← fill in your MongoDB URI, JWT secrets
+node src/scripts/importData.js   ← imports CSV data into MongoDB
+npm run dev                ← starts on port 5000
+
+# 3. Frontend
+cd frontend
+npm install
+cp .env.local.example .env.local
+npm run dev                ← starts on port 3000
+
+# 4. AI Service
+cd ai-service
+pip install -r requirements.txt
+python training/train_lstm.py   ← trains & saves model
+uvicorn main:app --reload --port 8000
+
+# 5. Mobile App (React Native / Expo)
+cd mobile-app
+npm install
+cp .env.example .env          ← fill API_URL, SOCKET_URL
+npx expo start                ← opens Expo Dev Tools
+# Scan QR code with Expo Go app (Android/iOS)
+# OR press 'a' for Android emulator, 'i' for iOS simulator
+
+# Build APK for demo
+npx eas build --platform android --profile preview
+
+# 6. Open browser
+http://localhost:3000
+
+Default Admin Login:
+  Email: admin@dtc.gov.in
+  Password: admin123
+
+Default Driver Login (Mobile App):
+  Email: driver1@dtc.gov.in
+  Password: driver123
+
+Default Passenger Login (Mobile App):
+  Email: passenger@example.com
+  Password: pass123
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 18: WHAT MAKES THIS PROJECT STAND OUT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ Real Dataset: 569 actual DTC routes + 14,248 GPS-tagged stops
+✅ Full-Stack: Next.js + Node.js + MongoDB (industry-standard)
+✅ AI Innovation: LSTM demand prediction drives scheduling decisions
+✅ Real-Time: WebSocket GPS tracking with smooth map animation
+✅ Multi-Role: Admin, Dispatcher, Driver, Passenger — all in one system
+✅ Geospatial: MongoDB 2dsphere + Leaflet — "Find nearest bus stop"
+✅ Intelligent: Smart rules engine for emergencies, overcrowding, delays
+✅ Production-Ready: Security, rate limiting, caching, deployment pipeline
+✅ Measurable: Clear metrics to prove system improvement for research paper
+✅ Scalable: Designed to handle all 569 DTC routes in production
+✅ Native Mobile Apps: React Native (Expo) for both Driver and Passenger
+✅ Background GPS: Driver app continuously sends location even when minimized
+✅ Push Notifications: Passengers alerted when their bus is approaching
+✅ Offline-Aware: Mobile app gracefully handles poor connectivity
+✅ Cross-Platform: One React Native codebase → Android APK + iOS build
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+END OF PLAN — SmartDTC Project v2.0 (with React Native Mobile Apps)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║           IMPLEMENTATION STATUS REPORT — Updated March 11, 2026                    ║
+║                    SmartDTC v2.0 — Phase-wise Build Progress                       ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 1 — FOUNDATION & BACKEND  [STATUS: ✅ COMPLETE]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✅ server.js              Entry point: connects MongoDB, starts Express, cron jobs
+  ✅ src/app.js             Express app, CORS, Helmet, rate-limit, 12 route prefixes
+  ✅ src/config/database.js MongoDB connection with retry logic
+  ✅ src/config/socket.js   Socket.io singleton (initSocket + getIO), room management
+
+  MODELS (13/13 complete):
+  ✅ User.js                bcrypt pre-save hook, comparePassword(), resetToken fields
+  ✅ Route.js               url_route_id unique, text index (name + start/end stage)
+  ✅ Stage.js               2dsphere index on GeoJSON Point, compound {route_id, seq}
+  ✅ Bus.js                 busNumber unique, embedded lastPosition, refs to Route/Driver
+  ✅ Driver.js              userId ref User (unique), status enum, rating 1-5
+  ✅ Schedule.js            Compound indexes: {date,route,status}, {driver,date}, {bus,date}
+  ✅ BusPosition.js         TTL expireAfterSeconds:3600, 2dsphere location, isSimulated flag
+  ✅ PassengerDemand.js     predictedCount, actualCount, crowdLevel enum
+  ✅ Alert.js               type/severity enums, resolvedBy ref User
+  ✅ Analytics.js           {date,route} unique compound, onTimePerformance %
+  ✅ PushToken.js           expoPushToken unique, platform android/ios
+  ✅ Favourite.js           refPath dynamic ref (Route|Stage), {user,refId} unique
+  ✅ TripHistory.js         incidents array, status enum, compound indexes
+
+  CONTROLLERS (10/10 complete):
+  ✅ auth.controller.js     register, login, refreshToken, logout, getMe, updateMe,
+                             changePassword, forgotPassword, resetPassword
+  ✅ route.controller.js    getAllRoutes (text search + pagination), getRoute,
+                             createRoute, updateRoute, deleteRoute
+  ✅ stage.controller.js    getStagesByRoute, getNearbyStages ($nearSphere),
+                             getStage, searchStages
+  ✅ bus.controller.js      getAllBuses, getBus, createBus, updateBus, deleteBus,
+                             getBusStats (aggregate)
+  ✅ driver.controller.js   getAllDrivers, getDriver, createDriver (creates User+Driver),
+                             updateDriver, assignDriver, deleteDriver
+  ✅ schedule.controller.js getSchedules, getSchedule, createSchedule, updateSchedule,
+                             deleteSchedule, bulkCreateSchedule
+  ✅ tracking.controller.js getLiveBuses (latest per bus via aggregation), getBusPosition,
+                             getBusesByRoute, getNearbyBuses ($geoNear)
+  ✅ demand.controller.js   getDemand, predictDemand (calls Python AI), updateActual
+  ✅ alert.controller.js    getAlerts, createAlert (socket broadcast), resolveAlert, delete
+  ✅ report.controller.js   getDailyReport, getSummary, getTripHistory, getOnTimePerformance
+
+  ROUTES (12/12 complete):
+  ✅ auth.routes.js, route.routes.js, stage.routes.js, bus.routes.js
+  ✅ driver.routes.js, schedule.routes.js, tracking.routes.js, demand.routes.js
+  ✅ alert.routes.js, report.routes.js, mobile.routes.js, public.routes.js
+
+  SERVICES:
+  ✅ gpsSimulator.js        Moves buses along route stages every 10s, saves BusPosition,
+                             emits bus:{id}/route:{id}/admin-dashboard socket events
+  ✅ scheduler.service.js   Cron jobs: GPS sim every 10s, schedule status every 1m,
+                             analytics aggregation at midnight (0 0 * * *)
+  ✅ scheduleStatus.service.js Updates scheduled→in-progress→completed based on wall-clock time
+  ✅ analytics.service.js   aggregateDailyAnalytics(date) — groups TripHistory by route
+
+  UTILS:
+  ✅ haversine.js           Distance calculation between lat/lng pairs (km)
+  ✅ etaCalculator.js       calculateETA() — returns stages with ETA dates at given speed
+  ✅ logger.js              Winston logger with file + console transports
+  ✅ catchAsync.js          Async error wrapper for controllers
+  ✅ AppError.js            Custom error class with statusCode
+
+  SCRIPTS:
+  ✅ importData.js          Reads routes.csv + stages.csv, bulk upsert in 1000-row chunks,
+                             --delete flag to wipe first; 569 routes + 14,248 stops
+  ✅ seedData.js            Creates: admin@dtc.in, 3 drivers, 5 buses, sample schedules
+
+  npm install: ✅ All packages installed
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 2 — NEXT.JS FRONTEND (Admin + Passenger)  [STATUS: ✅ COMPLETE]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  CONFIG:
+  ✅ next.config.js         Image remote patterns for OpenStreetMap, API rewrite to :5000
+  ✅ tsconfig.json          @/* alias for ./src/*, strict mode
+  ✅ tailwind.config.js     Custom colors: dtc-blue, dtc-orange, dtc-green, dtc-red
+  ✅ .env.local             NEXT_PUBLIC_API_URL + NEXT_PUBLIC_SOCKET_URL
+
+  CORE LIBS:
+  ✅ src/lib/api.ts         Axios instance, withCredentials, Bearer token, auto-refresh on 401
+  ✅ src/lib/socket.ts      Socket.io singleton: getSocket(), connectSocket(), disconnectSocket()
+  ✅ src/lib/utils.ts       cn() (clsx+twMerge), formatDate(), timeAgo(), crowdColor()
+  ✅ src/types/index.ts     User, Route, Stage, Bus, Driver, Schedule, BusPosition, Alert,
+                             DashboardSummary TypeScript interfaces
+  ✅ src/store/authStore.ts Zustand with persist — user, accessToken, login(), logout(),
+                             fetchMe(), setUser()
+
+  PAGES (11 pages):
+  ✅ app/page.tsx                  Public landing page with hero + features
+  ✅ app/login/page.tsx            Login form with toast feedback
+  ✅ app/register/page.tsx         Passenger self-registration
+  ✅ app/track/page.tsx            Public live bus tracker with sidebar
+  ✅ app/search/page.tsx           Passenger route search (from/to + keyword)
+  ✅ app/not-found.tsx             Custom 404 page
+  ✅ app/admin/page.tsx            Dashboard — KPIs, live alerts, live buses table
+  ✅ app/admin/routes/page.tsx     Routes table with text search + pagination
+  ✅ app/admin/buses/page.tsx      Fleet management table
+  ✅ app/admin/drivers/page.tsx    Drivers table with rating display
+  ✅ app/admin/schedule/page.tsx   Schedule by date with date picker
+  ✅ app/admin/tracking/page.tsx   Live map with Socket.io updates
+  ✅ app/admin/alerts/page.tsx     Real-time alert management
+  ✅ app/admin/reports/page.tsx    Reports + Recharts BarChart
+
+  COMPONENTS:
+  ✅ components/admin/Sidebar.tsx  Navigation sidebar, 8 nav items, user info, logout
+  ✅ components/map/LiveMap.tsx    Leaflet map, custom bus icons (red=delayed, blue=normal),
+                                   popups with speed/delay/nextStop, dynamic import for SSR
+  ✅ components/ui/Skeleton.tsx    TableSkeleton, CardSkeleton, StatCardSkeleton,
+                                   MapSkeleton, PageLoader
+
+  npm install: ✅ All packages installed (removed invalid @radix-ui/react-badge)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 3 — PYTHON AI MICROSERVICE  [STATUS: ✅ COMPLETE]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✅ requirements.txt       fastapi==0.110.0, uvicorn, pydantic, numpy, pandas, sklearn,
+                             xgboost==2.0.3, tensorflow==2.16.1, joblib, python-dotenv
+  ✅ .env                   PORT=8000, MODEL_DIR=models/saved
+  ✅ schemas.py             Pydantic request/response models:
+                             DemandRequest/Response, DelayRequest/Response,
+                             ScheduleRequest/Response
+  ✅ model_loader.py        load_models() at lifespan startup; loads LSTM (SavedModel),
+                             demand_scaler.pkl, delay_regressor.pkl, delay_classifier.pkl,
+                             delay_scaler.pkl; graceful fallback if not found
+  ✅ predictors.py          predict_demand() → LSTM or rule-based fallback
+                             predict_delay() → XGBoost or rule-based fallback
+                             generate_schedule() → demand-driven slot generation (5AM-midnight)
+  ✅ main.py                FastAPI app, asynccontextmanager lifespan, CORS for :3000/:5000
+                             GET  /health
+                             POST /predict/demand
+                             POST /predict/delay
+                             POST /schedule/generate
+
+  TRAINING SCRIPTS:
+  ✅ training/generate_dataset.py  Reads real routes.csv, 365 days × 24 hrs per route,
+                                    DTC_HOLIDAYS_2024 set, 10% noise injection,
+                                    outputs demand_dataset.csv + delay_dataset.csv
+  ✅ training/train_demand_lstm.py LSTM: 128→64→32→1, Dropout(0.2), BatchNorm,
+                                    EarlyStopping(patience=10), ReduceLROnPlateau,
+                                    80/10/10 split (shuffle=False, no data leakage),
+                                    saves demand_lstm (SavedModel) + demand_scaler.pkl
+  ✅ training/train_delay_xgboost.py XGBRegressor (500 estimators) + XGBClassifier
+                                    (400 estimators, auto scale_pos_weight),
+                                    feature importance plot, saves delay_regressor.pkl +
+                                    delay_classifier.pkl + delay_scaler.pkl
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 4 — REACT NATIVE MOBILE APP  [STATUS: ✅ COMPLETE]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  CONFIG:
+  ✅ package.json           expo ~50.0.17, expo-router ~3.4.10, expo-location,
+                             expo-notifications, expo-secure-store, expo-camera,
+                             react-native-maps, socket.io-client, zustand, axios
+  ✅ app.json               name: SmartDTC, slug: smartdtc, scheme: smartdtc,
+                             iOS/Android permissions, expo-router + expo-location plugins
+  ✅ tsconfig.json          extends expo/tsconfig.base, @/* → ./src/* path alias
+  ✅ babel.config.js        babel-preset-expo, react-native-reanimated plugin
+
+  CORE:
+  ✅ src/types/index.ts     User, Route, Stage, Bus, Driver, Schedule, BusPosition,
+                             Alert, NearbyStop, SearchResult interfaces
+  ✅ src/lib/api.ts         Axios with SecureStore token injection + 401 refresh interceptor
+  ✅ src/lib/socket.ts      Socket.io singleton (getSocket, connectSocket, disconnectSocket)
+  ✅ src/store/authStore.ts Zustand: loadToken(), login(), logout(), fetchMe()
+                             Persistence via expo-secure-store (not localStorage)
+
+  APP NAVIGATION (Expo Router):
+  ✅ app/_layout.tsx        Root layout, SplashScreen guard, auth-based redirect,
+                             GestureHandlerRootView, Toast provider
+  ✅ app/index.tsx          Smart redirect: driver→(driver), passenger→(passenger), else login
+  ✅ app/login.tsx          Shared login screen, role-based post-login redirect
+
+  DRIVER APP (5 screens + tab layout):
+  ✅ app/(driver)/_layout.tsx  Tab navigator: Dashboard, Schedule, Active Trip, SOS, Profile
+  ✅ app/(driver)/index.tsx    Dashboard: duty status toggle (on-duty/off-duty),
+                                assigned bus card, today's trip stats, current schedule
+  ✅ app/(driver)/schedule.tsx Schedule list: all trips with status badges, route + timing
+  ✅ app/(driver)/active-trip.tsx  Live GPS tracking via expo-location watchPositionAsync,
+                                    socket emit driver:gps_update every location change,
+                                    mark stop arrived (driver:arrived_stop), stop progress list
+  ✅ app/(driver)/sos.tsx      SOS screen: 4 emergency types, animated SOS button,
+                                location capture, socket driver:sos + REST POST /alerts
+  ✅ app/(driver)/profile.tsx  Driver info, rating stars, license, logout
+
+  PASSENGER APP (6 screens + tab layout):
+  ✅ app/(passenger)/_layout.tsx   Tab navigator: Home, Search, Favourites, Profile
+                                    (route/[id] and track/[busId] hidden from tabs)
+  ✅ app/(passenger)/index.tsx     Home: nearby stops (expo-location), popular routes,
+                                    quick search bar, 3 quick-action cards
+  ✅ app/(passenger)/search.tsx    Full-text route search → card list with route details
+  ✅ app/(passenger)/route/[id].tsx Route detail: stop list timeline, live buses on route,
+                                    favourite toggle (POST/DELETE /mobile/favourites)
+  ✅ app/(passenger)/track/[busId].tsx  Real-time bus tracker: Socket.io passenger:track_bus,
+                                         live speed/delay/nextStop, live status indicator
+  ✅ app/(passenger)/favourites.tsx  Saved routes/stops list, remove favourite
+  ✅ app/(passenger)/profile.tsx     Account info, stats (favourites count), logout
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 5 — DATA, SEED & DOCUMENTATION  [STATUS: ✅ COMPLETE]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ✅ routes.csv             569 real DTC bus routes (url_route_id, route_name, start, end)
+  ✅ stages.csv             14,248 GPS-tagged stops (route_id, seq, stage_name, lat/lng)
+  ✅ backend/importData.js  Bulk upsert via bulkWrite, 1000-row chunks, --delete flag
+  ✅ backend/seedData.js    Creates 5 users (admin + 3 drivers + passenger), 5 buses,
+                             sample schedules for today; prints credentials to console
+  ✅ README.md              Full setup guide: architecture diagram, API table, run commands,
+                             env vars for all 4 services, mobile device setup instructions
+  ✅ .gitignore (root)      Covers node_modules, .env, .next, models/saved, dist, .expo
+  ✅ .gitignore (per service) Separate gitignores for backend, frontend, ai-service, mobile-app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+CURRENT SYSTEM CAPABILITIES SUMMARY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  Services running simultaneously:
+    Backend API   → http://localhost:5000  (Node.js + Express + Socket.io)
+    AI Service    → http://localhost:8000  (FastAPI + LSTM + XGBoost)
+    Frontend      → http://localhost:3000  (Next.js 14 App Router)
+    Mobile App    → Expo Go (QR scan) or emulator
+
+  Default Credentials (after npm run seed):
+    admin@dtc.in       / Admin@123    → Admin Dashboard
+    driver1@dtc.in     / Driver@123   → Driver Mobile App
+    driver2@dtc.in     / Driver@123   → Driver Mobile App
+    driver3@dtc.in     / Driver@123   → Driver Mobile App
+    passenger@dtc.in   / Pass@123     → Passenger Portal + Mobile
+
+  What works right now:
+    ✓ Full JWT auth flow (register, login, refresh, logout)
+    ✓ Admin CRUD for routes, buses, drivers, schedules
+    ✓ GPS simulation every 10 seconds for all active buses
+    ✓ Live bus tracking on Leaflet map (WebSocket updates)
+    ✓ Demand prediction via LSTM (or rule-based fallback)
+    ✓ Delay prediction via XGBoost (or rule-based fallback)
+    ✓ AI-generated optimized schedules
+    ✓ Real-time alert system with socket broadcasts
+    ✓ SOS emergency from driver mobile app
+    ✓ Passenger route search + live bus tracker
+    ✓ Favourites (routes/stops) for passengers
+    ✓ Analytics aggregation + OTP reports
+    ✓ Driver GPS reporting via mobile app
+
+
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║         REMAINING ADVANCED TODOS — Phase 6 onwards (Capstone Enhancement)          ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 6 — ADVANCED AI & ML ENHANCEMENTS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  TODO-AI-01: Demand Heatmap Endpoint
+    File   : backend/src/controllers/demand.controller.js
+    Add    : GET /api/v1/demand/heatmap?date=&hour=
+    Logic  : Aggregates PassengerDemand by stage location → returns GeoJSON FeatureCollection
+             with crowdLevel as property; used to render heatmap in Leaflet.
+
+  TODO-AI-02: Anomaly Detection for Delays
+    File   : ai-service/anomaly_detector.py  (new)
+    Model  : Isolation Forest on BusPosition speed + delay_minutes
+    API    : POST /detect/anomaly → returns { isAnomaly, score, reason }
+    Trigger: Called from backend scheduler every 5 minutes for in-progress trips
+    Action : Auto-creates Alert with severity 'high' if anomaly detected
+
+  TODO-AI-03: Dynamic Headway Optimizer (Genetic Algorithm)
+    File   : ai-service/optimizer.py  (new)
+    Logic  : Given a route's predicted demand curve for a day,
+             use genetic algorithm (deap library) to find optimal bus dispatch times
+             minimizing total passenger wait time subject to fleet size constraint
+    API    : POST /optimize/headway { route_id, date, fleet_size }
+           → returns slots[] with optimal departure times
+    Frontend: "Auto-Optimize" button on Admin Schedule page triggers this
+
+  TODO-AI-04: ETA Prediction Using Traffic
+    File   : ai-service/eta_predictor.py  (new)
+    Model  : Linear Regression / Gradient Boost using features:
+             (distance_remaining_km, hour, day_of_week, weather, historical_avg_speed)
+    API    : POST /predict/eta
+    Backend: tracking.controller.js getNearbyBuses() → enrich with predicted ETA
+    Mobile : Passenger BusTracker screen shows "Arrives in ~X min (AI)"
+
+  TODO-AI-05: Passenger Load Estimation from GPS Patterns
+    File   : ai-service/load_estimator.py  (new)
+    Logic  : Correlate bus speed slowdowns at known stops with passenger boarding patterns
+             → estimate load_pct without sensors
+    Output : Feeds back into demand model for better crowdLevel accuracy
+
+  TODO-AI-06: Model Retraining Pipeline
+    File   : ai-service/retrain_pipeline.py  (new)
+    Logic  : Cron: every Sunday midnight, fetch last week's TripHistory + PassengerDemand
+             from MongoDB, append to dataset, retrain XGBoost (fast), checkpoint LSTM,
+             replace model files atomically (os.replace), reload via model_loader
+    Trigger: POST /admin/retrain (admin-only backend endpoint)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 7 — ADVANCED BACKEND FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  TODO-BE-01: Redis Caching Layer
+    Package: ioredis
+    Cache  :
+      - GET /routes          → cache 10 min (key: routes:page:N:search:Q)
+      - GET /tracking/live   → cache 5 sec  (key: tracking:live)
+      - GET /demand/heatmap  → cache 2 min  (key: heatmap:date:hour)
+    Files  : backend/src/config/redis.js (new)
+             backend/src/middleware/cache.middleware.js (new)
+    Benefit: Admin dashboard loads 10x faster; tracking API handles more concurrent users
+
+  TODO-BE-02: WebSocket Rooms — Stop-Level Tracking
+    File   : backend/src/config/socket.js
+    Event  : passenger:set_watch_stop { stopId }
+    Logic  : Join room stop:{stopId}. When GPS sim shows bus within 500m of that stop,
+             emit stop:{stopId}:bus_approaching { busId, eta_min, crowdLevel }
+    Use    : Passenger "watch this stop" feature → notify when bus ~5 min away
+
+  TODO-BE-03: Automated Delay Cascade Resolver
+    File   : backend/src/services/delayResolver.service.js  (new)
+    Logic  : If Schedule is in-progress and delay_minutes > 10:
+               1. Find next bus on same route that is 'scheduled'
+               2. Pull departure time forward by delay / 2 minutes
+               3. Update schedule, emit socket admin:cascade_resolved
+               4. Create Alert (type: delay, severity: medium) auto-resolved after 30 min
+    Trigger: Called from scheduler.service.js every 1 minute
+
+  TODO-BE-04: Bulk Schedule AI Generation Endpoint
+    File   : backend/src/controllers/schedule.controller.js
+    Route  : POST /api/v1/schedule/generate-ai
+    Body   : { date, routeIds[], totalBusesAvailable }
+    Logic  : For each routeId, call AI service POST /schedule/generate
+             → collect slot arrays → bulkWrite Schedules
+             → auto-assign available buses + drivers (greedy by proximity)
+    Auth   : Admin only
+
+  TODO-BE-05: Notification Service (Expo Push)
+    File   : backend/src/services/notification.service.js  (new)
+    Logic  : sendPush(userId, title, body, data) → looks up PushToken by userId,
+             calls Expo Push API https://exp.host/--/api/v2/push/send
+    Triggers:
+      - Bus approaching passenger's watched stop → push to that passenger
+      - SOS received → push to all admin users
+      - Schedule change → push to affected driver
+      - Alert resolved → push notification to admin
+    Package: @expo/server-sdk-node
+
+  TODO-BE-06: Rate Limiting per Role
+    File   : backend/src/middleware/rateLimit.middleware.js  (new)
+    Rules  :
+      - Guest (no token): 30 requests / 15 min
+      - Passenger: 100 requests / 15 min
+      - Driver: 200 requests / 15 min
+      - Admin: 500 requests / 15 min
+    Apply  : In app.js per router (replace global limiter)
+
+  TODO-BE-07: Audit Log System
+    Model  : backend/src/models/AuditLog.js  (new)
+             Fields: user (ref), action (string), entity, entityId, changes (Mixed),
+                     ip, userAgent, createdAt (TTL 90 days)
+    Trigger: Admin CRUD operations (createBus, deleteDriver, resolveAlert, etc.)
+    Route  : GET /api/v1/admin/audit-logs (admin only, paginated)
+
+  TODO-BE-08: Export Reports to PDF / Excel
+    Package: pdfkit + exceljs
+    File   : backend/src/controllers/report.controller.js
+    Routes :
+      GET /api/v1/reports/export/pdf?type=daily&date=
+      GET /api/v1/reports/export/excel?type=monthly&month=
+    Content: Trip summary, OTP %, fleet utilization, demand prediction accuracy
+    Frontend: Download button on Reports page
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 8 — ADVANCED FRONTEND FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  TODO-FE-01: Demand Heatmap on Live Map
+    File   : frontend/src/components/map/HeatmapLayer.tsx  (new)
+    Lib    : leaflet.heat (CDN or npm leaflet-heat)
+    Logic  : Fetches GET /demand/heatmap?date=today&hour=currentHour every 5 min
+             → renders colored radius circles on Leaflet map by stop coordinates
+    Admin  : Toggle button "Show Demand Heatmap" on /admin/tracking page
+
+  TODO-FE-02: Route Path Visualizer
+    File   : frontend/src/components/map/RouteMap.tsx  (new)
+    Logic  : Fetches all stages for a selected route → draws Polyline on Leaflet map
+             with numbered stop markers; highlights current bus position on route line
+    Page   : /admin/routes/[id]/page.tsx (new — Route Detail page)
+
+  TODO-FE-03: Admin Schedule AI Generation UI
+    File   : frontend/src/app/admin/schedule/page.tsx  (update existing)
+    Add    : "Generate AI Schedule" button panel:
+              - Date picker, multi-select routes, fleet size input
+              - POST /schedule/generate-ai → shows progress spinner
+              - On success: reload schedule table with newly created entries
+              - Show comparison: AI schedule vs existing manual schedule
+
+  TODO-FE-04: Analytics Dashboard — Advanced Charts
+    File   : frontend/src/app/admin/reports/page.tsx  (update existing)
+    Charts :
+      - Line chart: LSTM predicted vs actual demand (Recharts LineChart)
+      - Bar chart: OTP % per route (top 10 + bottom 10)
+      - Pie chart: Alert type distribution
+      - Area chart: Fleet utilization over 24 hours
+      - Scatter plot: delay_minutes vs passenger_load (correlation)
+    Lib    : Recharts (already installed)
+
+  TODO-FE-05: Demand Prediction Page (Admin)
+    File   : frontend/src/app/admin/demand/page.tsx  (new)
+    UI     :
+      - Route selector (searchable dropdown)
+      - Date picker + hour slider (0-23)
+      - Weather selector (clear/rain/fog/extreme)
+      - Special event toggle
+      - "Predict" button → POST /demand/predict → show result card
+        (predicted_count, crowd_level badge, confidence %)
+      - History table: past predictions vs actual (PassengerDemand collection)
+
+  TODO-FE-06: Real-time Dashboard KPI Widgets (Auto-refresh)
+    File   : frontend/src/app/admin/page.tsx  (update existing)
+    Add    : Auto-refresh every 30 seconds via setInterval + SWR/React Query
+    KPIs   :
+      - Live buses count (green badge, Socket.io)
+      - Average delay across all in-progress buses
+      - Alerts today (unresolved count, red if > 0)
+      - Demand index (high/medium/low for current hour)
+    Add    : Real-time notification toast when new alert fires (Socket.io)
+
+  TODO-FE-07: Driver Management — Assign Bus Modal
+    File   : frontend/src/app/admin/drivers/page.tsx  (update)
+    Add    : "Assign Bus" button per row → modal with bus dropdown (available buses)
+             → PATCH /drivers/:id/assign { busId }
+             → refresh table
+
+  TODO-FE-08: Public GTFS-Style API Docs Page
+    File   : frontend/src/app/api-docs/page.tsx  (new)
+    Content: Interactive API explorer (Swagger-style but custom) showing:
+             - All public endpoints (routes, stops, tracking)
+             - Example requests + responses
+             - Authentication instructions
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 9 — ADVANCED MOBILE APP FEATURES
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  TODO-MOB-01: Background GPS Tracking (Driver)
+    File   : mobile-app/app/(driver)/active-trip.tsx  (update)
+    Lib    : expo-task-manager + expo-location (background task)
+    Logic  : Register BACKGROUND_LOCATION_TASK that emits driver:gps_update via socket
+             even when app is minimized or screen is off
+    Code   :
+      TaskManager.defineTask(BACKGROUND_LOCATION_TASK, async ({ data }) => {
+        const { locations } = data;
+        socket.emit('driver:gps_update', { ...locations[0].coords });
+      });
+    Note   : Requires expo-location backgroundPermissions + app.json background modes
+
+  TODO-MOB-02: Push Notifications (Passenger)
+    File   : mobile-app/app/_layout.tsx  (update)
+    Logic  : On app launch, request Notifications.getExpoPushTokenAsync()
+             → POST /mobile/push-token { expoPushToken, platform }
+    Receive:
+      - "Bus approaching" → navigate to track/[busId]
+      - "Route delay alert" → show notification with dismiss
+      - Custom data.screen routing via expo-router push
+
+  TODO-MOB-03: Offline Mode — Cache Last Known State
+    File   : mobile-app/src/lib/offlineCache.ts  (new)
+    Lib    : @react-native-async-storage/async-storage
+    Cache  :
+      - Last fetched routes list (TTL 1 hour)
+      - Driver's today schedule (TTL 30 min)
+      - Favourite routes (TTL 6 hours)
+    Logic  : On network error, fall back to cached data + show "offline" banner
+    Hook   : useNetInfo() from @react-native-community/netinfo
+
+  TODO-MOB-04: Live Bus Map in Passenger App
+    File   : mobile-app/app/(passenger)/track/[busId].tsx  (update)
+    Lib    : react-native-maps (already in package.json, needs Google Maps API key)
+    Add    : MapView with Marker for bus position, Polyline for route stops,
+             animateToRegion on position update, custom bus marker icon
+    Note   : Needs EXPO_PUBLIC_GOOGLE_MAPS_KEY in .env for Android
+
+  TODO-MOB-05: Trip History for Passenger
+    File   : mobile-app/app/(passenger)/history.tsx  (new)
+    Add    : New tab in passenger nav: "History" (bus icon)
+    Logic  : GET /mobile/passenger/history → list of buses tracked,
+             routes searched, dates and times
+    Backend: Track TripHistory or log from passenger socket joins
+
+  TODO-MOB-06: QR Code Bus Stop Scanner
+    File   : mobile-app/app/(passenger)/scan.tsx  (new)
+    Lib    : expo-camera + expo-barcode-scanner
+    Logic  : Scan QR on physical bus stop sign (contains stop_id)
+             → auto-navigate to route list for that stop
+             → show live buses approaching that stop
+    Admin  : Generate printable QR codes: GET /api/v1/stages/:id/qr
+
+  TODO-MOB-07: Ratings & Feedback (Passenger → Driver)
+    File   : mobile-app/app/(passenger)/rate/[tripId].tsx  (new)
+    Logic  : After trip ends (bus arrives at destination), passenger gets
+             "Rate your trip" prompt (push notification)
+             → 1-5 star rating + optional comment
+             → PATCH /drivers/:driverId/rating { rating, comment }
+             → Updates Driver.rating (running average)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 10 — TESTING, SECURITY & DEPLOYMENT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  TODO-DEP-01: Unit & Integration Tests (Backend)
+    File   : backend/tests/  (new folder)
+    Tool   : Jest + Supertest
+    Cover  :
+      - auth.test.js  : register → login → getMe → logout flow
+      - route.test.js : CRUD operations with mock MongoDB (mongodb-memory-server)
+      - demand.test.js: mock AI service call, check prediction fallback
+      - socket.test.js: mock socket events, check room joins
+    Run    : npm test (jest --coverage)
+    Target : ≥ 80% coverage on controllers
+
+  TODO-DEP-02: API Security Hardening
+    File   : backend/src/app.js + middleware/
+    Add    :
+      - express-mongo-sanitize → prevents NoSQL injection
+      - xss-clean → strips XSS from req.body/query
+      - hpp → HTTP Parameter Pollution protection
+      - express-validator → strict input validation on all POST/PUT routes
+      - HTTPS enforcement (redirect HTTP → HTTPS in production)
+    Auth   : Add refresh token rotation (invalidate old token on each refresh)
+
+  TODO-DEP-03: CI/CD Pipeline (GitHub Actions)
+    File   : .github/workflows/ci.yml  (new)
+    Jobs   :
+      - lint: ESLint (frontend + backend) on every push
+      - test: jest --coverage (backend) on every push to main
+      - build: next build (frontend), pyflakes (ai-service)
+      - deploy: on push to main →
+          backend  → Railway (via railway.toml)
+          frontend → Vercel (via vercel.json)
+          ai-service → Render (via render.yaml)
+
+  TODO-DEP-04: Docker Compose (Local Dev)
+    File   : docker-compose.yml  (new)
+    Services:
+      mongodb:    mongo:7 (volume for data persistence)
+      backend:    node:20-alpine, COPY + npm install + npm run dev
+      frontend:   node:20-alpine, COPY + npm install + npm run dev
+      ai-service: python:3.11-slim, pip install + uvicorn main:app
+      redis:      redis:7-alpine (optional, for caching)
+    Benefit: Single command: docker-compose up → entire system starts
+
+  TODO-DEP-05: Production Environment Config
+    Files  :
+      backend/.env.production
+      frontend/.env.production
+      ai-service/.env.production
+    Add    :
+      - MongoDB Atlas connection string
+      - Redis Cloud URL
+      - JWT secrets (256-bit random)
+      - AI_SERVICE_URL pointing to Render deployment
+      - CORS origins → production domain only
+      - NODE_ENV=production (disables morgan verbose logging)
+
+  TODO-DEP-06: Expo EAS Build (Mobile APK)
+    File   : mobile-app/eas.json  (new)
+    Config :
+      {
+        "build": {
+          "preview": { "android": { "buildType": "apk" } },
+          "production": { "android": { "buildType": "app-bundle" } }
+        }
+      }
+    Run    : npx eas build --platform android --profile preview
+    Output : Downloadable APK for demo/presentation
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+PHASE 11 — CAPSTONE PRESENTATION ASSETS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  TODO-PRES-01: Jupyter Notebook — Model Evaluation
+    File   : ai-service/notebooks/model_evaluation.ipynb  (new)
+    Content:
+      - Load trained LSTM + XGBoost models
+      - Plot training loss curve (demand LSTM)
+      - Compute MAPE, RMSE on test set (demand model)
+      - Plot feature importance (XGBoost delay model)
+      - Confusion matrix for delay classifier (delayed / not delayed)
+      - Before/After comparison: static schedule vs AI schedule (simulated)
+    Tool   : matplotlib, seaborn, scikit-learn metrics
+
+  TODO-PRES-02: System Architecture Diagram
+    File   : docs/architecture.png  (new — create with draw.io or Excalidraw)
+    Show   :
+      - Client layer: Browser (Next.js) + Mobile (Expo)
+      - Application layer: Node.js API + FastAPI AI service
+      - Data layer: MongoDB + Redis
+      - Real-time layer: Socket.io
+      - External: OpenStreetMap tiles, Expo Push API
+    Export : PNG for README + presentation slides
+
+  TODO-PRES-03: Postman Collection
+    File   : docs/SmartDTC_API.postman_collection.json  (new)
+    Include: All 40+ API endpoints with example request bodies + expected responses
+    Auth   : Environment variable {{accessToken}} auto-set after login request
+    Benefit: Evaluators can test the API without reading code
+
+  TODO-PRES-04: Database Schema Diagram (ERD)
+    File   : docs/schema_erd.png  (new)
+    Show   : All 13 models with fields, types, relationships, and indexes
+    Tool   : Draw.io, dbdiagram.io, or MongoDB Compass schema analyzer
+
+  TODO-PRES-05: Performance Benchmark Report
+    File   : docs/performance_report.md  (new)
+    Measure:
+      - API response time: GET /tracking/live under 10 concurrent users (artillery)
+      - Socket.io throughput: 50 simultaneous buses emitting every 10s
+      - MongoDB query time for $geoNear (explain plan)
+      - LSTM inference time: < 100ms per prediction
+      - Memory usage: Node.js heap under load
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+QUICK PRIORITY GUIDE — What to Build Next
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  PRIORITY 1 — High Impact, Visible in Demo (build these first):
+    ★★★ TODO-FE-01   Demand Heatmap on Live Map
+    ★★★ TODO-FE-04   Advanced Analytics Charts (Recharts)
+    ★★★ TODO-FE-05   Demand Prediction UI (Admin)
+    ★★★ TODO-FE-03   AI Schedule Generation UI
+    ★★★ TODO-AI-03   Genetic Algorithm Headway Optimizer
+    ★★★ TODO-BE-05   Push Notifications (Expo)
+    ★★★ TODO-MOB-01  Background GPS (Driver — critical for real tracking)
+
+  PRIORITY 2 — Strong Technical Contribution:
+    ★★  TODO-AI-02   Anomaly Detection (Isolation Forest)
+    ★★  TODO-AI-04   AI ETA Prediction
+    ★★  TODO-AI-06   Model Retraining Pipeline
+    ★★  TODO-BE-01   Redis Caching
+    ★★  TODO-BE-03   Delay Cascade Resolver
+    ★★  TODO-MOB-02  Push Notifications (Passenger)
+    ★★  TODO-MOB-04  Live Map in Passenger App
+
+  PRIORITY 3 — Completeness & Polish:
+    ★   TODO-BE-07   Audit Log System
+    ★   TODO-BE-08   PDF/Excel Export
+    ★   TODO-MOB-03  Offline Mode
+    ★   TODO-MOB-07  Trip Ratings
+    ★   TODO-DEP-01  Unit Tests
+    ★   TODO-DEP-04  Docker Compose
+
+  PRIORITY 4 — Presentation & Evaluation:
+    ★   TODO-PRES-01 Jupyter Notebook (Model Evaluation)
+    ★   TODO-PRES-03 Postman Collection
+    ★   TODO-PRES-04 ERD Diagram
+    ★   TODO-PRES-05 Performance Benchmark
+    ★   TODO-DEP-06  Expo EAS Build (APK)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+END OF STATUS UPDATE — SmartDTC Project v2.0 | March 11, 2026
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

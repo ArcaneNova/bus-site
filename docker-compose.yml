@@ -1,0 +1,122 @@
+version: "3.9"
+
+services:
+  # ── MongoDB ────────────────────────────────────────────────────────────────
+  mongo:
+    image: mongo:7
+    container_name: smartdtc_mongo
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_USER:-admin}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASS:-secret}
+      MONGO_INITDB_DATABASE:      smartdtc
+    volumes:
+      - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - smartdtc_net
+    healthcheck:
+      test: ["CMD", "mongosh", "--eval", "db.adminCommand('ping')"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  # ── Redis ──────────────────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    container_name: smartdtc_redis
+    restart: unless-stopped
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - smartdtc_net
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout:  5s
+      retries:  5
+
+  # ── Backend (Node.js + Express) ────────────────────────────────────────────
+  backend:
+    build:
+      context:    ./backend
+      dockerfile: Dockerfile
+    container_name: smartdtc_backend
+    restart: unless-stopped
+    env_file: ./backend/.env
+    environment:
+      MONGO_URI:      mongodb://${MONGO_USER:-admin}:${MONGO_PASS:-secret}@mongo:27017/smartdtc?authSource=admin
+      REDIS_URL:      redis://redis:6379
+      PYTHON_AI_URL:  http://ai-service:8000
+      NODE_ENV:       production
+      PORT:           5000
+    ports:
+      - "5000:5000"
+    depends_on:
+      mongo:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    networks:
+      - smartdtc_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:5000/health"]
+      interval: 30s
+      timeout:  10s
+      retries:  3
+
+  # ── AI Service (FastAPI + Python) ─────────────────────────────────────────
+  ai-service:
+    build:
+      context:    ./ai-service
+      dockerfile: Dockerfile
+    container_name: smartdtc_ai
+    restart: unless-stopped
+    environment:
+      PORT: 8000
+    ports:
+      - "8000:8000"
+    volumes:
+      - ai_models:/app/models/saved
+    networks:
+      - smartdtc_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 30s
+      timeout:  10s
+      retries:  3
+
+  # ── Frontend (Next.js) ─────────────────────────────────────────────────────
+  frontend:
+    build:
+      context:    ./frontend
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_API_URL:    http://backend:5000/api/v1
+        NEXT_PUBLIC_SOCKET_URL: http://backend:5000
+    container_name: smartdtc_frontend
+    restart: unless-stopped
+    environment:
+      NEXT_PUBLIC_API_URL:    http://localhost:5000/api/v1
+      NEXT_PUBLIC_SOCKET_URL: http://localhost:5000
+    ports:
+      - "3000:3000"
+    depends_on:
+      - backend
+    networks:
+      - smartdtc_net
+
+# ── Volumes ───────────────────────────────────────────────────────────────────
+volumes:
+  mongo_data:
+  redis_data:
+  ai_models:
+
+# ── Networks ──────────────────────────────────────────────────────────────────
+networks:
+  smartdtc_net:
+    driver: bridge

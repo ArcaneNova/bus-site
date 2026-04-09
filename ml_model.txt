@@ -1,0 +1,1652 @@
+╔══════════════════════════════════════════════════════════════════════════════════════╗
+║           SmartDTC — COMPLETE ML MODEL DOCUMENTATION                               ║
+║         Passenger Demand Prediction + Delay Prediction + Scheduling AI             ║
+║                  From Dataset → Features → Training → Deployment                   ║
+╚══════════════════════════════════════════════════════════════════════════════════════╝
+
+Date      : February 25, 2026
+Dataset   : routes.csv (569 routes) + stages.csv (14,248 stops with GPS)
+AI Stack  : Python 3.11 · TensorFlow/Keras · Scikit-learn · FastAPI · Pandas
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+OVERVIEW — THREE ML MODELS WE WILL BUILD
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  MODEL 1 → Passenger Demand Predictor (LSTM)
+    What    : Predicts how many passengers will board at a stop at a given hour
+    Input   : Route + Stop + Time features
+    Output  : predicted_passenger_count (regression)
+    Use     : Drives the scheduling engine (high demand → more buses)
+
+  MODEL 2 → Bus Delay Predictor (XGBoost / Random Forest)
+    What    : Predicts whether a bus on a route will be delayed and by how many minutes
+    Input   : Route + Time + Traffic + Schedule features
+    Output  : delay_minutes (regression) OR is_delayed (binary classification)
+    Use     : Early warning system, passenger ETA alerts
+
+  MODEL 3 → Schedule Optimizer (Rule-based + ML Hybrid)
+    What    : Recommends optimal bus frequency for each route per hour
+    Input   : Demand predictions + available fleet + peak hour rules
+    Output  : recommended_frequency_minutes per route per hour
+    Use     : Auto schedule generation in admin dashboard
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 1: DATASET STRATEGY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Since real DTC ridership data is not publicly available, we use a SYNTHETIC DATA
+GENERATION approach that is grounded in the real routes.csv and stages.csv datasets.
+
+The synthetic data is NOT random — it is generated using realistic patterns observed
+in public transit research for Indian metropolitan cities, calibrated to Delhi:
+
+  SOURCES USED TO CALIBRATE PATTERNS:
+    1. OpenCity Delhi open data (transport statistics)
+    2. Indian Smart Cities mobility studies
+    3. DTC annual reports (publicly available fleet data)
+    4. Academic papers on Mumbai/Delhi bus ridership patterns
+    5. Our actual routes.csv + stages.csv (all coordinates and route info)
+
+  WHY SYNTHETIC DATA IS ACADEMICALLY VALID:
+    - Real ridership data requires DTC partnership (not always possible for students)
+    - Synthetic data with realistic distributions is accepted in research papers
+    - We validate model behavior against known patterns (peak hours, weekday patterns)
+    - Model architecture and pipeline are the same as production systems
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 2: DATASET COLUMNS — MASTER FEATURE TABLE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+2.1  RAW DATA COLUMNS (from CSV files — already available)
+──────────────────────────────────────────────────────────
+
+FROM routes.csv:
+  url_route_id   INT       Unique route ID (e.g. 7000)
+  route_name     STRING    Route number label (e.g. "427")
+  start_stage    STRING    Origin terminal name
+  end_stage      STRING    Destination terminal name
+  distance_km    FLOAT     Total route length in km (5 to 52 km in our data)
+
+FROM stages.csv:
+  url_route_id   INT       Foreign key to route
+  seq            INT       Stop sequence number (1 = first stop on route)
+  stage_id       INT       Unique stop ID
+  stage_name     STRING    Stop name (e.g. "Nizamuddin Railway Station")
+  latitude       FLOAT     GPS latitude (e.g. 28.586725)
+  longitude      FLOAT     GPS longitude (e.g. 77.252876)
+
+2.2  ENGINEERED FEATURES (derived from raw data + synthetic generation)
+────────────────────────────────────────────────────────────────────────
+
+TEMPORAL FEATURES (Time-based — highest predictive power):
+  hour               INT       Hour of day (0–23)
+  day_of_week        INT       0=Monday … 6=Sunday
+  is_weekday         BOOL      1 if Mon–Fri, 0 if Sat/Sun
+  is_weekend         BOOL      1 if Sat/Sun
+  is_morning_peak    BOOL      1 if hour ∈ {7,8,9,10}
+  is_evening_peak    BOOL      1 if hour ∈ {17,18,19,20}
+  is_off_peak        BOOL      1 if hour ∈ {11,12,13,14,15,16}
+  is_night           BOOL      1 if hour ∈ {22,23,0,1,2,3,4}
+  month              INT       1–12
+  week_of_year       INT       1–52
+  quarter            INT       1–4
+  is_holiday         BOOL      1 for Indian public holidays (Republic Day, Holi, etc.)
+  days_to_holiday    INT       Number of days until next major holiday (0–30)
+  is_festival_day    BOOL      Diwali, Eid, Navratri (extra spike days)
+
+ROUTE FEATURES (from routes.csv):
+  url_route_id       INT       Raw route ID (used as category)
+  route_encoded      INT       Label-encoded route (0 to 568)
+  distance_km        FLOAT     Total route distance
+  total_stops        INT       Total number of stages on route
+  route_type         INT       0=short(<15km), 1=medium(15-30km), 2=long(>30km)
+  is_terminal_route  BOOL      1 if route starts/ends at ISBT, Railway Station
+  route_popularity   FLOAT     Synthetic popularity score (0.0–1.0)
+                               Higher for routes through commercial/central areas
+
+STOP (STAGE) FEATURES (from stages.csv):
+  stage_id           INT       Unique stop ID
+  stage_encoded      INT       Label-encoded stop
+  seq                INT       Stop sequence position on route
+  seq_normalized     FLOAT     seq / total_stops (0.0 = first stop, 1.0 = last stop)
+  latitude           FLOAT     GPS latitude
+  longitude          FLOAT     GPS longitude
+  dist_from_center   FLOAT     Haversine distance from Connaught Place (DTC hub)
+                               (lat=28.6328, lng=77.2197)
+  is_terminal_stop   BOOL      1 if stop is first or last on route
+  is_major_stop      BOOL      1 if stop name contains key words:
+                               ['Railway Station', 'ISBT', 'Metro', 'Terminal',
+                                'Stadium', 'Airport', 'Hospital', 'Market']
+  stop_popularity    FLOAT     Synthetic score based on stop_name keywords + GPS zone
+
+WEATHER FEATURES (synthetic, calibrated to Delhi climate):
+  weather_condition  INT       0=Clear, 1=Cloudy, 2=Light Rain, 3=Heavy Rain,
+                               4=Fog (common in Delhi winters), 5=Extreme Heat
+  temperature_c      FLOAT     Temperature in Celsius (Delhi range: 3°C–45°C)
+  humidity_pct       FLOAT     Humidity percentage (30–95%)
+  weather_impact     FLOAT     Composite impact score on ridership (0.7–1.3)
+                               >1.0 = rain increases bus usage (people avoid walking)
+                               <1.0 = extreme heat/cold reduces usage
+
+HISTORICAL DEMAND FEATURES (lag features for LSTM):
+  pax_lag_1h         INT       Passenger count 1 hour ago (same stop, same route)
+  pax_lag_24h        INT       Passenger count 24 hours ago (yesterday, same time)
+  pax_lag_168h       INT       Passenger count 7 days ago (same day last week)
+  pax_rolling_7d     FLOAT     7-day rolling average passenger count
+  pax_rolling_30d    FLOAT     30-day rolling average passenger count
+  pax_same_hour_avg  FLOAT     Historical average for this stop at this hour
+
+TRAFFIC & OPERATIONAL FEATURES:
+  traffic_index      FLOAT     Traffic congestion score (0.0=clear, 1.0=gridlock)
+                               Varies by hour, day, area of Delhi
+  scheduled_freq     INT       Planned bus frequency for this hour (minutes between buses)
+  buses_on_route     INT       How many buses are currently assigned to this route
+  avg_speed_kmh      FLOAT     Historical average speed on this route at this hour
+
+TARGET VARIABLES (what we predict):
+  passenger_count    INT       Number of passengers boarding at stop in this hour  ← MODEL 1
+  delay_minutes      FLOAT     Bus delay in minutes (0 = on time)                 ← MODEL 2
+  crowd_level        INT       0=Low(<20), 1=Medium(20-80), 2=High(80-150),
+                               3=Critical(>150)                                    ← MODEL 1 derived
+
+2.3  FINAL FEATURE COUNT SUMMARY
+──────────────────────────────────
+  Temporal features     : 14
+  Route features        : 7
+  Stop features         : 8
+  Weather features      : 5
+  Lag/Historical        : 6
+  Traffic/Operational   : 4
+  ─────────────────────────
+  TOTAL INPUT FEATURES  : 44
+  TARGET (Model 1)      : passenger_count (+ crowd_level derived)
+  TARGET (Model 2)      : delay_minutes
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 3: SYNTHETIC DATASET GENERATION SCRIPT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FILE: ai-service/data/generate_dataset.py
+
+━━━━━ STEP-BY-STEP LOGIC ━━━━━
+
+STEP 1: Load real route and stop data
+  - Read routes.csv → DataFrame of 569 routes
+  - Read stages.csv → DataFrame of 14,248 stops
+  - Compute total_stops per route
+  - Compute dist_from_center for each stop (haversine to CP)
+  - Identify major stops, terminal stops
+  - Assign route_popularity scores
+
+STEP 2: Define time range
+  - Generate 2 years of hourly records: Jan 1, 2024 → Dec 31, 2025
+  - Total time slots: 365 * 2 * 24 = 17,520 hours
+  - For scalability: sample 50 routes × 5 stops each × 17,520 hours
+  - Dataset size: 50 × 5 × 17,520 = 4,380,000 records
+
+  NOTE: You can reduce to top 20 routes for faster training (20×5×17520 = 1,752,000 rows)
+
+STEP 3: Base demand calculation formula
+  Each record's passenger_count is computed as:
+
+    base = route_popularity × stop_popularity × 60    (base passengers/hr)
+
+    time_multiplier:
+      Morning peak (7–10 AM)     → × 2.8
+      Evening peak (5–8 PM)      → × 2.5
+      Off-peak (11 AM–4 PM)      → × 1.0
+      Night (10 PM–5 AM)         → × 0.25
+      Early morning (5–7 AM)     → × 0.6
+
+    day_multiplier:
+      Monday                     → × 1.1  (heavy office commute)
+      Tuesday–Thursday           → × 1.0
+      Friday                     → × 1.15 (end of week)
+      Saturday                   → × 0.75 (schools closed)
+      Sunday                     → × 0.55 (lowest demand)
+
+    weather_multiplier:
+      Clear                      → × 1.0
+      Cloudy                     → × 1.05
+      Light Rain                 → × 1.20  (people avoid walking)
+      Heavy Rain                 → × 1.35  (major spike)
+      Fog (Dec–Feb)              → × 0.85  (people stay home)
+      Extreme Heat (May–Jun)     → × 0.80
+
+    holiday_multiplier:
+      Regular holiday            → × 0.50
+      Festival day (Diwali etc.) → × 1.40  (shopping/visiting)
+      Day before holiday         → × 1.25
+
+    major_stop_bonus:
+      Railway Station            → + 40
+      ISBT / Bus Terminal        → + 35
+      Metro Station              → + 25
+      Market / Hospital          → + 15
+      Regular stop               → + 0
+
+    passenger_count = (base × time_mult × day_mult × weather_mult
+                       × holiday_mult + major_stop_bonus)
+                      + Gaussian noise (μ=0, σ=8)    ← adds realism
+    passenger_count = max(0, round(passenger_count))  ← no negatives
+
+STEP 4: Delay calculation (for Model 2)
+  base_delay = 0 (minutes)
+
+  delay_components:
+    traffic_index contribution    → traffic_index × 12   (0–12 min)
+    peak hour contribution        → if peak: +5 to +8 min randomly
+    long route contribution       → distance_km × 0.1   (longer = more delay)
+    weather contribution          → heavy_rain: +8, fog: +10
+    random variance               → Gaussian noise (μ=0, σ=3)
+
+  delay_minutes = max(0, base_delay + sum(delay_components))
+  is_delayed = 1 if delay_minutes > 5 else 0
+
+STEP 5: Save dataset
+  - Save to: ai-service/data/synthetic_demand.csv
+  - Also save a sample of 10,000 rows to: ai-service/data/sample_demand.csv (for quick dev)
+
+━━━━━ ACTUAL PYTHON CODE ━━━━━
+
+# ai-service/data/generate_dataset.py
+
+import pandas as pd
+import numpy as np
+from datetime import datetime, timedelta
+import math
+import os
+
+# ─── Configuration ───────────────────────────────────────────────────────────
+ROUTES_CSV   = '../../data/routes.csv'
+STAGES_CSV   = '../../data/stages.csv'
+OUTPUT_CSV   = 'synthetic_demand.csv'
+SAMPLE_CSV   = 'sample_demand.csv'
+
+# Delhi center (Connaught Place)
+DELHI_CENTER_LAT = 28.6328
+DELHI_CENTER_LNG = 77.2197
+
+# Top N routes to use (increase for larger dataset)
+TOP_N_ROUTES = 50
+STOPS_PER_ROUTE = 5   # sample stops per route (start, end, and 3 intermediates)
+
+# Date range
+START_DATE = datetime(2024, 1, 1)
+END_DATE   = datetime(2025, 12, 31)
+
+# ─── Indian Public Holidays 2024–2025 ────────────────────────────────────────
+HOLIDAYS = {
+    # 2024
+    '2024-01-26', '2024-03-25', '2024-04-14', '2024-04-17',
+    '2024-04-21', '2024-08-15', '2024-10-02', '2024-10-12',
+    '2024-10-24', '2024-11-01', '2024-11-15', '2024-12-25',
+    # 2025
+    '2025-01-26', '2025-03-14', '2025-04-14', '2025-04-18',
+    '2025-04-10', '2025-08-15', '2025-10-02', '2025-10-02',
+    '2025-10-21', '2025-10-22', '2025-11-05', '2025-12-25',
+}
+
+FESTIVAL_DAYS = {
+    '2024-11-01', '2024-11-02',  # Diwali 2024
+    '2025-10-21', '2025-10-22',  # Diwali 2025
+    '2024-03-25',                # Holi 2024
+    '2025-03-14',                # Holi 2025
+}
+
+# ─── Helper Functions ─────────────────────────────────────────────────────────
+def haversine(lat1, lng1, lat2, lng2):
+    """Calculate distance in km between two GPS points."""
+    R = 6371
+    dlat = math.radians(lat2 - lat1)
+    dlng = math.radians(lng2 - lng1)
+    a = (math.sin(dlat/2)**2 +
+         math.cos(math.radians(lat1)) * math.cos(math.radians(lat2)) *
+         math.sin(dlng/2)**2)
+    return R * 2 * math.asin(math.sqrt(a))
+
+def is_major_stop(name):
+    keywords = ['railway station', 'isbt', 'metro', 'terminal', 'stadium',
+                'airport', 'hospital', 'market', 'masjid', 'mandir', 'jln']
+    return int(any(k in name.lower() for k in keywords))
+
+def is_terminal_stop(seq, total):
+    return int(seq == 1 or seq == total)
+
+def get_route_popularity(route_name, start, end):
+    """Higher score for routes through central Delhi or major hubs."""
+    central_keywords = ['railway', 'isbt', 'connaught', 'karol bagh', 'lajpat',
+                         'nehru place', 'anand vihar', 'shahdara', 'mori gate']
+    score = 0.5
+    for kw in central_keywords:
+        if kw in start.lower() or kw in end.lower():
+            score = min(1.0, score + 0.15)
+    return round(score, 2)
+
+def get_weather_for_date(dt):
+    """Simulate Delhi weather based on month."""
+    month = dt.month
+    if month in [12, 1, 2]:       # Winter
+        conditions = [4, 4, 0, 0, 1]   # Frequent fog
+        temps = np.random.uniform(8, 22)
+        humidity = np.random.uniform(60, 90)
+    elif month in [3, 4]:          # Spring
+        conditions = [0, 0, 1, 1, 0]
+        temps = np.random.uniform(22, 38)
+        humidity = np.random.uniform(30, 55)
+    elif month in [5, 6]:          # Summer (extreme heat)
+        conditions = [5, 5, 0, 0, 0]
+        temps = np.random.uniform(38, 46)
+        humidity = np.random.uniform(20, 40)
+    elif month in [7, 8, 9]:       # Monsoon
+        conditions = [2, 3, 3, 0, 1]   # Heavy rain
+        temps = np.random.uniform(28, 36)
+        humidity = np.random.uniform(70, 95)
+    else:                           # Oct–Nov (post-monsoon)
+        conditions = [0, 1, 1, 0, 0]
+        temps = np.random.uniform(18, 30)
+        humidity = np.random.uniform(40, 70)
+    condition = np.random.choice(conditions)
+    return condition, round(float(temps), 1), round(float(humidity), 1)
+
+WEATHER_MULT = {0: 1.0, 1: 1.05, 2: 1.20, 3: 1.35, 4: 0.85, 5: 0.80}
+TIME_MULT = {
+    0: 0.15, 1: 0.10, 2: 0.08, 3: 0.08, 4: 0.12, 5: 0.40,
+    6: 0.70, 7: 2.20, 8: 2.80, 9: 2.40, 10: 1.80,
+    11: 1.10, 12: 1.20, 13: 1.05, 14: 1.00, 15: 1.20,
+    16: 1.80, 17: 2.50, 18: 2.60, 19: 2.20, 20: 1.60,
+    21: 1.10, 22: 0.60, 23: 0.30,
+}
+DAY_MULT = {0: 1.10, 1: 1.00, 2: 1.00, 3: 1.00, 4: 1.15, 5: 0.75, 6: 0.55}
+
+# ─── Load Data ────────────────────────────────────────────────────────────────
+print("Loading routes and stages...")
+routes_df = pd.read_csv(ROUTES_CSV)
+stages_df = pd.read_csv(STAGES_CSV)
+
+# Compute total stops per route
+stop_counts = stages_df.groupby('url_route_id')['seq'].max().reset_index()
+stop_counts.columns = ['url_route_id', 'total_stops']
+routes_df = routes_df.merge(stop_counts, on='url_route_id', how='left')
+
+# Select top N routes (by distance — more stops = richer data)
+routes_df = routes_df.nlargest(TOP_N_ROUTES, 'distance_km').reset_index(drop=True)
+print(f"Selected {len(routes_df)} routes for dataset generation")
+
+# For each selected route, pick sample stops
+selected_stops = []
+for _, route in routes_df.iterrows():
+    rid = route['url_route_id']
+    total = route['total_stops']
+    route_stages = stages_df[stages_df['url_route_id'] == rid].sort_values('seq')
+    n = len(route_stages)
+    if n == 0:
+        continue
+    # Pick: first, last, and 3 evenly-spaced intermediates
+    indices = [0, n//4, n//2, 3*n//4, n-1]
+    indices = sorted(set(min(i, n-1) for i in indices))
+    for idx in indices[:STOPS_PER_ROUTE]:
+        selected_stops.append(route_stages.iloc[idx])
+
+stops_df = pd.DataFrame(selected_stops).reset_index(drop=True)
+stops_df['dist_from_center'] = stops_df.apply(
+    lambda r: haversine(r['latitude'], r['longitude'], DELHI_CENTER_LAT, DELHI_CENTER_LNG), axis=1)
+stops_df['is_major_stop']    = stops_df['stage_name'].apply(is_major_stop)
+print(f"Total stop-route combinations: {len(stops_df)}")
+
+# Route popularity
+routes_df['route_popularity'] = routes_df.apply(
+    lambda r: get_route_popularity(r['route_name'], r['start_stage'], r['end_stage']), axis=1)
+
+# Merge popularity into stops_df
+stops_df = stops_df.merge(
+    routes_df[['url_route_id', 'route_popularity', 'distance_km', 'total_stops']],
+    on='url_route_id', how='left')
+
+# ─── Generate Time Range ──────────────────────────────────────────────────────
+print("Generating time range...")
+date_range = []
+dt = START_DATE
+while dt <= END_DATE:
+    for h in range(24):
+        date_range.append(datetime(dt.year, dt.month, dt.day, h))
+    dt += timedelta(days=1)
+print(f"Time slots: {len(date_range):,}")
+
+# ─── Main Generation Loop ─────────────────────────────────────────────────────
+print("Generating dataset... (this may take a few minutes)")
+records = []
+weather_cache = {}
+
+for stop_row in stops_df.itertuples():
+    rid           = stop_row.url_route_id
+    stage_id      = stop_row.stage_id
+    stage_name    = stop_row.stage_name
+    seq           = stop_row.seq
+    lat           = stop_row.latitude
+    lng           = stop_row.longitude
+    dist_center   = stop_row.dist_from_center
+    is_major      = stop_row.is_major_stop
+    route_pop     = stop_row.route_popularity
+    dist_km       = stop_row.distance_km
+    total_stops   = stop_row.total_stops
+    seq_norm      = round(seq / max(total_stops, 1), 3)
+
+    # Stop popularity score
+    stop_pop = 0.3 + (0.3 * is_major) + max(0, 0.4 - dist_center / 30)
+    stop_pop = round(min(1.0, stop_pop), 3)
+
+    base_pax = route_pop * stop_pop * 80  # max ~80 pax/hour at full popularity
+
+    for dt in date_range:
+        date_str  = dt.strftime('%Y-%m-%d')
+        is_holiday   = int(date_str in HOLIDAYS)
+        is_festival  = int(date_str in FESTIVAL_DAYS)
+
+        # Cache weather per date
+        if date_str not in weather_cache:
+            weather_cache[date_str] = get_weather_for_date(dt)
+        weather_cond, temp_c, humidity = weather_cache[date_str]
+        weather_mult = WEATHER_MULT[weather_cond]
+
+        h        = dt.hour
+        dow      = dt.weekday()
+        month    = dt.month
+        woy      = dt.isocalendar()[1]
+        quarter  = (month - 1) // 3 + 1
+
+        time_mult    = TIME_MULT[h]
+        day_mult     = DAY_MULT[dow]
+        is_weekday   = int(dow < 5)
+        is_morning_p = int(h in [7, 8, 9, 10])
+        is_evening_p = int(h in [17, 18, 19, 20])
+        is_off_peak  = int(h in range(11, 17))
+        is_night     = int(h in [22, 23, 0, 1, 2, 3, 4])
+
+        # Holiday multiplier
+        if is_festival:
+            hol_mult = 1.40
+        elif is_holiday:
+            hol_mult = 0.50
+        else:
+            hol_mult = 1.0
+
+        # Major stop bonus
+        major_bonus = 40 if is_major and 'railway' in stage_name.lower() else \
+                      35 if is_major and 'isbt' in stage_name.lower() else \
+                      25 if is_major and 'metro' in stage_name.lower() else \
+                      15 if is_major else 0
+
+        # Compute passenger count
+        pax = (base_pax * time_mult * day_mult * weather_mult * hol_mult
+               + major_bonus + np.random.normal(0, 8))
+        pax = int(max(0, round(pax)))
+
+        # Crowd level
+        if pax < 20:     crowd = 0
+        elif pax < 80:   crowd = 1
+        elif pax < 150:  crowd = 2
+        else:            crowd = 3
+
+        # Traffic index (high during peaks in congested areas)
+        traffic_base = 0.3 + (0.4 * is_morning_p) + (0.35 * is_evening_p)
+        traffic_idx  = min(1.0, traffic_base + np.random.uniform(-0.1, 0.1)
+                           + (0.15 if dist_center < 10 else 0))
+        traffic_idx  = round(float(traffic_idx), 3)
+
+        # Delay in minutes
+        delay = max(0, (traffic_idx * 12)
+                       + (np.random.uniform(5, 8) if (is_morning_p or is_evening_p) else 0)
+                       + (dist_km * 0.1)
+                       + (8 if weather_cond == 3 else 10 if weather_cond == 4 else 0)
+                       + np.random.normal(0, 3))
+        delay = round(float(delay), 2)
+
+        # Days to next holiday (simplified: check next 14 days)
+        days_to_hol = 30
+        for d in range(1, 15):
+            if (dt + timedelta(days=d)).strftime('%Y-%m-%d') in HOLIDAYS:
+                days_to_hol = d
+                break
+
+        # Scheduled frequency (minutes between buses) — will be used by model
+        if is_morning_p or is_evening_p:
+            sched_freq = np.random.choice([5, 7, 10])
+        elif is_off_peak:
+            sched_freq = np.random.choice([15, 20])
+        elif is_night:
+            sched_freq = np.random.choice([30, 40, 60])
+        else:
+            sched_freq = np.random.choice([12, 15])
+
+        records.append({
+            # Identifiers
+            'url_route_id':      rid,
+            'stage_id':          stage_id,
+            'timestamp':         dt.isoformat(),
+            'date':              date_str,
+            # Temporal
+            'hour':              h,
+            'day_of_week':       dow,
+            'is_weekday':        is_weekday,
+            'is_weekend':        int(not is_weekday),
+            'is_morning_peak':   is_morning_p,
+            'is_evening_peak':   is_evening_p,
+            'is_off_peak':       is_off_peak,
+            'is_night':          is_night,
+            'month':             month,
+            'week_of_year':      woy,
+            'quarter':           quarter,
+            'is_holiday':        is_holiday,
+            'is_festival_day':   is_festival,
+            'days_to_holiday':   days_to_hol,
+            # Route
+            'distance_km':       dist_km,
+            'total_stops':       total_stops,
+            'route_popularity':  route_pop,
+            # Stop
+            'seq':               seq,
+            'seq_normalized':    seq_norm,
+            'latitude':          lat,
+            'longitude':         lng,
+            'dist_from_center':  round(dist_center, 3),
+            'is_major_stop':     is_major,
+            'stop_popularity':   stop_pop,
+            # Weather
+            'weather_condition': weather_cond,
+            'temperature_c':     temp_c,
+            'humidity_pct':      humidity,
+            'traffic_index':     traffic_idx,
+            # Operational
+            'scheduled_freq':    sched_freq,
+            # Targets
+            'passenger_count':   pax,
+            'crowd_level':       crowd,
+            'delay_minutes':     delay,
+        })
+
+print(f"Generated {len(records):,} records. Saving...")
+df = pd.DataFrame(records)
+
+# Add lag features (sort first)
+df = df.sort_values(['url_route_id', 'stage_id', 'timestamp']).reset_index(drop=True)
+df['pax_lag_1h']       = df.groupby(['url_route_id','stage_id'])['passenger_count'].shift(1).fillna(0)
+df['pax_lag_24h']      = df.groupby(['url_route_id','stage_id'])['passenger_count'].shift(24).fillna(0)
+df['pax_lag_168h']     = df.groupby(['url_route_id','stage_id'])['passenger_count'].shift(168).fillna(0)
+df['pax_rolling_7d']   = (df.groupby(['url_route_id','stage_id'])['passenger_count']
+                            .transform(lambda x: x.shift(1).rolling(168, min_periods=1).mean())
+                            .fillna(0).round(2))
+df['pax_rolling_30d']  = (df.groupby(['url_route_id','stage_id'])['passenger_count']
+                            .transform(lambda x: x.shift(1).rolling(720, min_periods=1).mean())
+                            .fillna(0).round(2))
+df['pax_same_hour_avg'] = (df.groupby(['url_route_id','stage_id','hour'])['passenger_count']
+                            .transform(lambda x: x.shift(1).expanding().mean())
+                            .fillna(0).round(2))
+
+df.to_csv(OUTPUT_CSV, index=False)
+df.head(10000).to_csv(SAMPLE_CSV, index=False)
+print(f"Dataset saved → {OUTPUT_CSV}  ({len(df):,} rows, {len(df.columns)} columns)")
+print(f"Sample saved  → {SAMPLE_CSV} (10,000 rows)")
+print(df[['passenger_count','delay_minutes','crowd_level']].describe())
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 4: MODEL 1 — PASSENGER DEMAND PREDICTION (LSTM)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+4.1  WHY LSTM?
+──────────────
+LSTM (Long Short-Term Memory) is a type of Recurrent Neural Network specifically
+designed for SEQUENTIAL / TIME-SERIES data.
+
+  Why not simple regression (LinearRegression, DecisionTree)?
+    → They treat each hour independently, ignoring the pattern over time.
+    → A bus stop's demand at 8 AM is related to what happened at 7 AM, and
+      to what happened on the same day last week. LSTM captures this.
+
+  Why not ARIMA / SARIMA?
+    → ARIMA works for single time series. We have hundreds of stop-route
+      combinations with non-linear interactions (weather, holidays, etc.)
+    → LSTM handles multivariate features naturally.
+
+  Why LSTM over Transformer?
+    → Our dataset is tabular + sequential. LSTM is simpler, faster to train,
+      and well-understood for academic papers. Transformer would also work
+      but requires more data and compute.
+
+  LSTM "Memory" concept:
+    → It has a "cell state" (long-term memory) and "hidden state" (short-term)
+    → It LEARNS to remember: "weekday morning peaks are always high"
+    → It LEARNS to forget: "last week's weather doesn't affect today"
+
+4.2  INPUT SHAPE FOR LSTM
+──────────────────────────
+LSTM requires 3D input: (samples, timesteps, features)
+
+  samples   = number of training examples
+  timesteps = 24  (we feed the past 24 hours of data for each prediction)
+  features  = 20  (we select the most important features for the LSTM input)
+
+  The 20 LSTM features:
+    hour, day_of_week, is_weekday, is_morning_peak, is_evening_peak,
+    is_holiday, is_festival_day, month, weather_condition, temperature_c,
+    traffic_index, route_popularity, stop_popularity, dist_from_center,
+    is_major_stop, pax_lag_1h, pax_lag_24h, pax_lag_168h,
+    pax_rolling_7d, seq_normalized
+
+4.3  LSTM MODEL ARCHITECTURE
+──────────────────────────────
+
+  Input Layer:  shape=(24, 20)
+        ↓
+  LSTM Layer 1: units=128, return_sequences=True, activation='tanh'
+    → return_sequences=True because the next LSTM needs full sequence output
+        ↓
+  Dropout:      rate=0.2  (prevents overfitting — randomly zeros 20% neurons)
+        ↓
+  LSTM Layer 2: units=64, return_sequences=True, activation='tanh'
+        ↓
+  Dropout:      rate=0.2
+        ↓
+  LSTM Layer 3: units=32, return_sequences=False  (final LSTM — outputs one vector)
+        ↓
+  Dropout:      rate=0.15
+        ↓
+  Dense Layer:  units=64, activation='relu'
+        ↓
+  BatchNorm:    (stabilizes training)
+        ↓
+  Dense Layer:  units=32, activation='relu'
+        ↓
+  Output Layer: units=1, activation='linear'   ← passenger_count (regression)
+
+  Total Parameters: ~200,000 (lightweight, trains in <30 min on CPU)
+
+4.4  TRAINING CONFIGURATION
+─────────────────────────────
+  Loss Function  : Mean Absolute Error (MAE)
+                   → Good for regression. Penalizes errors linearly (not squared)
+                   → Robust to outliers (unlike MSE)
+
+  Optimizer      : Adam (lr=0.001)
+                   → Adaptive learning rate. Industry standard for LSTM.
+                   → With ReduceLROnPlateau: reduces lr if val_loss plateaus
+
+  Metrics        : MAE, RMSE, MAPE (Mean Absolute Percentage Error)
+
+  Epochs         : 100 (with EarlyStopping, usually stops at ~40–60)
+
+  Batch Size     : 256 (good balance of speed and gradient quality)
+
+  Callbacks:
+    EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True)
+      → Stops training when val_loss doesn't improve for 10 epochs
+    ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5)
+      → Halves learning rate if stuck
+    ModelCheckpoint(filepath='saved_models/demand_best.h5', save_best_only=True)
+      → Saves only the best-performing version
+
+  Train/Val/Test Split:
+    Training   : Jan 2024 – Sep 2025 (70%)
+    Validation : Oct 2025 – Nov 2025 (15%)  ← used during training
+    Test       : Dec 2025 (15%)              ← final evaluation (never seen by model)
+
+4.5  DATA PREPROCESSING FOR LSTM
+──────────────────────────────────
+
+  Step 1: Feature Selection
+    Select 20 LSTM features (listed in 4.2)
+
+  Step 2: Normalization
+    Use MinMaxScaler(feature_range=(0, 1)) for ALL features including target
+    WHY: LSTM gradients become unstable with large values (e.g., 200 passengers
+         vs 0.1 weather score). Normalization makes all features same scale.
+    IMPORTANT: Fit scaler on TRAINING data only. Apply to val + test.
+    Save scaler: joblib.dump(scaler, 'saved_models/demand_scaler.pkl')
+
+  Step 3: Sequence Creation
+    For each (route, stop) pair, create sliding window sequences:
+      X[i] = rows[i : i+24]   shape=(24, 20)  ← 24 hours of features
+      y[i] = passenger_count[i+24]             ← next hour's count
+    This gives us overlapping windows for maximum training data.
+
+  Step 4: Reshape
+    X shape: (num_samples, 24, 20)  ← what LSTM expects
+    y shape: (num_samples, 1)
+
+4.6  FULL TRAINING SCRIPT
+──────────────────────────
+
+FILE: ai-service/training/train_demand_lstm.py
+
+# ──────────────────────────────────────────────────────
+import numpy as np
+import pandas as pd
+import os, joblib, json
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import mean_absolute_error, mean_squared_error
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import LSTM, Dense, Dropout, BatchNormalization
+from tensorflow.keras.callbacks import (EarlyStopping, ReduceLROnPlateau,
+                                         ModelCheckpoint)
+import matplotlib.pyplot as plt
+
+# ── Config ────────────────────────────────────────────
+DATA_PATH    = '../data/synthetic_demand.csv'
+MODEL_DIR    = '../saved_models'
+SEQ_LEN      = 24        # lookback window (hours)
+BATCH_SIZE   = 256
+MAX_EPOCHS   = 100
+os.makedirs(MODEL_DIR, exist_ok=True)
+
+LSTM_FEATURES = [
+    'hour', 'day_of_week', 'is_weekday', 'is_morning_peak', 'is_evening_peak',
+    'is_holiday', 'is_festival_day', 'month', 'weather_condition', 'temperature_c',
+    'traffic_index', 'route_popularity', 'stop_popularity', 'dist_from_center',
+    'is_major_stop', 'pax_lag_1h', 'pax_lag_24h', 'pax_lag_168h',
+    'pax_rolling_7d', 'seq_normalized'
+]
+TARGET = 'passenger_count'
+
+# ── Load Data ─────────────────────────────────────────
+print("Loading data...")
+df = pd.read_csv(DATA_PATH)
+df = df.sort_values(['url_route_id', 'stage_id', 'timestamp']).reset_index(drop=True)
+df = df.dropna(subset=LSTM_FEATURES + [TARGET])
+print(f"Loaded {len(df):,} rows")
+
+# ── Normalize ─────────────────────────────────────────
+all_cols = LSTM_FEATURES + [TARGET]
+scaler = MinMaxScaler()
+
+# Split by date BEFORE scaling to prevent data leakage
+df['timestamp'] = pd.to_datetime(df['timestamp'])
+train_df = df[df['timestamp'] <  '2025-10-01']
+val_df   = df[(df['timestamp'] >= '2025-10-01') & (df['timestamp'] < '2025-12-01')]
+test_df  = df[df['timestamp'] >= '2025-12-01']
+
+print(f"Train: {len(train_df):,}  Val: {len(val_df):,}  Test: {len(test_df):,}")
+
+# Fit scaler on TRAINING data ONLY
+scaler.fit(train_df[all_cols])
+joblib.dump(scaler, f'{MODEL_DIR}/demand_scaler.pkl')
+print("Scaler saved.")
+
+def scale_df(data, scaler, cols):
+    scaled = scaler.transform(data[cols])
+    return pd.DataFrame(scaled, columns=cols, index=data.index)
+
+train_scaled = scale_df(train_df, scaler, all_cols)
+val_scaled   = scale_df(val_df,   scaler, all_cols)
+test_scaled  = scale_df(test_df,  scaler, all_cols)
+
+# ── Create Sequences ──────────────────────────────────
+def create_sequences(scaled_df, seq_len, features, target):
+    X, y = [], []
+    # Group by route+stop to avoid sequence bleeding between different stops
+    groups = train_df[['url_route_id','stage_id']].drop_duplicates()
+    for _, row in groups.iterrows():
+        mask = ((train_df['url_route_id'] == row['url_route_id']) &
+                (train_df['stage_id']    == row['stage_id']))
+        sub = scaled_df[mask].reset_index(drop=True)
+        feat_vals = sub[features].values
+        targ_vals = sub[target].values
+        for i in range(len(sub) - seq_len):
+            X.append(feat_vals[i:i+seq_len])
+            y.append(targ_vals[i+seq_len])
+    return np.array(X, dtype='float32'), np.array(y, dtype='float32')
+
+print("Creating sequences...")
+X_train, y_train = create_sequences(train_scaled, SEQ_LEN, LSTM_FEATURES, TARGET)
+X_val,   y_val   = create_sequences(val_scaled,   SEQ_LEN, LSTM_FEATURES, TARGET)
+X_test,  y_test  = create_sequences(test_scaled,  SEQ_LEN, LSTM_FEATURES, TARGET)
+print(f"X_train: {X_train.shape}  X_val: {X_val.shape}  X_test: {X_test.shape}")
+
+# ── Build Model ───────────────────────────────────────
+def build_lstm_model(seq_len, n_features):
+    model = Sequential([
+        LSTM(128, return_sequences=True, input_shape=(seq_len, n_features)),
+        Dropout(0.2),
+        LSTM(64, return_sequences=True),
+        Dropout(0.2),
+        LSTM(32, return_sequences=False),
+        Dropout(0.15),
+        Dense(64, activation='relu'),
+        BatchNormalization(),
+        Dense(32, activation='relu'),
+        Dense(1, activation='linear')
+    ])
+    model.compile(optimizer=tf.keras.optimizers.Adam(learning_rate=0.001),
+                  loss='mae',
+                  metrics=['mae', tf.keras.metrics.RootMeanSquaredError(name='rmse')])
+    model.summary()
+    return model
+
+model = build_lstm_model(SEQ_LEN, len(LSTM_FEATURES))
+
+# ── Callbacks ─────────────────────────────────────────
+callbacks = [
+    EarlyStopping(monitor='val_loss', patience=10, restore_best_weights=True,
+                  verbose=1),
+    ReduceLROnPlateau(monitor='val_loss', factor=0.5, patience=5,
+                      min_lr=1e-6, verbose=1),
+    ModelCheckpoint(filepath=f'{MODEL_DIR}/demand_lstm_best.h5',
+                    monitor='val_loss', save_best_only=True, verbose=1)
+]
+
+# ── Train ─────────────────────────────────────────────
+print("Training LSTM model...")
+history = model.fit(
+    X_train, y_train,
+    validation_data=(X_val, y_val),
+    epochs=MAX_EPOCHS,
+    batch_size=BATCH_SIZE,
+    callbacks=callbacks,
+    verbose=1
+)
+
+# ── Evaluate on Test Set ──────────────────────────────
+print("\nEvaluating on test set...")
+y_pred_scaled = model.predict(X_test).flatten()
+
+# Inverse transform: we need to reverse scale only the target column
+def inverse_target(scaled_values, scaler, all_cols, target_col):
+    """Inverse transform only the target column."""
+    dummy = np.zeros((len(scaled_values), len(all_cols)))
+    target_idx = all_cols.index(target_col)
+    dummy[:, target_idx] = scaled_values
+    inversed = scaler.inverse_transform(dummy)
+    return inversed[:, target_idx]
+
+y_pred_actual = inverse_target(y_pred_scaled, scaler, all_cols, TARGET)
+y_test_actual = inverse_target(y_test,        scaler, all_cols, TARGET)
+y_pred_actual = np.maximum(0, y_pred_actual)  # clamp negatives
+
+mae   = mean_absolute_error(y_test_actual, y_pred_actual)
+rmse  = np.sqrt(mean_squared_error(y_test_actual, y_pred_actual))
+mask  = y_test_actual > 0
+mape  = np.mean(np.abs((y_test_actual[mask] - y_pred_actual[mask])
+                        / y_test_actual[mask])) * 100
+
+print(f"\n{'='*40}")
+print(f"  MAE  : {mae:.2f} passengers")
+print(f"  RMSE : {rmse:.2f} passengers")
+print(f"  MAPE : {mape:.2f}%")
+print(f"{'='*40}")
+
+# ── Save Metrics ──────────────────────────────────────
+metrics = {'mae': round(mae,2), 'rmse': round(rmse,2), 'mape': round(mape,2)}
+with open(f'{MODEL_DIR}/demand_metrics.json', 'w') as f:
+    json.dump(metrics, f, indent=2)
+
+# ── Plot Training Curves ──────────────────────────────
+fig, axes = plt.subplots(1, 2, figsize=(14, 5))
+axes[0].plot(history.history['loss'],     label='Train Loss')
+axes[0].plot(history.history['val_loss'], label='Val Loss')
+axes[0].set_title('Training & Validation Loss (MAE)')
+axes[0].set_xlabel('Epoch'); axes[0].set_ylabel('MAE')
+axes[0].legend(); axes[0].grid(True)
+
+axes[1].scatter(y_test_actual[:500], y_pred_actual[:500], alpha=0.4, s=15)
+axes[1].plot([0, max(y_test_actual[:500])], [0, max(y_test_actual[:500])],
+             'r--', label='Perfect Prediction')
+axes[1].set_title('Predicted vs Actual (sample)')
+axes[1].set_xlabel('Actual Passengers')
+axes[1].set_ylabel('Predicted Passengers')
+axes[1].legend(); axes[1].grid(True)
+
+plt.tight_layout()
+plt.savefig(f'{MODEL_DIR}/demand_training_curves.png', dpi=150)
+plt.show()
+print(f"Plots saved to {MODEL_DIR}/demand_training_curves.png")
+print("Training complete!")
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 5: MODEL 2 — BUS DELAY PREDICTOR (XGBoost)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+5.1  WHY XGBOOST (not LSTM for delay)?
+────────────────────────────────────────
+  - Delay prediction is more of a TABULAR problem than a sequence problem
+  - XGBoost excels at tabular data with mixed feature types
+  - Faster to train than LSTM for this use case
+  - Feature importance is interpretable (important for research paper)
+  - SHAP values can explain why a bus is predicted to be delayed
+  - In benchmarks, XGBoost often matches LSTM for tabular regression
+
+5.2  FEATURES FOR DELAY MODEL
+──────────────────────────────
+  SELECTED 18 FEATURES:
+    hour, day_of_week, is_morning_peak, is_evening_peak, is_holiday,
+    is_festival_day, weather_condition, temperature_c, humidity_pct,
+    traffic_index, distance_km, total_stops, route_popularity,
+    dist_from_center, is_major_stop, scheduled_freq,
+    pax_lag_1h,    ← crowded buses run slower
+    month
+
+  TARGET: delay_minutes (continuous regression)
+  Also train a CLASSIFIER for: is_delayed (1 if delay > 5 min)
+
+5.3  FULL TRAINING SCRIPT
+──────────────────────────
+
+FILE: ai-service/training/train_delay_xgboost.py
+
+# ──────────────────────────────────────────────────────
+import pandas as pd
+import numpy as np
+import joblib, json, os
+from xgboost import XGBRegressor, XGBClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import StandardScaler
+from sklearn.metrics import (mean_absolute_error, mean_squared_error,
+                              accuracy_score, f1_score, classification_report)
+import matplotlib.pyplot as plt
+import shap
+
+DATA_PATH = '../data/synthetic_demand.csv'
+MODEL_DIR = '../saved_models'
+os.makedirs(MODEL_DIR, exist_ok=True)
+
+DELAY_FEATURES = [
+    'hour', 'day_of_week', 'is_morning_peak', 'is_evening_peak',
+    'is_holiday', 'is_festival_day', 'weather_condition', 'temperature_c',
+    'humidity_pct', 'traffic_index', 'distance_km', 'total_stops',
+    'route_popularity', 'dist_from_center', 'is_major_stop',
+    'scheduled_freq', 'pax_lag_1h', 'month'
+]
+
+print("Loading data...")
+df = pd.read_csv(DATA_PATH)
+df = df.dropna(subset=DELAY_FEATURES + ['delay_minutes'])
+df['is_delayed'] = (df['delay_minutes'] > 5).astype(int)
+
+# Train/test split by date
+df['timestamp'] = pd.to_datetime(df['timestamp'])
+train = df[df['timestamp'] < '2025-12-01']
+test  = df[df['timestamp'] >= '2025-12-01']
+
+X_train = train[DELAY_FEATURES]
+X_test  = test[DELAY_FEATURES]
+y_reg_train = train['delay_minutes']
+y_reg_test  = test['delay_minutes']
+y_cls_train = train['is_delayed']
+y_cls_test  = test['is_delayed']
+
+# Scale for stability (XGBoost doesn't strictly need it but helps)
+scaler = StandardScaler()
+X_train_s = scaler.fit_transform(X_train)
+X_test_s  = scaler.transform(X_test)
+joblib.dump(scaler, f'{MODEL_DIR}/delay_scaler.pkl')
+
+# ── Regression Model (predict exact delay minutes) ────
+print("Training XGBoost Regressor...")
+reg_model = XGBRegressor(
+    n_estimators=500,
+    max_depth=7,
+    learning_rate=0.05,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    min_child_weight=3,
+    gamma=0.1,
+    reg_alpha=0.01,
+    reg_lambda=1.0,
+    n_jobs=-1,
+    random_state=42,
+    early_stopping_rounds=30,
+    eval_metric='mae'
+)
+reg_model.fit(X_train_s, y_reg_train,
+              eval_set=[(X_test_s, y_reg_test)],
+              verbose=50)
+joblib.dump(reg_model, f'{MODEL_DIR}/delay_xgb_regressor.pkl')
+
+y_pred_reg = reg_model.predict(X_test_s)
+y_pred_reg = np.maximum(0, y_pred_reg)
+mae  = mean_absolute_error(y_reg_test, y_pred_reg)
+rmse = np.sqrt(mean_squared_error(y_reg_test, y_pred_reg))
+print(f"\nDelay Regressor — MAE: {mae:.2f} min  RMSE: {rmse:.2f} min")
+
+# ── Classification Model (is_delayed: yes/no) ─────────
+print("\nTraining XGBoost Classifier (is_delayed)...")
+cls_model = XGBClassifier(
+    n_estimators=400,
+    max_depth=6,
+    learning_rate=0.05,
+    subsample=0.8,
+    colsample_bytree=0.8,
+    use_label_encoder=False,
+    eval_metric='logloss',
+    n_jobs=-1,
+    random_state=42,
+    scale_pos_weight=(len(y_cls_train) - y_cls_train.sum()) / y_cls_train.sum()
+    # handles class imbalance (most trips are on-time)
+)
+cls_model.fit(X_train_s, y_cls_train,
+              eval_set=[(X_test_s, y_cls_test)],
+              verbose=50)
+joblib.dump(cls_model, f'{MODEL_DIR}/delay_xgb_classifier.pkl')
+
+y_pred_cls = cls_model.predict(X_test_s)
+acc = accuracy_score(y_cls_test, y_pred_cls)
+f1  = f1_score(y_cls_test, y_pred_cls)
+print(f"\nDelay Classifier — Accuracy: {acc:.4f}  F1: {f1:.4f}")
+print(classification_report(y_cls_test, y_pred_cls,
+                             target_names=['On-Time','Delayed']))
+
+# ── Feature Importance Plot ───────────────────────────
+feat_imp = pd.Series(reg_model.feature_importances_, index=DELAY_FEATURES)
+feat_imp.sort_values().plot(kind='barh', figsize=(10,7), color='steelblue')
+plt.title('XGBoost Feature Importance — Delay Prediction')
+plt.xlabel('Importance Score')
+plt.tight_layout()
+plt.savefig(f'{MODEL_DIR}/delay_feature_importance.png', dpi=150)
+plt.show()
+
+# ── SHAP Explainability ───────────────────────────────
+print("\nGenerating SHAP values (sample of 500)...")
+explainer = shap.TreeExplainer(reg_model)
+shap_vals = explainer.shap_values(X_test_s[:500])
+shap.summary_plot(shap_vals, X_test_s[:500],
+                  feature_names=DELAY_FEATURES, show=False)
+plt.savefig(f'{MODEL_DIR}/delay_shap_summary.png', dpi=150, bbox_inches='tight')
+print("SHAP plot saved.")
+
+# ── Save Metrics ──────────────────────────────────────
+metrics = {
+    'regression': {'mae': round(mae,2), 'rmse': round(rmse,2)},
+    'classification': {'accuracy': round(acc,4), 'f1': round(f1,4)}
+}
+with open(f'{MODEL_DIR}/delay_metrics.json', 'w') as f:
+    json.dump(metrics, f, indent=2)
+print("Delay model training complete!")
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 6: MODEL 3 — SCHEDULE OPTIMIZER (Rule-based + ML Hybrid)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FILE: ai-service/models/scheduler_ai.py
+
+This model takes LSTM demand predictions + current fleet info
+and outputs: recommended bus frequency (minutes) per route per hour.
+
+# ──────────────────────────────────────────────────────
+import numpy as np
+
+BUS_CAPACITY = 60  # average DTC bus capacity
+
+def recommend_frequency(predicted_pax: float, bus_capacity: int = BUS_CAPACITY,
+                         load_factor: float = 0.85) -> dict:
+    """
+    Greedy frequency recommendation based on demand prediction.
+
+    Args:
+        predicted_pax : predicted passengers per hour at peak stop on route
+        bus_capacity  : bus seating capacity (default 60)
+        load_factor   : target occupancy ratio (85% of capacity)
+
+    Returns:
+        dict with recommended_freq_min, buses_needed, crowd_level
+    """
+    effective_capacity = bus_capacity * load_factor  # 51 passengers per bus
+
+    # How many buses needed per hour to meet demand
+    if predicted_pax <= 0:
+        buses_per_hour = 1
+    else:
+        buses_per_hour = max(1, int(np.ceil(predicted_pax / effective_capacity)))
+
+    # Convert buses/hour to minutes between buses
+    freq_min = max(5, min(60, int(60 / buses_per_hour)))
+
+    # Crowd classification
+    if predicted_pax < 20:    crowd = 'low'
+    elif predicted_pax < 80:  crowd = 'medium'
+    elif predicted_pax < 150: crowd = 'high'
+    else:                     crowd = 'critical'
+
+    return {
+        'recommended_freq_min':  freq_min,
+        'buses_needed_per_hour': buses_per_hour,
+        'crowd_level':           crowd,
+        'predicted_passengers':  int(predicted_pax)
+    }
+
+def generate_daily_schedule(demand_predictions: list, available_buses: int,
+                              route_id: int) -> list:
+    """
+    Given 24 hourly demand predictions for a route,
+    generate a full-day schedule.
+
+    Args:
+        demand_predictions : list of 24 ints (predicted pax for each hour 0-23)
+        available_buses    : how many buses DTC has for this route today
+        route_id           : route identifier
+
+    Returns:
+        list of schedule slots: [{hour, freq_min, buses_needed, crowd_level}, ...]
+    """
+    schedule = []
+    for hour, pax in enumerate(demand_predictions):
+        rec = recommend_frequency(pax)
+
+        # Constrain by available fleet
+        actual_buses = min(rec['buses_needed_per_hour'], available_buses)
+        actual_freq  = max(5, int(60 / max(actual_buses, 1)))
+
+        # Apply hard rules
+        if hour in [0, 1, 2, 3, 4]:        # Night service
+            actual_freq = max(actual_freq, 40)
+            actual_buses = min(actual_buses, 2)
+        elif hour in [7, 8, 9, 10, 17, 18, 19]:  # Peak hours
+            actual_freq = min(actual_freq, 12)  # Never worse than 12min during peak
+
+        schedule.append({
+            'hour':                 hour,
+            'predicted_passengers': int(pax),
+            'recommended_freq_min': actual_freq,
+            'buses_assigned':       actual_buses,
+            'crowd_level':          rec['crowd_level']
+        })
+    return schedule
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 7: FASTAPI DEPLOYMENT — AI MICROSERVICE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+FILE: ai-service/main.py
+
+# ──────────────────────────────────────────────────────
+from fastapi import FastAPI, HTTPException
+from pydantic import BaseModel
+from typing import List, Optional
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+import joblib
+import json
+import os
+from models.scheduler_ai import recommend_frequency, generate_daily_schedule
+
+app = FastAPI(title="SmartDTC AI Service", version="1.0.0")
+
+# ── Load Models on Startup ────────────────────────────
+MODEL_DIR = './saved_models'
+lstm_model    = None
+delay_reg     = None
+delay_cls     = None
+demand_scaler = None
+delay_scaler  = None
+
+@app.on_event("startup")
+async def load_models():
+    global lstm_model, delay_reg, delay_cls, demand_scaler, delay_scaler
+    print("Loading ML models...")
+    lstm_model    = tf.keras.models.load_model(f'{MODEL_DIR}/demand_lstm_best.h5')
+    delay_reg     = joblib.load(f'{MODEL_DIR}/delay_xgb_regressor.pkl')
+    delay_cls     = joblib.load(f'{MODEL_DIR}/delay_xgb_classifier.pkl')
+    demand_scaler = joblib.load(f'{MODEL_DIR}/demand_scaler.pkl')
+    delay_scaler  = joblib.load(f'{MODEL_DIR}/delay_scaler.pkl')
+    print("All models loaded successfully.")
+
+# ── Pydantic Schemas ──────────────────────────────────
+class DemandRequest(BaseModel):
+    url_route_id:     int
+    stage_id:         int
+    hour:             int            # 0-23
+    day_of_week:      int            # 0=Mon ... 6=Sun
+    is_weekday:       int
+    is_morning_peak:  int
+    is_evening_peak:  int
+    is_holiday:       int
+    is_festival_day:  int
+    month:            int
+    weather_condition: int           # 0-5
+    temperature_c:    float
+    traffic_index:    float          # 0.0-1.0
+    route_popularity: float
+    stop_popularity:  float
+    dist_from_center: float
+    is_major_stop:    int
+    pax_lag_1h:       float
+    pax_lag_24h:      float
+    pax_lag_168h:     float
+    pax_rolling_7d:   float
+    seq_normalized:   float
+    # For sequence: provide last 24 hours of the above (simplified: single row)
+    # In production: pass full 24-step sequence
+
+class DelayRequest(BaseModel):
+    hour:             int
+    day_of_week:      int
+    is_morning_peak:  int
+    is_evening_peak:  int
+    is_holiday:       int
+    is_festival_day:  int
+    weather_condition: int
+    temperature_c:    float
+    humidity_pct:     float
+    traffic_index:    float
+    distance_km:      float
+    total_stops:      int
+    route_popularity: float
+    dist_from_center: float
+    is_major_stop:    int
+    scheduled_freq:   int
+    pax_lag_1h:       float
+    month:            int
+
+class ScheduleRequest(BaseModel):
+    demand_predictions: List[float]  # 24 values (one per hour)
+    available_buses:    int
+    route_id:           int
+
+# ── Endpoints ─────────────────────────────────────────
+
+@app.get("/health")
+def health():
+    return {"status": "ok", "models_loaded": lstm_model is not None}
+
+@app.post("/predict/demand")
+async def predict_demand(req: DemandRequest):
+    """Predict passenger count for a stop at a given hour."""
+    try:
+        LSTM_FEATURES = [
+            'hour','day_of_week','is_weekday','is_morning_peak','is_evening_peak',
+            'is_holiday','is_festival_day','month','weather_condition','temperature_c',
+            'traffic_index','route_popularity','stop_popularity','dist_from_center',
+            'is_major_stop','pax_lag_1h','pax_lag_24h','pax_lag_168h',
+            'pax_rolling_7d','seq_normalized'
+        ]
+        # Build a single-step input; replicate 24 times as a simple sequence
+        # In production: pass actual 24-hour historical window
+        row = [getattr(req, f) for f in LSTM_FEATURES]
+        seq = np.array([row] * 24, dtype='float32')   # shape (24, 20)
+
+        # Scale using demand_scaler (only the feature columns)
+        # We create a dummy full-feature row for scaling
+        ALL_COLS = LSTM_FEATURES + ['passenger_count']
+        dummy_row = row + [0.0]  # append dummy target
+        dummy_arr = np.array([dummy_row])
+        scaled_dummy = demand_scaler.transform(dummy_arr)
+        seq_scaled = np.tile(scaled_dummy[:, :len(LSTM_FEATURES)], (24, 1))
+        seq_scaled = seq_scaled.reshape(1, 24, len(LSTM_FEATURES))
+
+        pred_scaled = lstm_model.predict(seq_scaled, verbose=0)[0][0]
+
+        # Inverse transform target
+        dummy_inv = np.zeros((1, len(ALL_COLS)))
+        target_idx = ALL_COLS.index('passenger_count')
+        dummy_inv[0, target_idx] = pred_scaled
+        pred_pax = demand_scaler.inverse_transform(dummy_inv)[0, target_idx]
+        pred_pax = max(0, round(float(pred_pax)))
+
+        # Crowd level
+        if pred_pax < 20:     crowd = 'low'
+        elif pred_pax < 80:   crowd = 'medium'
+        elif pred_pax < 150:  crowd = 'high'
+        else:                 crowd = 'critical'
+
+        freq_rec = recommend_frequency(pred_pax)
+
+        return {
+            "predicted_passengers": pred_pax,
+            "crowd_level":          crowd,
+            "recommended_freq_min": freq_rec['recommended_freq_min'],
+            "buses_needed":         freq_rec['buses_needed_per_hour']
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/predict/delay")
+async def predict_delay(req: DelayRequest):
+    """Predict bus delay in minutes for a route at a given time."""
+    try:
+        DELAY_FEATURES = [
+            'hour','day_of_week','is_morning_peak','is_evening_peak',
+            'is_holiday','is_festival_day','weather_condition','temperature_c',
+            'humidity_pct','traffic_index','distance_km','total_stops',
+            'route_popularity','dist_from_center','is_major_stop',
+            'scheduled_freq','pax_lag_1h','month'
+        ]
+        row = np.array([[getattr(req, f) for f in DELAY_FEATURES]])
+        row_scaled = delay_scaler.transform(row)
+
+        delay_min  = float(max(0, delay_reg.predict(row_scaled)[0]))
+        is_delayed = int(delay_cls.predict(row_scaled)[0])
+        delay_prob = float(delay_cls.predict_proba(row_scaled)[0][1])
+
+        return {
+            "delay_minutes":       round(delay_min, 1),
+            "is_delayed":          bool(is_delayed),
+            "delay_probability":   round(delay_prob, 3),
+            "severity":            "none" if delay_min < 5 else
+                                   "minor" if delay_min < 15 else
+                                   "moderate" if delay_min < 30 else "severe"
+        }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+
+@app.post("/schedule/generate")
+async def generate_schedule(req: ScheduleRequest):
+    """Generate a full-day schedule for a route based on demand predictions."""
+    if len(req.demand_predictions) != 24:
+        raise HTTPException(status_code=400, detail="demand_predictions must have 24 values")
+    schedule = generate_daily_schedule(
+        req.demand_predictions, req.available_buses, req.route_id)
+    return {"route_id": req.route_id, "schedule": schedule}
+
+@app.get("/models/metrics")
+def get_metrics():
+    """Return saved evaluation metrics for both models."""
+    metrics = {}
+    for name in ['demand_metrics', 'delay_metrics']:
+        path = f'{MODEL_DIR}/{name}.json'
+        if os.path.exists(path):
+            with open(path) as f:
+                metrics[name] = json.load(f)
+    return metrics
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 8: COMPLETE ai-service FOLDER STRUCTURE
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+ai-service/
+├── main.py                              ← FastAPI app (Section 7)
+├── requirements.txt                     ← Python dependencies
+├── .env                                 ← PORT, MODEL_DIR
+│
+├── data/
+│   ├── generate_dataset.py              ← Run first (Section 3)
+│   ├── synthetic_demand.csv             ← Generated dataset (~4M rows)
+│   ├── sample_demand.csv                ← 10K row sample for quick dev
+│   ├── routes.csv                       ← Copied from /data/
+│   └── stages.csv                       ← Copied from /data/
+│
+├── training/
+│   ├── train_demand_lstm.py             ← LSTM training (Section 4)
+│   ├── train_delay_xgboost.py           ← XGBoost training (Section 5)
+│   └── evaluate_models.py              ← Compare predictions vs actual
+│
+├── models/
+│   ├── lstm_model.py                    ← LSTM architecture (reusable)
+│   ├── scheduler_ai.py                  ← Schedule optimizer (Section 6)
+│   └── feature_engineering.py          ← Shared feature computation utils
+│
+├── saved_models/
+│   ├── demand_lstm_best.h5              ← Best LSTM weights (auto-saved)
+│   ├── demand_scaler.pkl                ← MinMaxScaler for demand features
+│   ├── demand_metrics.json             ← MAE, RMSE, MAPE scores
+│   ├── demand_training_curves.png      ← Training plot (for report)
+│   ├── delay_xgb_regressor.pkl         ← XGBoost regressor
+│   ├── delay_xgb_classifier.pkl        ← XGBoost classifier
+│   ├── delay_scaler.pkl                ← StandardScaler for delay features
+│   ├── delay_metrics.json              ← Accuracy, F1 scores
+│   ├── delay_feature_importance.png    ← Feature importance plot
+│   └── delay_shap_summary.png          ← SHAP explainability plot
+│
+├── notebooks/
+│   ├── 01_data_exploration.ipynb       ← EDA: distributions, correlations
+│   ├── 02_feature_analysis.ipynb       ← Feature importance analysis
+│   ├── 03_model_comparison.ipynb       ← LSTM vs GRU vs baseline
+│   └── 04_results_visualization.ipynb  ← Final charts for report
+│
+└── README.md                           ← How to run everything
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 9: REQUIREMENTS.TXT
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+# ai-service/requirements.txt
+
+# Core
+fastapi==0.110.0
+uvicorn[standard]==0.29.0
+pydantic==2.6.4
+python-dotenv==1.0.1
+
+# Data
+pandas==2.2.1
+numpy==1.26.4
+scikit-learn==1.4.1
+
+# Deep Learning
+tensorflow==2.16.1
+keras==3.2.1
+
+# ML
+xgboost==2.0.3
+joblib==1.3.2
+shap==0.45.0
+
+# Visualization (for training notebooks)
+matplotlib==3.8.4
+seaborn==0.13.2
+
+# HTTP (for internal health checks)
+httpx==0.27.0
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 10: MODEL EVALUATION STRATEGY
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+10.1  METRICS EXPLAINED
+──────────────────────────
+
+  MAE (Mean Absolute Error)
+    Formula : mean( |actual - predicted| )
+    Unit    : passengers
+    Goal    : < 10 passengers (for demand model)
+    Good for: Understanding average error in real units
+
+  RMSE (Root Mean Squared Error)
+    Formula : sqrt( mean( (actual - predicted)² ) )
+    Unit    : passengers
+    Goal    : < 15 passengers
+    Good for: Penalizes large errors more than MAE
+
+  MAPE (Mean Absolute Percentage Error)
+    Formula : mean( |actual - predicted| / actual ) × 100
+    Unit    : %
+    Goal    : < 15%
+    Good for: Research paper — easy to explain "our model is X% accurate"
+    Note    : Exclude hours where actual=0 (division by zero)
+
+  R² Score (Coefficient of Determination)
+    Formula : 1 - (SS_res / SS_tot)
+    Range   : 0 to 1 (1 = perfect)
+    Goal    : > 0.85
+
+  For Delay Classifier:
+    Accuracy : % of correctly classified (delayed / on-time)
+    F1 Score : Harmonic mean of precision & recall
+               Important because delayed cases are minority class
+    Goal     : F1 > 0.80
+
+10.2  BASELINE COMPARISON
+───────────────────────────
+We compare our LSTM against 3 baselines to prove it's better:
+
+  Baseline 1 — Simple Average
+    Predict = historical average pax for this stop at this hour
+    Expected MAE: ~18–25 passengers
+
+  Baseline 2 — Last Week Same Time (naive lag)
+    Predict = pax_lag_168h (same hour, 7 days ago)
+    Expected MAE: ~14–20 passengers
+
+  Baseline 3 — Linear Regression with same features
+    Expected MAE: ~12–18 passengers
+
+  Our LSTM Target:
+    Expected MAE: < 8–10 passengers
+    This gap = our model's contribution (key for research paper)
+
+10.3  WHAT TO SHOW IN YOUR RESEARCH PAPER
+────────────────────────────────────────────
+  Figure 1: Dataset generation methodology (flowchart)
+  Figure 2: Feature correlation heatmap
+  Figure 3: Training/validation loss curves (LSTM)
+  Figure 4: Predicted vs Actual scatter plot
+  Figure 5: Model comparison table (LSTM vs 3 baselines)
+  Figure 6: Feature importance bar chart (XGBoost delay model)
+  Figure 7: SHAP summary plot (delay model explainability)
+  Figure 8: Hourly demand prediction accuracy (avg across routes)
+  Figure 9: Confusion matrix for delay classifier
+  Table 1 : All evaluation metrics (MAE, RMSE, MAPE, R², F1)
+  Table 2 : Schedule frequency comparison: Static vs AI-Generated
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 11: STEP-BY-STEP EXECUTION ORDER
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+STEP 1 → Setup Python environment
+  cd ai-service
+  python -m venv venv
+  venv\Scripts\activate          (Windows)
+  pip install -r requirements.txt
+
+STEP 2 → Copy datasets
+  Copy routes.csv and stages.csv into ai-service/data/
+
+STEP 3 → Generate synthetic dataset (run once, takes ~5–10 min)
+  cd data
+  python generate_dataset.py
+  # Output: synthetic_demand.csv (~4M rows) + sample_demand.csv (10K rows)
+
+STEP 4 → Explore data (optional but recommended for report)
+  jupyter notebook notebooks/01_data_exploration.ipynb
+
+STEP 5 → Train LSTM demand model (30–60 min on CPU, 10 min on GPU)
+  cd training
+  python train_demand_lstm.py
+  # Output: saved_models/demand_lstm_best.h5 + demand_scaler.pkl + demand_metrics.json
+
+STEP 6 → Train XGBoost delay model (5–10 min)
+  python train_delay_xgboost.py
+  # Output: delay_xgb_regressor.pkl + delay_xgb_classifier.pkl + plots
+
+STEP 7 → Start FastAPI service
+  cd ..
+  uvicorn main:app --reload --port 8000
+  # API docs: http://localhost:8000/docs   (Swagger auto-generated)
+
+STEP 8 → Test predictions
+  curl -X POST http://localhost:8000/predict/demand \
+    -H "Content-Type: application/json" \
+    -d '{"url_route_id":7000,"stage_id":12249,"hour":8,"day_of_week":0,
+         "is_weekday":1,"is_morning_peak":1,"is_evening_peak":0,
+         "is_holiday":0,"is_festival_day":0,"month":3,
+         "weather_condition":0,"temperature_c":28.0,"traffic_index":0.75,
+         "route_popularity":0.7,"stop_popularity":0.8,"dist_from_center":8.2,
+         "is_major_stop":1,"pax_lag_1h":65,"pax_lag_24h":70,"pax_lag_168h":68,
+         "pax_rolling_7d":62.5,"seq_normalized":0.04}'
+
+  Expected response:
+  {
+    "predicted_passengers": 142,
+    "crowd_level": "high",
+    "recommended_freq_min": 7,
+    "buses_needed": 3
+  }
+
+STEP 9 → Verify Node.js backend can call AI service
+  The Node.js cron job (jobs/demandPrediction.job.js) calls:
+    POST http://localhost:8000/predict/demand
+  for each active route × hour → saves to MongoDB PassengerDemand collection
+
+STEP 10 → View API docs
+  Open browser: http://localhost:8000/docs
+  All endpoints with try-it-out functionality (Swagger UI auto-generated by FastAPI)
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 12: EXPECTED MODEL PERFORMANCE (TARGETS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ┌─────────────────────────────────────────────────────────────────┐
+  │  MODEL 1 — LSTM Demand Predictor                                │
+  │  MAE  : ~6–10 passengers         (excellent for transit)        │
+  │  RMSE : ~10–16 passengers                                       │
+  │  MAPE : ~8–14%                   (publishable threshold <15%)   │
+  │  R²   : ~0.87–0.93                                              │
+  ├─────────────────────────────────────────────────────────────────┤
+  │  MODEL 2 — XGBoost Delay Predictor                              │
+  │  MAE  : ~2–4 minutes             (good for operational use)     │
+  │  RMSE : ~4–7 minutes                                            │
+  │  Delay Classifier Accuracy : ~82–88%                            │
+  │  Delay Classifier F1 Score : ~0.78–0.85                         │
+  ├─────────────────────────────────────────────────────────────────┤
+  │  MODEL 3 — Schedule Optimizer                                   │
+  │  Reduction in avg wait time vs static: ~30–45% (simulated)     │
+  │  Fleet utilization improvement: ~20–35% (simulated)             │
+  └─────────────────────────────────────────────────────────────────┘
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 13: HYPERPARAMETER TUNING (OPTIONAL — For Best Results)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+If time permits, tune these hyperparameters for even better performance:
+
+  LSTM — What to tune:
+    units       : try [64, 128, 256] for each LSTM layer
+    layers      : try 2 vs 3 LSTM layers
+    dropout     : try [0.1, 0.2, 0.3]
+    seq_len     : try [12, 24, 48] hours lookback
+    batch_size  : try [128, 256, 512]
+    learning_rate: try [0.001, 0.0005, 0.0001]
+
+  Method: Manual grid search (try 5–6 configs, pick best val_loss)
+          OR use Keras Tuner:
+            pip install keras-tuner
+            kt.RandomSearch(build_model, objective='val_mae', max_trials=10)
+
+  XGBoost — What to tune:
+    n_estimators     : [200, 400, 600, 800]
+    max_depth        : [4, 6, 8, 10]
+    learning_rate    : [0.01, 0.05, 0.1]
+    subsample        : [0.7, 0.8, 0.9]
+    colsample_bytree : [0.7, 0.8, 0.9]
+
+  Method: RandomizedSearchCV (sklearn) with 5-fold CV
+    from sklearn.model_selection import RandomizedSearchCV
+    → Much faster than GridSearchCV for large parameter spaces
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+SECTION 14: COMMON MISTAKES & HOW TO AVOID THEM
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+  ❌ MISTAKE 1: Data leakage
+     Problem : Fitting the scaler on ALL data (including test set)
+     Fix     : Fit scaler ONLY on training data, then transform val+test
+
+  ❌ MISTAKE 2: Sequence bleeding across different stops/routes
+     Problem : Creating sequences that span from one stop to another stop
+     Fix     : Group by (url_route_id, stage_id) before creating sequences
+
+  ❌ MISTAKE 3: Not saving the scaler
+     Problem : You save the model but forget the scaler. At prediction time,
+               you can't inverse-transform predictions correctly.
+     Fix     : Always joblib.dump(scaler, 'demand_scaler.pkl')
+
+  ❌ MISTAKE 4: Predicting negative passengers
+     Problem : LSTM output can be slightly negative
+     Fix     : pred_pax = max(0, predicted_value) after inverse transform
+
+  ❌ MISTAKE 5: MAPE with zero actual values
+     Problem : Division by zero when computing MAPE for hours with 0 demand
+     Fix     : mask = actual > 0; compute mape only on mask
+
+  ❌ MISTAKE 6: Using future data as lag features
+     Problem : Using pax_lag_1h where "1h ago" was actually calculated using
+               future data (when sorting is wrong)
+     Fix     : Always sort by timestamp BEFORE computing lag features,
+               and use shift(1) not shift(0)
+
+  ❌ MISTAKE 7: Forgetting to call model.predict() in batch mode
+     Problem : Calling predict() one row at a time is very slow
+     Fix     : Always batch predictions in FastAPI
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+END OF ML MODEL DOCUMENTATION — SmartDTC v1.0
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━

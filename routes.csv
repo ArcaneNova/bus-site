@@ -1,0 +1,562 @@
+url_route_id,route_name,start_stage,end_stage,distance_km,url
+7000,427,Nizamuddin Railway Station,Mehrauli,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7000_Route.htm
+7001,429,Railway Station,Kalkaji Dda Flats,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7001_Route.htm
+7002,218,Indirapuri Loni Border,Hari Nagar Clock Tower,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7002_Route.htm
+7003,443,Shahdara,Badarpur Mb Road,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7003_Route.htm
+7004,231,Railway Station,Mangolpuri Terminal Block Q,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7004_Route.htm
+7005,236,Anand Vihar Isbt,Nangloi Jj Colony,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7005_Route.htm
+7006,236 EXT,Anand Vihar Isbt,Ghevra Savda Jj Colony,40,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7006_Route.htm
+7007,455,Mori Gate Terminal,Jaitpur Village,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7007_Route.htm
+7008,921 EXT,Gtb Nagar,Mubarakpur Dabas,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7008_Route.htm
+7009,254,Babarpur Extension,Nangloi Jj Colony,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7009_Route.htm
+7010,463 EXT,Lajpat Nagar,Mehrauli,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7010_Route.htm
+7011,725,Mehrauli,Inderpuri Jj Colony Krishi Kunj,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7011_Route.htm
+7012,73,Anand Vihar Isbt,Hari Nagar Clock Tower,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7012_Route.htm
+7013,101,Nizamuddin Railway Station,Saroop Nagar Jj Colony Bhalswa,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7013_Route.htm
+7014,26,Dr Mukherjee Nagar Bandh,Sewa Nagar Railway Crossing,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7014_Route.htm
+7015,260,Kendriya Terminal,Yamuna Vihar Block C 4,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7015_Route.htm
+7016,47,Inderpuri Jj Colony,Central Work Shop 1,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7016_Route.htm
+7017,473,Anand Vihar Isbt,Badarpur Mb Road,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7017_Route.htm
+7018,474,Safdarjung Terminal,Mithapur Extension Sindhu Farm,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7018_Route.htm
+7019,739,Safdarjung Terminal,Dwarka Sector 19 Pocket 2,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7019_Route.htm
+7020,741,Mangalpuri,Jonti Shivalaya,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7020_Route.htm
+7021,301,Bmd Chowk,Mayur Vihar Phase 2,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7021_Route.htm
+7022,503,Mori Gate Terminal,Malviya Nagar Block F,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7022_Route.htm
+7023,118 EXT,Mori Gate,Mayur Vihar Phase 3,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7023_Route.htm
+7024,778,Inderlok Metro Station,Madhu Vihar,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7024_Route.htm
+7025,781,Minto Road Terminal,Palam Village,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7025_Route.htm
+7026,331,Shivaji Stadium,Nand Nagri Extension,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7026_Route.htm
+7027,518,Nizamuddin Railway Station,Uttam Nagar,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7027_Route.htm
+7028,790A,Railway Station,Najafgarh Terminal,41,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7028_Route.htm
+7029,792,Isbt,Bharthal Village,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7029_Route.htm
+7030,127,Fatehpuri,Haidarpur,13,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7030_Route.htm
+7031,129,Fatehpuri,Jhangola Village,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7031_Route.htm
+7032,340,Kendriya Terminal,New Seemapuri,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7032_Route.htm
+7033,529 EXT,Nehru Place Terminal,Raghubir Nagar Block N,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7033_Route.htm
+7034,808,Tilak Nagar,Mangolpuri Block Q,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7034_Route.htm
+7035,817,Inderlok Metro Station,Najafgarh Terminal,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7035_Route.htm
+7036,534,Anand Vihar Isbt,Mehrauli,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7036_Route.htm
+7037,543,Anand Vihar,Safdarjung Terminal,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7037_Route.htm
+7038,543 EXT,Anand Vihar,Gk 1 M Block Market,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7038_Route.htm
+7039,822,Tilak Nagar,Issapur Temple,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7039_Route.htm
+7040,144 A,Ajmeri Gate,Singhu Border,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7040_Route.htm
+7041,353,Karol Bagh Terminal,Babarpur Extension,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7041_Route.htm
+7042,567,Lajpat Nagar,Nangloi,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7042_Route.htm
+7043,830 EXT,Anand Vihar Isbt,Khyala Re Settlement Colony,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7043_Route.htm
+7044,833,Karampura Terminal,Goela Dairy,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7044_Route.htm
+7045,169,Isbt Kashmiri Gate,Katwaria Sarai,37,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7045_Route.htm
+7046,568,Safdarjung Terminal,Mangolpuri Block Q,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7046_Route.htm
+7047,588,Jln Stadium,Tilak Nagar,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7047_Route.htm
+7048,836,Tilak Nagar,Mundhela Khurd,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7048_Route.htm
+7049,398 EXP,Dhaula Kuan,Mayur Vihar Phase 2,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7049_Route.htm
+7050,601,Rk Puram Sector 1,Rohini Sector 1,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7050_Route.htm
+7051,602,Old Delhi Railway Station,Vasant Kunj Pocket C,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7051_Route.htm
+7052,61,Gtb Nagar,Jhoroda Village,5,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7052_Route.htm
+7053,610,Anand Parbat,Rk Puram,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7053_Route.htm
+7054,611,Mayur Vihar Phase 3,Dhaula Kuan,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7054_Route.htm
+7055,849,Tilak Nagar,Nangloi Jj Colony,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7055_Route.htm
+7056,179,Azadpur,Narela Terminal,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7056_Route.htm
+7057,180,Kendriya Terminal,Baba Colony,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7057_Route.htm
+7058,185,Kendriya Terminal,Nathupur,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7058_Route.htm
+7059,616,Kendriya Terminal,Vasant Kunj,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7059_Route.htm
+7060,862,Kamla Market,Raghubir Nagar Shivaji Enclave,10,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7060_Route.htm
+7061,415,Jal Vihar Terminal,Jaitpur,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7061_Route.htm
+7062,419 EXT,Railway Station,Malviya Nagar Block F,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7062_Route.htm
+7063,630,Kendriya Terminal,Nanakpura,8,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7063_Route.htm
+7064,631,Rk Puram Sector 1,Haidarpur,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7064_Route.htm
+7065,632,Mori Gate Terminal,Nanakpura Community Centre,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7065_Route.htm
+7066,874,Uttam Nagar Terminal,Badarpur Mb Road,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7066_Route.htm
+7067,Rl 79,New Delhi Railway Station Gate No 1,Dwarka Sector 23 Pochanpur,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7067_Route.htm
+7068,965,Kendriya Terminal,Nangloi Syed,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7068_Route.htm
+7069,970,Jln Stadium Cgo Complex,Rohini Avantika,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7069_Route.htm
+7070,972,Bawana,Uttam Nagar Terminal,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7070_Route.htm
+7071,99,Sk Khan,Tri Nagar Jai Mata Market,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7071_Route.htm
+7072,GL 90,Palika Kendra,Rohini Sector 16,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7072_Route.htm
+7073,MF 1,Kendriya Terminal,Shahdara,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7073_Route.htm
+7074,882,Uttam Nagar Terminal,Holambi Kalan Jj Colony,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7074_Route.htm
+7075,887,Tilak Nagar,Ghumanhera Village,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7075_Route.htm
+7076,889,Hari Nagar Clock Tower,Rohini Sector 27,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7076_Route.htm
+7077,195,Fatehpuri,Siraspur,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7077_Route.htm
+7078,201,Mori Gate Terminal,Noida Sector 32 Terminal,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7078_Route.htm
+7079,203,Bhai Mati Dass Chowk,Krishna Nagar,11,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7079_Route.htm
+7080,204,Shivaji Stadium,Ghond,11,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7080_Route.htm
+7081,205,Fatehpuri,New Seemapuri,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7081_Route.htm
+7082,430,Kendriya Terminal,Badarpur Crossing Mb Road,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7082_Route.htm
+7083,214 A,Anand Parbat,New Seemapuri,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7083_Route.htm
+7084,438,Railway Station,Jaitpur Village,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7084_Route.htm
+7085,445,New Delhi Railway Station Gate No 2,Gk Part 2,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7085_Route.htm
+7086,71,Isbt,Inderpuri Jj Colony,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7086_Route.htm
+7087,234 EXT,Tilak Nagar,Harsh Vihar,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7087_Route.htm
+7088,454,New Delhi Railway Station Gate No 2,Jaitpur Extension Phase 1,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7088_Route.htm
+7089,458,New Delhi Railway Station Gate No 2,Madanpur Khadar Jj Colony,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7089_Route.htm
+7090,72,Isbt,Najafgarh,52,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7090_Route.htm
+7091,722,Ambedkar Stadium,Badu Sarai,39,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7091_Route.htm
+7092,258,Mori Gate,Chauhan Patti,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7092_Route.htm
+7093,100,Kendriya Terminal,Adarsh Nagar,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7093_Route.htm
+7094,102,Fatehpuri,Rohini Sector 22 Lakhi Ram Park,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7094_Route.htm
+7095,271,Kendriya Terminal,Jagatpur Village,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7095_Route.htm
+7096,473 EXT,Anand Vihar Isbt,Mithapur Chowk,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7096_Route.htm
+7097,737,Jln Stadium,Dwarka Sector 18 A 17 D,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7097_Route.htm
+7098,506,Safdarjung Terminal,Jheer Khore Temple,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7098_Route.htm
+7099,323,Dhaula Kuan,Noida Sector 34 Up Roadways Bus Terminal,38,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7099_Route.htm
+7100,516,Safdarjung Terminal,Dera Village,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7100_Route.htm
+7101,780,Super Bazaar,Igi Airport,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7101_Route.htm
+7102,332,Isbt,Noida Sector 32 Terminal,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7102_Route.htm
+7103,333,Jahangirpuri Block E,Anand Vihar Isbt,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7103_Route.htm
+7104,519,Safdarjung Terminal,Mandi Village,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7104_Route.htm
+7105,801,Inderlok Metro Station,Igi Airport,37,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7105_Route.htm
+7106,810,Kendriya Terminal,Uttam Nagar Terminal,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7106_Route.htm
+7107,135,Delhi Secretariat,Narela,33,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7107_Route.htm
+7108,137,Fatehpuri,Holambi Kalan,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7108_Route.htm
+7109,142,Isbt,Jahangirpuri Block E,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7109_Route.htm
+7110,350 A,Karol Bagh Terminal,Shahdara Terminal,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7110_Route.htm
+7111,146,Fatehpuri,Hiranki Village,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7111_Route.htm
+7112,159 A,Sp Depot,Jahangirpuri Block E,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7112_Route.htm
+7113,355 L,New Delhi Railway Station Gate No 1,Noida Sector 3,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7113_Route.htm
+7114,374,Nehru Place Terminal,Nand Nagri Terminal,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7114_Route.htm
+7115,569,Safdarjung Terminal,Sultanpur,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7115_Route.htm
+7116,840 EXT,New Delhi Railway Station Gate No 1,Mahavir Enclave Part 2 3,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7116_Route.htm
+7117,172,New Delhi Railway Station Gate No 2,Holambi Kalan Jj Colony,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7117_Route.htm
+7118,175,Fatehpuri,Lampur Border,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7118_Route.htm
+7119,391,Kendriya Terminal,Kalyanpuri,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7119_Route.htm
+7120,604,New Delhi Railway Station Gate No 2,Vasant Kunj,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7120_Route.htm
+7121,605,Mori Gate Terminal,Vasant Kunj Pocket C,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7121_Route.htm
+7122,844,Najafgarh Terminal,Sarangpur,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7122_Route.htm
+7123,845,Tilak Nagar,Daulatpur,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7123_Route.htm
+7124,178 A,Fatehpuri,Sanoth Village,33,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7124_Route.htm
+7125,183,Fatehpuri,Rohini Sector,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7125_Route.htm
+7126,404,Old Delhi Railway Station,Madanpur Khadar,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7126_Route.htm
+7127,611 EXT,Trilokpuri Block 26,Mayapuri Depot,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7127_Route.htm
+7128,620,Shivaji Stadium,Hauz Khas Terminal,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7128_Route.htm
+7129,623,Shahdara Terminal,Vasant Vihar Cpwd Colony,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7129_Route.htm
+7130,191,Mori Gate,Harewali Village,35,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7130_Route.htm
+7131,192,Isbt,Keshav Nagar,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7131_Route.htm
+7132,423,Mori Gate Terminal,Ambedkar Nagar Terminal,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7132_Route.htm
+7133,666,Poorvanchal Hostel,Jia Sarai,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7133_Route.htm
+7134,873,Tilak Nagar,Tajpur Khurd,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7134_Route.htm
+7135,925,Fatehpuri,Nilothi Village,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7135_Route.htm
+7136,93,Kendriya Terminal,Tri Nagar Jai Mata Market,11,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7136_Route.htm
+7137,940,Shivaji Stadium,Mangolpuri Block Q,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7137_Route.htm
+7138,941,Fatehpuri,Katevda Village,43,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7138_Route.htm
+7139,944,Kendriya Terminal,Sultanpuri,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7139_Route.htm
+7140,949 EXT,Sarai Kale Khan Isbt,Savda Ghevra Jj Colony,35,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7140_Route.htm
+7141,954,Karol Bagh Terminal,Sultanpuri Block C 9,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7141_Route.htm
+7142,957 EXT,Shivaji Stadium,Budh Vihar Phase 2,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7142_Route.htm
+7143,957L,Shivaji Stadium,Rohini Avantika,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7143_Route.htm
+7144,975,Kendriya Terminal,Rohini Sector 11 Sfs Flat,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7144_Route.htm
+7145,982,New Seemapuri,Sultanpuri,34,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7145_Route.htm
+7146,982 EXT,New Seemapuri,Indra Enclave,37,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7146_Route.htm
+7147,GL 91,New Delhi Railway Station Gate No 1,Mundka,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7147_Route.htm
+7148,89,Tri Nagar Jai Mata Market,Sn Depot,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7148_Route.htm
+7149,2 STL,Indirapuri Loni Border,Shahdara,9,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7149_Route.htm
+7150,21,New Delhi Railway Station Gate No 1,New Seemapuri,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7150_Route.htm
+7151,425A,Isbt,Kalkaji Extension Dda Flats,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7151_Route.htm
+7152,714,Badarpur Mb Road,Rajokri Harijan Basti,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7152_Route.htm
+7153,907,Mori Gate Terminal,Nilothi Village,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7153_Route.htm
+7154,451,Jantar Mantar,Jaitpur,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7154_Route.htm
+7155,459,New Delhi Railway Station Gate No 2,Badarpur Mb Road,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7155_Route.htm
+7156,720,Shahdara Terminal,Janakpuri Block B,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7156_Route.htm
+7157,921,Railway Station,Rani Khera,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7157_Route.htm
+7158,245,Kamla Market,Indirapuri Loni,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7158_Route.htm
+7159,463,Okhla Enclave,Mehrauli,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7159_Route.htm
+7160,729,Mori Gate,Kapashera Border,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7160_Route.htm
+7161,105,Isbt,Mukhmelpur,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7161_Route.htm
+7162,263,Mori Gate Terminal,Indirapuri Loni Border,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7162_Route.htm
+7163,266,Shivaji Stadium,Jagatpur Temple,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7163_Route.htm
+7164,272,Shivaji Stadium,Nehru Vihar,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7164_Route.htm
+7165,491,Nehru Place,Noida Phase 2,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7165_Route.htm
+7166,109,Fatehpuri,Banker Village,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7166_Route.htm
+7167,300,Kendriya Terminal,Noida Sector 34 Up Roadways Bus Terminal,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7167_Route.htm
+7168,492,Nehru Place,Noida Sector 62 Electronic City,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7168_Route.htm
+7169,753,Mori Gate,Uttam Nagar Terminal,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7169_Route.htm
+7170,753 EXT,Isbt,Uttam Nagar Terminal,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7170_Route.htm
+7171,118,Rp Bagh,Kalyanpuri,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7171_Route.htm
+7172,312,Mori Gate Terminal,New Seemapuri,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7172_Route.htm
+7173,319,Shahdara,Noida Sector 3,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7173_Route.htm
+7174,508,Bhatti Mines,Raghubir Nagar Block F,36,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7174_Route.htm
+7175,511,Badarpur Mb Road,Dhaula Kuan,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7175_Route.htm
+7176,512,Rk Puram Sector 1,Ambedkar Nagar Sector 5,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7176_Route.htm
+7177,765,Bakarwala Jj Colony,Hauz Khas Terminal,34,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7177_Route.htm
+7178,78,Azadpur Terminal,Inderpuri Jj Colony,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7178_Route.htm
+7179,12,Isbt,Bawana,39,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7179_Route.htm
+7180,326,Vasant Kunj Sector A,Krishna Nagar,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7180_Route.htm
+7181,522 EXT,Malviya Nagar Block F,Arya Samaj Road,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7181_Route.htm
+7182,336,Vasant Vihar Terminal,Vivek Vihar,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7182_Route.htm
+7183,81,Inderpuri Jj Colony,Mukherjee Nagar Bandh,13,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7183_Route.htm
+7184,351,Anand Parbat,Gazipur Dairy Farm,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7184_Route.htm
+7185,819,Tilak Nagar,Pandwala Kalan,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7185_Route.htm
+7186,82,Isbt,Janakpuri Block D,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7186_Route.htm
+7187,355,Anand Parbat,Noida Sector 3,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7187_Route.htm
+7188,827,Tilak Nagar,Daurala Border,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7188_Route.htm
+7189,828A,Kauria Bridge,Galibpur,41,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7189_Route.htm
+7190,375,Nehru Place Terminal,Dilshad Garden,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7190_Route.htm
+7191,174 STL,Azadpur,Jonti Border,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7191_Route.htm
+7192,390,Kendriya Terminal,Mayur Vihar Phase 1 Terminal,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7192_Route.htm
+7193,590,Shivaji Stadium,Chattarpur Pahari Syndicate Bank,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7193_Route.htm
+7194,842,Isbt,Raghubir Nagar Block N,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7194_Route.htm
+7195,85 EXT,Anand Vihar Isbt,Pitampura West Enclave,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7195_Route.htm
+7196,181,Nizamuddin Railway Station,Jahangirpuri Block E,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7196_Route.htm
+7197,621,Mori Gate Terminal,Poorvanchal Hostel,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7197_Route.htm
+7198,851,Delhi Secretariat,Uttam Nagar Terminal,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7198_Route.htm
+7199,641,Shivaji Stadium,Vasant Vihar Cpwd Colony,13,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7199_Route.htm
+7200,66,Jln Stadium,Vasant Kunj Pocket C,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7200_Route.htm
+7201,871,Shivaji Stadium,Vikaspuri Block H 3,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7201_Route.htm
+7202,924,Fatehpuri,Majra Dabas,36,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7202_Route.htm
+7203,929 STL,Karol Bagh Terminal,Mubarakpur Dabas,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7203_Route.htm
+7204,94,Railway Station,Sultapur Block E,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7204_Route.htm
+7205,962,Kendriya Terminal,Kanjawala,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7205_Route.htm
+7206,969,Narela,Uttam Nagar Terminal,37,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7206_Route.htm
+7207,971,Anand Vihar Isbt,Rohini Avantika,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7207_Route.htm
+7208,990 EXT,Shivaji Stadium,Rohini Sector 24 Pocket 1,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7208_Route.htm
+7209,991,Shivaji Stadium,Mubarakpur Dabas,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7209_Route.htm
+7210,GL 32,Karampura Terminal,Noida Sector 34 Up Roadways Bus Terminal,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7210_Route.htm
+7211,MF 4,Shivaji Stadium,Shahdara,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7211_Route.htm
+7212,RL 75,New Delhi Railway Station Gate No 1,Dwarka Sector 14 Metro Station,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7212_Route.htm
+7213,883,Isbt,Uttam Nagar Terminal,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7213_Route.htm
+7214,886,Mehrauli Terminal,Najafgarh Terminal,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7214_Route.htm
+7215,211,Mori Gate,Mayur Vihar Phase 2,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7215_Route.htm
+7216,435,New Delhi Railway Station,Tara Apartment,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7216_Route.htm
+7217,891,Hari Nagar Clock Tower,Jahangirpuri Block E,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7217_Route.htm
+7218,898,Tilak Nagar,Asalatpur Khadar,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7218_Route.htm
+7219,44,Isbt,Okhla,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7219_Route.htm
+7220,708,Narela,Najafgarh Terminal,40,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7220_Route.htm
+7221,711,Janakpuri Block C 1,Sarai Kale Khan,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7221_Route.htm
+7222,716,Shivaji Stadium,Dhool Siras,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7222_Route.htm
+7223,221,Mori Gate Terminal,Anand Vihar Isbt,13,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7223_Route.htm
+7224,222,Anand Vihar Isbt,Ashok Vihar Phase 1,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7224_Route.htm
+7225,724 SPL,Dwarka Sector 19 Pocket 3,Nehru Place Terminal,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7225_Route.htm
+7226,103,Fatehpuri,Narela,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7226_Route.htm
+7227,108,Nehru Vihar,Hari Nagar Clock Tower,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7227_Route.htm
+7228,110,Kendriya Terminal,Balak Ram Hospital,11,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7228_Route.htm
+7229,76,Anand Vihar Isbt,Inderpuri Jj Colony,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7229_Route.htm
+7230,113,Fatehpuri,Sanoth Village,35,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7230_Route.htm
+7231,313,Vivek Vihar,Inderpuri,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7231_Route.htm
+7232,323 A,Dhaula Kuan,Noida Sector 34 Up Roadways Bus Terminal,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7232_Route.htm
+7233,770,Ambedkar Stadium Terminal,Palam Village,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7233_Route.htm
+7234,123,Mori Gate Terminal,Harewali Border,36,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7234_Route.htm
+7235,33,Bhajanpura,Noida Sector 3,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7235_Route.htm
+7236,522A,Arya Samaj Road,Hamdard Nagar,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7236_Route.htm
+7237,522 SPL,New Delhi Railway Station Gate No 2,Ambedkar Nagar Terminal,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7237_Route.htm
+7238,790,Ambedkar Stadium Terminal,Najafgarh Terminal,40,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7238_Route.htm
+7239,34 EXT,Lado Sarai,Mayur Vihar Phase 2,33,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7239_Route.htm
+7240,342,Kendriya Terminal,Surajmal Vihar Cbd Ground,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7240_Route.htm
+7241,525 EXT,Badarpur Mb Road,Mehrauli,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7241_Route.htm
+7242,532,Minto Road Terminal,Ignou Maidan Garhi,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7242_Route.htm
+7243,809,Tilak Nagar,Neelwal Village,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7243_Route.htm
+7244,136,Fatehpuri,Ghoga Village,36,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7244_Route.htm
+7245,143,Anand Vihar Isbt,Keshav Nagar Mukti Ashram,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7245_Route.htm
+7246,352,Wazirpur Jj Colony,Krishna Nagar,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7246_Route.htm
+7247,540,Kendriya Terminal,Tara Apartment,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7247_Route.htm
+7248,825,Tilak Nagar,Jharoda Kalan,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7248_Route.htm
+7249,826,Tilak Nagar,Khera Daba,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7249_Route.htm
+7250,148,Fatehpuri,Tikri Khurd,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7250_Route.htm
+7251,548,Minto Road Terminal,Tughlakabad Village,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7251_Route.htm
+7252,558,Bhatti Mines,Karampura Terminal,37,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7252_Route.htm
+7253,166,Palika Kendra,Shalimar Bagh Block B H,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7253_Route.htm
+7254,381,Kendriya Terminal,Gorakh Park West Dda Flats,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7254_Route.htm
+7255,173,Jln Stadium,Narela Block A 5 6,39,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7255_Route.htm
+7256,402,Azadpur,Okhla Extension Abul Fazal Enclave,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7256_Route.htm
+7257,405 A,Railway Station,Badarpur Mb Road,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7257_Route.htm
+7258,853,Karol Bagh Terminal,Uttam Nagar Terminal,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7258_Route.htm
+7259,854,Shivaji Stadium,Janakpuri Block C 1,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7259_Route.htm
+7260,19,Shivaji Stadium,Jahangirpuri Block E,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7260_Route.htm
+7261,413,Nizamuddin Railway Station,Mehrauli,11,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7261_Route.htm
+7262,416,Jal Vihar Terminal,Ambedkar Nagar Terminal,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7262_Route.htm
+7263,929,Fatehpuri,Mubarakpur Dabas,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7263_Route.htm
+7264,931,Punjabi Bagh,Bakarwala,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7264_Route.htm
+7265,937,Railway Station,Sultanpur,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7265_Route.htm
+7266,943,Shakarpur,Sultanpuri,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7266_Route.htm
+7267,966,Nizamuddin Railway Station,Nangloi Jj Colony,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7267_Route.htm
+7268,984A,Rohini Avantika,Aiims,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7268_Route.htm
+7269,998,Raghubir Nagar Block F,Bakarwala Jj Colony,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7269_Route.htm
+7270,GL 23,Maharana Pratap Isbt,Anand Vihar Isbt,11,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7270_Route.htm
+7271,879,Janakpuri Block D,Shahbad Dairy,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7271_Route.htm
+7272,198,Wazirpur Depot,Bhalswa Jj Colony,11,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7272_Route.htm
+7273,433,Jantar Mantar,Central Workshop 2 Tehkhana,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7273_Route.htm
+7274,436,Railway Station,Jasola Village,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7274_Route.htm
+7275,680 EXT,Hari Nagar Clock Tower,Hamdard Nagar,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7275_Route.htm
+7276,890,Kendriya Terminal,Hatshal Lig Flats,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7276_Route.htm
+7277,893,Nizamuddin Railway Station,Uttam Nagar Terminal,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7277_Route.htm
+7278,894A,Okhla,New Delhi Railway Station Gate No 1,13,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7278_Route.htm
+7279,212,Anand Parbat,Nand Nagri Terminal,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7279_Route.htm
+7280,218 A,Isbt,Shadipur Depot,10,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7280_Route.htm
+7281,219,Railway Station,Nangloi,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7281_Route.htm
+7282,442,Azadpur,Nehru Place Terminal,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7282_Route.htm
+7283,717,Badarpur Mb Road,Shahbad Mohammad Pur,36,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7283_Route.htm
+7284,914,Karampura Terminal,Rasoolpur,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7284_Route.htm
+7285,915,Inderlok Metro Station,Majra Dabas,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7285_Route.htm
+7286,234,Karampura Terminal,Harsh Vihar,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7286_Route.htm
+7287,449,Railway Station,Ambedkar Nagar Sector 5,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7287_Route.htm
+7288,721,Isbt,Mangalpuri,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7288_Route.htm
+7289,92,Anand Vihar Isbt,Gulabi Bagh Dda Flats,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7289_Route.htm
+7290,241,Shivaji Stadium,Nand Nagri Terminal,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7290_Route.htm
+7291,246,Shivaji Stadium,New Seemapuri,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7291_Route.htm
+7292,726,Mori Gate Terminal,Janakpuri Block D,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7292_Route.htm
+7293,727,Jln Stadium,Palam Village,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7293_Route.htm
+7294,100 EXT,Kendriya Terminal,Samaypur,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7294_Route.htm
+7295,103 STL,Azadpur,Narela Sector A 7 Raja Harish Chand Hospital,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7295_Route.htm
+7296,261,Sarai Kale Khan Isbt,Nand Nagri Terminal,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7296_Route.htm
+7297,480,Kendriya Terminal,Kalkaji Dda Flats,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7297_Route.htm
+7298,490,Arya Samaj Road Pusa Road Petrol Pump,Kalkaji Dda Flats,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7298_Route.htm
+7299,738,Anand Vihar Isbt,Kailashpur,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7299_Route.htm
+7300,301 A,Mori Gate Terminal,Mayur Vihar Phase 2,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7300_Route.htm
+7301,308,Ambedkar Stadium,Uttam Nagar Terminal,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7301_Route.htm
+7302,493,Nehru Place Terminal,Mayur Vihar Phase 3,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7302_Route.htm
+7303,500,Super Bazaar,Saket,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7303_Route.htm
+7304,115,Old Delhi Railway Station,Deep Market,9,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7304_Route.htm
+7305,317,Shivaji Stadium,Shahdara,11,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7305_Route.htm
+7306,322,Isbt,Mayur Vihar Phase 1 Terminal,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7306_Route.htm
+7307,507,Dhaula Kuan,Okhla Extension Abul Fazal Enclave,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7307_Route.htm
+7308,507 A,Munirka Village,Okhla Extension Abul Fazal Enclave,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7308_Route.htm
+7309,51,Old Delhi Railway Station,Sn Depot,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7309_Route.htm
+7310,764,Najafgarh Terminal,Nehru Place Terminal,32,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7310_Route.htm
+7311,8,Badarpur Mb Road,Noida Phase 1,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7311_Route.htm
+7312,525,Badarpur Mb Road,Aya Nagar,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7312_Route.htm
+7313,816,Malka Ganj,Uttam Nagar Terminal,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7313_Route.htm
+7314,346,Shivaji Stadium,Noida Sector 34 Up Roadways Bus Terminal,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7314_Route.htm
+7315,347 L,Isbt,Noida Sector 12 22 Block O,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7315_Route.htm
+7316,349,Kendriya Terminal,Mayur Vihar Phase 1,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7316_Route.htm
+7317,350,Anand Parbat,Shahdara Terminal,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7317_Route.htm
+7318,154,Mori Gate Terminal,Dehisara Border,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7318_Route.htm
+7319,362,Mori Gate Terminal,Vasundhra Enclave,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7319_Route.htm
+7320,546,Hamdard Nagar,Uttam Nagar Terminal,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7320_Route.htm
+7321,56,New Delhi Railway Station Gate No 2,Vasant Vihar Cpwd Colony,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7321_Route.htm
+7322,832,Janakpuri Block D,Inderlok Metro Station,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7322_Route.htm
+7323,162,Mori Gate Terminal,Tiggipur,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7323_Route.htm
+7324,171,Shivaji Stadium,Holambi Kalan Jj Colony,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7324_Route.htm
+7325,384,Arya Samaj Road,Trilokpuri Block 27,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7325_Route.htm
+7326,39,Jheel,Tri Nagar Jai Mata Market,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7326_Route.htm
+7327,834,Tilak Nagar,Nanak Heri Border,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7327_Route.htm
+7328,840,Shivaji Stadium,Mangalpuri,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7328_Route.htm
+7329,848,Tilak Nagar,Bakar Garh Border,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7329_Route.htm
+7330,615,Minto Road Terminal,Poorvanchal Hostel,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7330_Route.htm
+7331,858 EXT,Kamla Market,Rajouri Garden Extension,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7331_Route.htm
+7332,863,Isbt,Hatshal Jj Colony,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7332_Route.htm
+7333,187,Palika Kendra,Siraspur,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7333_Route.htm
+7334,193,Mori Gate,Narela Terminal,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7334_Route.htm
+7335,414,Nizamuddin Railway Station,Badarpur Mb Road,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7335_Route.htm
+7336,872,Tilak Nagar,Surakhpur,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7336_Route.htm
+7337,876,Karampura Terminal,Dichaon Kalan,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7337_Route.htm
+7338,877,Karampura Terminal,Bijwasan Railway Crossing,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7338_Route.htm
+7339,926,Fatehpuri,Tikri Border,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7339_Route.htm
+7340,966 EXT,Nizamuddin Railway Station,Mangolpuri Block Q,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7340_Route.htm
+7341,983,Karampura Terminal,Auchandi Border,36,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7341_Route.htm
+7342,990,Shivaji Stadium,Rithala Village,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7342_Route.htm
+7343,OMS,Anand Vihar Isbt,Ram Prashna Crossing,94,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7343_Route.htm
+7344,194,Fatehpuri,Bakoli Temple,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7344_Route.htm
+7345,202,Old Delhi Railway Station,Anand Vihar Isbt,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7345_Route.htm
+7346,425 L,Isbt,Kalkaji Extension Dda Flats,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7346_Route.htm
+7347,435 L,New Delhi Railway Station,Tara Apartment,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7347_Route.htm
+7348,7,Kendriya Terminal,Kewal Park Mcd Flat,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7348_Route.htm
+7349,704,Surajmal Vihar,Janakpuri Block B 1,35,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7349_Route.htm
+7350,213,Kendriya Terminal,Harsh Vihar,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7350_Route.htm
+7351,217,Bmd Chowk,Gokulpuri,10,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7351_Route.htm
+7352,715,Mangalpuri,Mehrauli,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7352_Route.htm
+7353,909,Railway Station,Pitampura West Enclave,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7353_Route.htm
+7354,91,Kendriya Terminal,Tri Nagar Jai Mata Market,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7354_Route.htm
+7355,910,Shivaji Stadium,Syed Nagar,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7355_Route.htm
+7356,719,Jln Stadium,Pandwala Village,37,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7356_Route.htm
+7357,915 EXT,Karampura Terminal,Bawana,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7357_Route.htm
+7358,918,Ambedkar Stadium,Nangloi Jj Colony,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7358_Route.htm
+7359,461,Railway Station,Ali Village,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7359_Route.htm
+7360,103 EXT,Tri Nagar Jai Mata Market,Narela Industrial Area,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7360_Route.htm
+7361,259,Jahangirpuri Block E,Nand Nagri Terminal,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7361_Route.htm
+7362,479,Punjabi Bagh,Badarpur Mb Road,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7362_Route.htm
+7363,740 EXT,Anand Vihar Isbt,Uttam Nagar Terminal,33,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7363_Route.htm
+7364,106,Fatehpuri,Qutab Garh Border,40,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7364_Route.htm
+7365,112,Fatehpuri,Safiabad Border,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7365_Route.htm
+7366,307,Kamla Market,Trilokpuri Block 27,10,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7366_Route.htm
+7367,492 L,Nehru Place,Noida Sector 2,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7367_Route.htm
+7368,501,Mori Gate Terminal,Anupam Cinema Modi Hospital,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7368_Route.htm
+7369,760A,Bmd Chowk,Kirby Place,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7369_Route.htm
+7370,761,Mangalpuri,Azadpur Terminal,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7370_Route.htm
+7371,116,Fatehpuri,Bawana Jj Colony,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7371_Route.htm
+7372,320,Kendriya Terminal,Shahdara,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7372_Route.htm
+7373,119,Fatehpuri,Bajitpur,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7373_Route.htm
+7374,120,Kendriya Terminal,Narela,40,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7374_Route.htm
+7375,124,Fatehpuri,Mukhmelpur,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7375_Route.htm
+7376,335,Hauz Khas Terminal,Nand Nagri Terminal,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7376_Route.htm
+7377,522,Rajinder Nagar Market,Ambedkar Nagar Terminal,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7377_Route.htm
+7378,134 A,Azadpur,Ibrahimpur,9,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7378_Route.htm
+7379,144,Fatehpuri,Singhu School,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7379_Route.htm
+7380,344,Hauz Khas Terminal,Kalyanpuri,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7380_Route.htm
+7381,347,Isbt,Noida Sector 34 Up Roadways Bus Terminal,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7381_Route.htm
+7382,348,Mori Gate Terminal,Mayur Vihar Phase 1,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7382_Route.htm
+7383,536,Rk Puram Sector 1,Chattarpur Extension,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7383_Route.htm
+7384,542,New Seemapuri,Hauz Khas Terminal,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7384_Route.htm
+7385,818,Kashmiri Gate,Jhatikra,36,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7385_Route.htm
+7386,149,Fatehpuri,Tajpur Khurd,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7386_Route.htm
+7387,157,Palika Kendra,Ashok Vihar Phase 1,11,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7387_Route.htm
+7388,159,Inderpuri,Jahangirpuri Block E,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7388_Route.htm
+7389,361,Avantika,New Ashok Nagar East End Apartment,40,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7389_Route.htm
+7390,828,Tilak Nagar,Galibpur,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7390_Route.htm
+7391,363,Isbt,Nodia Sector 82 Kent Vihar,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7391_Route.htm
+7392,578,Safdarjung Terminal,Najafgarh Terminal,34,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7392_Route.htm
+7393,580,Kendriya Terminal,Ambedkar Nagar Sector 5,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7393_Route.htm
+7394,841,Isbt,Khyala Jj Colony,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7394_Route.htm
+7395,176,Mori Gate,Palla,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7395_Route.htm
+7396,393,New Delhi Railway Station Gate No 1,Noida Sector 62 Electronic City,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7396_Route.htm
+7397,403,Old Delhi Railway Station,Okhla Extension Abul Fazal,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7397_Route.htm
+7398,85,Anand Vihar Isbt,Punjabi Bagh Terminal,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7398_Route.htm
+7399,404 EXT,Old Delhi Railway Station,Madanpur Khadar Jj Colony,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7399_Route.htm
+7400,411,Mori Gate,Ambedkar Nagar Terminal,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7400_Route.htm
+7401,412,Nehru Place Terminal,Yamuna Vihar Block C 4,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7401_Route.htm
+7402,861,Tilak Nagar,Jahangirpuri Block E,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7402_Route.htm
+7403,414 STL,Nehru Place Terminal,Prahladpur Suraj Apartment,7,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7403_Route.htm
+7404,417,Red Fort,Mehrauli,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7404_Route.htm
+7405,421,Nand Nagri Terminal,Okhla Extension Abul Fazal Enclave,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7405_Route.htm
+7406,927,Tri Nagar Metro Station,Bawana,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7406_Route.htm
+7407,928,Fatehpuri,Garhi Randhala,32,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7407_Route.htm
+7408,936,Pragati Maidan,Gulabi Bagh,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7408_Route.htm
+7409,947,Igi Airport,Sawda Jj Colony,38,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7409_Route.htm
+7410,957,Shivaji Stadium,Rohini Sector 20 21 Pocket 9,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7410_Route.htm
+7411,963,Shivaji Stadium,Bakarwala Jj Colony,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7411_Route.htm
+7412,968,Tri Nagar Metro Station,Dhansa Border,39,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7412_Route.htm
+7413,979,Nangloi,Narela Terminal,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7413_Route.htm
+7414,987,Karampura Terminal,Rohini Sector 25 Deep Vihar,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7414_Route.htm
+7415,990 SPL,Shivaji Stadium,Rohini Sector 23,,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7415_Route.htm
+7416,Palam Coach,Isbt,Igi Airport,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7416_Route.htm
+7417,RL 77 A,New Delhi Railway Station Gate No 1,Dwarka Sector 18 B,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7417_Route.htm
+7418,196,Shivaji Stadium,Rohini Sector,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7418_Route.htm
+7419,210,Kendriya Terminal,Mandoli Sewa Dham,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7419_Route.htm
+7420,425,Railway Station,Kalkaji Extension Dda Flats,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7420_Route.htm
+7421,70,Anand Vihar Isbt,Naraina Vihar,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7421_Route.htm
+7422,703,Shastri Nagar Pushta,Janakpuri Block A,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7422_Route.htm
+7423,894,Okhla,Karampura Terminal,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7423_Route.htm
+7424,901,Kamla Market,Mangolpuri Block S,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7424_Route.htm
+7425,905,Mori Gate Terminal,Kamruddin Nagar,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7425_Route.htm
+7426,216,Laxmi Narain Mandir,New Seemapuri,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7426_Route.htm
+7427,440,New Delhi Railway Station Gate No 2,Ambedkar Nagar Terminal,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7427_Route.htm
+7428,447,Bhalswa Jj Colony,Ambedkar Nagar Sector 5,40,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7428_Route.htm
+7429,912,Vishnu Garden New Chowk,Burari Village,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7429_Route.htm
+7430,917,Ambedkar Stadium,Madipur Jj Colony,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7430_Route.htm
+7431,923,Fatehpuri,Najafgarh Terminal,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7431_Route.htm
+7432,24,Jheel,Karawal Nagar,11,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7432_Route.htm
+7433,248,Mori Gate,Johripur Village,13,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7433_Route.htm
+7434,253,Mori Gate,Yamuna Vihar Terminal,9,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7434_Route.htm
+7435,255,Kendriya Terminal,Sabhapur Village,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7435_Route.htm
+7436,460,Minto Road Terminal,Badarpur Old Mb Road,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7436_Route.htm
+7437,467,New Delhi Railway Station,Gautampuri,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7437_Route.htm
+7438,726A,Isbt,Janakpuri Block D,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7438_Route.htm
+7439,270,Kendriya Terminal,Karawal Nagar,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7439_Route.htm
+7440,106 A,Mori Gate,Qutab Garh Border,36,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7440_Route.htm
+7441,745,Jln Stadium,Daulatpur,36,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7441_Route.htm
+7442,114,Fatehpuri,Qutab Garh Border,38,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7442_Route.htm
+7443,511 EXT,Badarpur Mb Road,Malviya Nagar Block F,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7443_Route.htm
+7444,763L,Janakpuri Block C 1,Sarai Kale Khan,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7444_Route.htm
+7445,120 A,Isbt,Narela,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7445_Route.htm
+7446,327,Punjabi Bagh Terminal,Mayur Vihar Phase 1 Extension,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7446_Route.htm
+7447,517,Safdarjung Terminal,Aya Nagar,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7447_Route.htm
+7448,520,Super Bazaar,Malviya Nagar Block F,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7448_Route.htm
+7449,783,Delhi Secretariat,Najafgarh Terminal,33,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7449_Route.htm
+7450,128,Mori Gate,Khera Khurd Road,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7450_Route.htm
+7451,133,Mori Gate,Narela Terminal,37,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7451_Route.htm
+7452,133 A,Mori Gate,Narela Terminal,34,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7452_Route.htm
+7453,341,Vivekanand Isbt,Holambi Kalan Jj Colony,38,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7453_Route.htm
+7454,53,Rk Puram Sector 1,Nand Nagri Community Centre,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7454_Route.htm
+7455,801A,Karampura,Kapashera Border,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7455_Route.htm
+7456,134,Isbt,Ibrahimpur,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7456_Route.htm
+7457,823,Kauria Bridge,Uttam Nagar Terminal,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7457_Route.htm
+7458,824,Tilak Nagar,Kair Village,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7458_Route.htm
+7459,147,Fatehpuri,Tiggipur,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7459_Route.htm
+7460,545,Bhatti Mines,Uttam Nagar Terminal,37,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7460_Route.htm
+7461,164,Shivaji Stadium,Pitampura West Enclave,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7461_Route.htm
+7462,165,Anand Vihar Isbt,Shahbad Dairy,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7462_Route.htm
+7463,170,Kendriya Terminal,Pitampura West Enclave,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7463_Route.htm
+7464,364,Lajpat Nagar,Kalyanpuri,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7464_Route.htm
+7465,581,Kendriya Terminal,Devli Village,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7465_Route.htm
+7466,838,Jama Masjid,Uttam Nagar Terminal,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7466_Route.htm
+7467,174,Azadpur,Kanjawala,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7467_Route.htm
+7468,392 EXP,Dhaula Kuan,Noida Sector 6,34,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7468_Route.htm
+7469,846,Tilak Nagar,Sultanpur,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7469_Route.htm
+7470,405,Mori Gate,Badarpur Mb Road,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7470_Route.htm
+7471,409,Railway Station,Molar Bandh School,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7471_Route.htm
+7472,410,Khiala Restt Colony,Jal Vihar Terminal,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7472_Route.htm
+7473,622,Mehrauli,Krishna Nagar,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7473_Route.htm
+7474,852,Ambedkar Stadium,Uttam Nagar Terminal,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7474_Route.htm
+7475,186,Isbt,Mukandpur,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7475_Route.htm
+7476,19 A,Palika Kendra,Jahangirpuri Block E,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7476_Route.htm
+7477,419,Railway Station,Ambedkar Nagar Terminal,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7477_Route.htm
+7478,Rl 77 EXT,New Delhi Railway Station Gate No 1,Dwarka Sector 19 Pocket 2,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7478_Route.htm
+7479,Yamuna Mudrika,Isbt Kashmiri Gate Nitiya Nand Marg,Yamuna Bridge East,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7479_Route.htm
+7480,935,Azadpur,Majra Dabas,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7480_Route.htm
+7481,947A,Bhatti Mines,Sawda Jj Colony,54,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7481_Route.htm
+7482,976,Inderlok Metro Station,Nithari Village,13,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7482_Route.htm
+7483,980,Kendriya Terminal,Nangloi Jj Colony,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7483_Route.htm
+7484,Gramin Mudrika,Qutab Garh,Qutab Enclave,60,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7484_Route.htm
+7485,MS,Gtb Nagar,Model Town Phase 2,46,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7485_Route.htm
+7486,885,Tilak Nagar,Rewla Khanpur,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7486_Route.htm
+7487,701,Narela,Najafgarh Terminal,54,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7487_Route.htm
+7488,706,Mori Gate Terminal,Harijan Basti Rajoukri,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7488_Route.htm
+7489,214,Kamla Market,New Seemapuri,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7489_Route.htm
+7490,448 A,Punjabi Bagh,Hamdard Nagar,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7490_Route.htm
+7491,908,Karampura Terminal,Sultanpur,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7491_Route.htm
+7492,227,Old Delhi Railway Station,Karawal Nagar,12,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7492_Route.htm
+7493,235,Wazirpur Depot Jj Colony,Nand Nagri Terminal,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7493_Route.htm
+7494,450,Anand Parbat,Jal Vihar Terminal,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7494_Route.htm
+7495,453,New Delhi Railway Station Gate No 2,Jaitpur Extension Islampur Road,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7495_Route.htm
+7496,457,New Delhi Railway Station Gate No 2,Molar Bandh School,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7496_Route.htm
+7497,922,Fatehpuri,Najafgarh Terminal,34,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7497_Route.htm
+7498,237,Jahangirpuri Block E,Babarpur Extension,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7498_Route.htm
+7499,462,Mori Gate,Maidan Garhi,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7499_Route.htm
+7500,465,Safdarjung Terminal,Madanpur Khadar Jj Colony,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7500_Route.htm
+7501,465 EXT,Safdarjung Terminal,Sarita Vihar,16,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7501_Route.htm
+7502,469,Anand Vihar Isbt,Ambedkar Nagar Terminal,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7502_Route.htm
+7503,724,Uttam Nagar Terminal,Nehru Place Terminal,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7503_Route.htm
+7504,104,Shivaji Stadium,Jharoda Village,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7504_Route.htm
+7505,262,Kalyan Vihar,Harsh Vihar,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7505_Route.htm
+7506,280,Kendriya Terminal,Nand Nagri Terminal,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7506_Route.htm
+7507,740,Anand Vihar Isbt,Uttam Nagar Terminal,34,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7507_Route.htm
+7508,107,Fatehpuri,Katwaria Sarai,33,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7508_Route.htm
+7509,281,Kendriya Terminal,Dilshad Garden Terminal,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7509_Route.htm
+7510,306,Nehru Place Terminal,Kalyanpuri,13,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7510_Route.htm
+7511,309,Anand Parbat,Kalyanpuri,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7511_Route.htm
+7512,310,Inderpuri,Jheel,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7512_Route.htm
+7513,502,Railway Station,Mehrauli,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7513_Route.htm
+7514,505,Kamla Market,Mehrauli,14,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7514_Route.htm
+7515,760,Bmd Chowk,Old Nangal,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7515_Route.htm
+7516,114A,Azadpur,Jatkhore Village,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7516_Route.htm
+7517,509,Safdarjung Terminal,Maidan Garhi,11,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7517_Route.htm
+7518,521,Rajinder Nagar Market,Ambedkar Nagar Sector 5,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7518_Route.htm
+7519,784 STA,Kamla Market,Yamuna Vihar Block C 1,13,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7519_Route.htm
+7520,125,Fatehpuri,Palla,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7520_Route.htm
+7521,131,Fatehpuri,Lampur Border,33,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7521_Route.htm
+7522,34,Mehrauli,Noida Sector 32 Ntpc,33,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7522_Route.htm
+7523,523,Dhaula Kuan,Bhatti Mines,25,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7523_Route.htm
+7524,529,Nehru Place Terminal,Nangloi Syed,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7524_Route.htm
+7525,533,Mori Gate Terminal,Mehrauli,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7525_Route.htm
+7526,807,Jama Masjid,Najafgarh Terminal,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7526_Route.htm
+7527,138,Fatehpuri,Hamidpur,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7527_Route.htm
+7528,539,Mehrauli,Nangloi,42,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7528_Route.htm
+7529,544,Rk Puram Sector 1,Badarpur Mb Road,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7529_Route.htm
+7530,358,Karol Bagh Terminal,New Seemapuri,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7530_Route.htm
+7531,829,Tilak Nagar,Shakarpur,21,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7531_Route.htm
+7532,161,Fatehpuri,Sultanpur Dabas,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7532_Route.htm
+7533,378,Kendriya Terminal,Mayur Vihar Phase 3,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7533_Route.htm
+7534,569 EXT,Safdarjung Terminal,Indra Enclave,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7534_Route.htm
+7535,835,Tilak Nagar,Dhansa Border,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7535_Route.htm
+7536,177,Mori Gate,Katwaria Sarai,33,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7536_Route.htm
+7537,400,Minto Road Terminal,Abul Fazal Enclave,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7537_Route.htm
+7538,847,New Seemapuri,Uttam Nagar Terminal,29,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7538_Route.htm
+7539,182 A,Isbt,Sukhbir Nagar,23,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7539_Route.htm
+7540,408,Raghubir Nagar Block F,Sarai Kale Khan Isbt,27,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7540_Route.htm
+7541,62,Kamla Market,Shahbad Dairy,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7541_Route.htm
+7542,864,Tilak Nagar,Nehru Place Terminal,31,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7542_Route.htm
+7543,190,Kendriya Terminal,Sant Nagar East Of Kailash,18,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7543_Route.htm
+7544,418,Jal Vihar Terminal,Shahdara,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7544_Route.htm
+7545,422,Mori Gate Terminal,Badarpur Mb Road,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7545_Route.htm
+7546,629,Mehrauli,Khyala Re Settlement Colony,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7546_Route.htm
+7547,680,Kendriya Terminal,Ambedkar Nagar Sector 4 Virat Cinema,20,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7547_Route.htm
+7548,878,Tilak Nagar,Malikpur Zar,24,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7548_Route.htm
+7549,TMS,Gtb Nagar,Model Town Phase 2,45,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7549_Route.htm
+7550,929 EXT,Tri Nagar Metro Station,Mubarakpur Dabas,15,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7550_Route.htm
+7551,930,Nehru Place,Pitampura West Enclave,28,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7551_Route.htm
+7552,934,Punjabi Bagh Terminal,Neelwal Village,17,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7552_Route.htm
+7553,939,Anand Vihar Isbt,Mangolpuri Block Q,30,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7553_Route.htm
+7554,942,Fatehpuri,Kair Village,36,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7554_Route.htm
+7555,951,Kamla Market,Pitampura West Enclave,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7555_Route.htm
+7556,953,Karol Bagh Terminal,Mangolpuri Block Q,19,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7556_Route.htm
+7557,978,Azadpur Terminal,Najafgarh,26,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7557_Route.htm
+7558,988,Palika Kendra,Qutab Garh,44,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7558_Route.htm
+7559,Najafgarh Zakhira Circular Sewa,Najafgarh Terminal,Najafgarh Police Station,40,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7559_Route.htm
+7560,RL 77,New Delhi Railway Station Gate No 1,Mangalpuri,22,http://www.onefivenine.com/india/BusRouteStage/bus_CityBus_7560_Route.htm
