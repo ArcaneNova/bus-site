@@ -53,7 +53,9 @@ OUT_DIR = os.path.join(project_root, "data")
 os.makedirs(OUT_DIR, exist_ok=True)
 
 # Configuration
-YEARS_OF_DATA = 3  # 2022-2024
+# Reduced for Colab compatibility: sampling strategy instead of exhaustive
+YEARS_OF_DATA = 1  # Effective: ~6 months of sampled data
+SAMPLING_RATIO = 0.5  # Sample 50% of days to stay under 1GB
 RANDOM_SEED = 42
 random.seed(RANDOM_SEED)
 np.random.seed(RANDOM_SEED)
@@ -310,7 +312,12 @@ def generate_demand_dataset(routes, stages_df):
         
         capacity = 60  # Standard DTC bus
         
-        for day_offset in range(365 * YEARS_OF_DATA):
+        # Sampling: 50% of days to reduce memory (Colab limit)
+        total_days = 365 * YEARS_OF_DATA
+        for day_offset in range(total_days):
+            if random.random() > SAMPLING_RATIO:
+                continue
+            
             date = start_date + timedelta(days=day_offset)
             
             is_wknd = is_weekend(date)
@@ -363,8 +370,8 @@ def generate_demand_dataset(routes, stages_df):
     return df
 
 def generate_delay_dataset(routes, stages_df):
-    """Generate 3-year delay dataset with realistic patterns."""
-    logger.info("🔄 Generating delay dataset (3 years)...")
+    """Generate delay dataset with realistic patterns (sampled for Colab)."""
+    logger.info("🔄 Generating delay dataset (sampled ~180 days)...")
     
     records = []
     start_date = datetime(2022, 1, 1)
@@ -382,7 +389,11 @@ def generate_delay_dataset(routes, stages_df):
         route_stages = stages_df[stages_df['url_route_id'] == route_id]
         total_stops = len(route_stages)
         
-        for day_offset in range(365 * YEARS_OF_DATA):
+        # Sampling: 50% of days to reduce memory (Colab limit)
+        total_days = 365 * YEARS_OF_DATA
+        for day_offset in range(total_days):
+            if random.random() > SAMPLING_RATIO:
+                continue
             date = start_date + timedelta(days=day_offset)
             
             is_wknd = is_weekend(date)
@@ -438,8 +449,8 @@ def generate_delay_dataset(routes, stages_df):
     return df
 
 def generate_anomaly_dataset(routes, stages_df):
-    """Generate anomaly dataset (normal + abnormal patterns)."""
-    logger.info("🔄 Generating anomaly dataset (3 years)...")
+    """Generate anomaly dataset (normal + abnormal patterns, sampled for Colab)."""
+    logger.info("🔄 Generating anomaly dataset (sampled ~180 days)...")
     
     records = []
     start_date = datetime(2022, 1, 1)
@@ -450,7 +461,12 @@ def generate_anomaly_dataset(routes, stages_df):
         real_distance = calculate_real_distance(route_id, stages_df)
         total_stops = len(stages_df[stages_df['url_route_id'] == route_id])
         
-        for day_offset in range(365 * YEARS_OF_DATA):
+        # Sampling: 50% of days to reduce memory (Colab limit)
+        total_days = 365 * YEARS_OF_DATA
+        for day_offset in range(total_days):
+            if random.random() > SAMPLING_RATIO:
+                continue
+            
             date = start_date + timedelta(days=day_offset)
             
             is_wknd = is_weekend(date)
