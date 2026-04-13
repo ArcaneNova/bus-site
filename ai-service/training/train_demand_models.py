@@ -88,10 +88,20 @@ except Exception as e:
 
 # Prepare features and target
 feature_cols = [col for col in df.columns if col != 'passenger_count']
-X = df[feature_cols].values
+X = df[feature_cols].copy()
 y = df['passenger_count'].values
 
-# Normalize
+# Handle categorical features
+categorical_cols = X.select_dtypes(include=['object']).columns.tolist()
+if categorical_cols:
+    print(f"   Encoding categorical features: {categorical_cols}")
+    # One-hot encode categorical features
+    X = pd.get_dummies(X, columns=categorical_cols, drop_first=True)
+    print(f"   After encoding: {X.shape[1]} features")
+
+X = X.values
+
+# Normalize only numerical features
 scaler = StandardScaler()
 X = scaler.fit_transform(X)
 

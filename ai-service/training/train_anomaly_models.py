@@ -1,345 +1,191 @@
 """
-train_anomaly_models.py
-Trains multiple anomaly detection models for bus behavior analysis.
+Train Anomaly Detection Models
 
-Models trained:
-1. Isolation Forest - Tree-based, very efficient
-2. Local Outlier Factor (LOF) - Density-based detection
-3. One-Class SVM - Kernel-based boundary detection
-4. Autoencoder - Deep learning reconstruction-based
-5. DBSCAN - Clustering-based anomalies
-6. Ensemble - Voting of multiple methods
-
-Output: Individual model files + comprehensive comparison metrics
-
-Usage: python training/train_anomaly_models.py
+Models:
+- Isolation Forest, LOF, One-Class SVM, Autoencoder, DBSCAN, Ensemble
 """
 
 import os
+import sys
 import json
-import logging
-import joblib
+import warnings
 import numpy as np
 import pandas as pd
+import joblib
+import tensorflow as tf
 from datetime import datetime
 from sklearn.preprocessing import StandardScaler
-from sklearn.model_selection import train_test_split
-from sklearn.metrics import (
-    precision_score, recall_score, f1_score, roc_auc_score,
-    confusion_matrix, classification_report
-)
 from sklearn.ensemble import IsolationForest
 from sklearn.neighbors import LocalOutlierFactor
 from sklearn.svm import OneClassSVM
 from sklearn.cluster import DBSCAN
 
-import tensorflow as tf
-from tensorflow.keras.models import Sequential, Model, clone_model
-from tensorflow.keras.layers import Dense, Input, Dropout, BatchNormalization
-from tensorflow.keras.callbacks import EarlyStopping
-from tensorflow.keras.optimizers import Adam
+warnings.filterwarnings('ignore')
+tf.get_logger().setLevel('ERROR')
 
-logging.basicConfig(level=logging.INFO, format="%(message)s")
-logger = logging.getLogger(__name__)
+# ════════════════════════════════════════════════════════════════════════════
 
-# ─────────────────────────────────────────────────────────────────────────
+SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
+PROJECT_ROOT = os.path.dirname(SCRIPT_DIR)
 
-# Resolve paths - works in both local and Colab environments
-script_dir = os.path.dirname(os.path.abspath(__file__))
-project_root = os.path.dirname(script_dir)  # ai-service/
-
-# Try multiple possible data paths
 DATA_PATH = None
-for possible_path in [
-    os.path.join(project_root, "data/anomaly_dataset.csv"),
+for path in [
+    os.path.join(PROJECT_ROOT, "data", "anomaly_dataset.csv"),
     "/content/bus-site/ai-service/data/anomaly_dataset.csv",
-    "anomaly_dataset.csv",
 ]:
-    if os.path.exists(possible_path):
-        DATA_PATH = possible_path
+    if os.path.exists(path):
+        DATA_PATH = os.path.abspath(path)
         break
 
-if DATA_PATH is None:
-    raise FileNotFoundError("❌ anomaly_dataset.csv not found in any expected location")
-
-SAVE_DIR = os.path.join(project_root, "models/saved")
+SAVE_DIR = os.path.join(PROJECT_ROOT, "models", "saved")
 os.makedirs(SAVE_DIR, exist_ok=True)
 
-FEATURES = ["speed_kmh", "delay_minutes", "passenger_load"]
-TARGET = "is_anomaly"
-TEST_SIZE = 0.20
-SEED = 42
-tf.random.set_seed(SEED)
-np.random.seed(SEED)
+print(f"\n╔{'═'*75}╗")
+print(f"║{'ANOMALY DETECTION - 6 METHODS COMPARISON':^75}║")
+print(f"╚{'═'*75}╝\n")
 
-# ─────────────────────────────────────────────────────────────────────────
-# Load & Preprocess
+if DATA_PATH is None or not os.path.exists(DATA_PATH):
+    print(f"❌ Dataset not found. Run: python enhanced_generate_dataset.py")
+    sys.exit(1)
 
-logger.info("🔄 Loading anomaly dataset...")
+# LOAD & PREPARE
+print(f"🔄 Loading anomaly dataset...")
 df = pd.read_csv(DATA_PATH)
-logger.info(f"   Loaded {len(df):,} records")
+print(f"   ✅ Loaded {len(df):,} records")
 
-X = df[FEATURES].values.astype(np.float32)
-y = df[TARGET].values.astype(np.int32)
+# Separate normal and anomaly data
+X_normal = df[df['anomaly_label'] == 0].copy()
+X_anomaly = df[df['anomaly_label'] == 1].copy()
 
-anomaly_count = y.sum()
-anomaly_pct = anomaly_count / len(y) * 100
+feature_cols = [col for col in df.columns if col not in ['anomaly_label']]
+X_all = df[feature_cols].copy()
+y_all = df['anomaly_label'].values
 
-logger.info(f"   Anomalies: {anomaly_count:,} ({anomaly_pct:.2f}%)")
-logger.info(f"   Features: {len(FEATURES)}")
+# Categorical encoding if any
+cat_cols = X_all.select_dtypes(include=['object']).columns.tolist()
+if cat_cols:
+    X_all = pd.get_dummies(X_all, columns=cat_cols, drop_first=True)
+    X_normal = pd.get_dummies(X_normal, columns=cat_cols, drop_first=True)
+    X_anomaly = pd.get_dummies(X_anomaly, columns=cat_cols, drop_first=True)
 
-# Train/val/test split
-X_train, X_test, y_train, y_test = train_test_split(
-    X, y, test_size=TEST_SIZE, shuffle=True, random_state=SEED, stratify=y
-)
+X_all = X_all.values
+X_normal = X_normal.values
+X_anomaly = X_anomaly.values
 
-X_train, X_val, y_train, y_val = train_test_split(
-    X_train, y_train, test_size=0.20, shuffle=True, random_state=SEED, stratify=y_train
-)
-
-logger.info(f"   Train: {len(X_train):,}  Val: {len(X_val):,}  Test: {len(X_test):,}")
-
-# Scale
 scaler = StandardScaler()
-X_train_s = scaler.fit_transform(X_train)
-X_val_s = scaler.transform(X_val)
-X_test_s = scaler.transform(X_test)
+X_all = scaler.fit_transform(X_all)
+X_normal = scaler.transform(X_normal)
+X_anomaly = scaler.transform(X_anomaly)
 
-# ─────────────────────────────────────────────────────────────────────────
-# Evaluation Function
+results = {"task": "anomaly_detection", "timestamp": datetime.now().isoformat(), "models": {}}
 
-def evaluate_anomaly(y_true, y_pred, model_name):
-    """Evaluate anomaly detection model."""
-    # Filter to only anomalies for positive evaluation
-    if y_true.sum() == 0:
-        logger.warning(f"   {model_name}: No anomalies in test set!")
-        return {"error": "No anomalies in test set"}
-    
-    precision = precision_score(y_true, y_pred, zero_division=0)
-    recall = recall_score(y_true, y_pred, zero_division=0)
-    f1 = f1_score(y_true, y_pred, zero_division=0)
-    
-    # For AUC, use a soft score if possible
-    try:
-        auc = roc_auc_score(y_true, y_pred)
-    except:
-        auc = None
-    
-    tn, fp, fn, tp = confusion_matrix(y_true, y_pred, labels=[0, 1]).ravel()
-    specificity = tn / (tn + fp) if (tn + fp) > 0 else 0
-    
-    logger.info(f"   {model_name}: Prec={precision:.3f}, Rec={recall:.3f}, F1={f1:.3f}, Spec={specificity:.3f}")
-    
-    return {
-        "precision": float(precision),
-        "recall": float(recall),
-        "f1": float(f1),
-        "specificity": float(specificity),
-        "confusion_matrix": {"tn": int(tn), "fp": int(fp), "fn": int(fn), "tp": int(tp)}
-    }
+print(f"   Normal: {len(X_normal):,}  Anomaly: {len(X_anomaly):,}\n")
 
-# ─────────────────────────────────────────────────────────────────────────
-# Model Training
+# ════════════════════════════════════════════════════════════════════════════
 
-models_dict = {}
-metrics_dict = {}
-predictions_dict = {}
-
-# ──────────────────────────────────────────────────────────────────
-# 1. Isolation Forest
-# ──────────────────────────────────────────────────────────────────
-
-logger.info("\n🔨 Building Isolation Forest model...")
-if_model = IsolationForest(
-    n_estimators=200,
-    contamination=anomaly_pct / 100,
-    max_samples="auto",
-    random_state=SEED,
-    n_jobs=-1,
-)
-
-logger.info("   Training Isolation Forest...")
-if_model.fit(X_train_s)
-
-y_pred_if = if_model.predict(X_test_s)
-y_pred_if = np.where(y_pred_if == -1, 1, 0)  # Convert -1 to 1 for anomaly
-metrics_dict["IsolationForest"] = evaluate_anomaly(y_test, y_pred_if, "Isolation Forest")
-predictions_dict["IsolationForest"] = y_pred_if
-
-models_dict["isolation_forest"] = if_model
+print(f"🔨 [1/6] Isolation Forest")
+if_model = IsolationForest(contamination=0.05, random_state=42, n_jobs=-1)
+if_model.fit(X_normal)
+y_pred_if = if_model.predict(X_all)
+y_pred_if = np.where(y_pred_if == -1, 1, 0)
+tp = np.sum((y_pred_if == 1) & (y_all == 1))
+fp = np.sum((y_pred_if == 1) & (y_all == 0))
+fn = np.sum((y_pred_if == 0) & (y_all == 1))
+precision = tp / (tp + fp + 1e-8)
+recall = tp / (tp + fn + 1e-8)
+f1 = 2 * precision * recall / (precision + recall + 1e-8)
 joblib.dump(if_model, os.path.join(SAVE_DIR, "anomaly_isolation_forest_multimodel.pkl"))
-logger.info("   ✅ Saved Isolation Forest model")
+results["models"]["isolation_forest"] = {"precision": float(precision), "recall": float(recall), "f1": float(f1)}
+print(f"   ✅ F1={f1:.3f}, Precision={precision:.3f}, Recall={recall:.3f}\n")
 
-# ──────────────────────────────────────────────────────────────────
-# 2. Local Outlier Factor (LOF)
-# ──────────────────────────────────────────────────────────────────
-
-logger.info("\n🔨 Building LOF model...")
-lof_model = LocalOutlierFactor(
-    n_neighbors=20,
-    contamination=anomaly_pct / 100,
-    novelty=False,
-    n_jobs=-1,
-)
-
-logger.info("   Training LOF...")
-lof_model.fit(X_train_s)
-
-y_pred_lof = lof_model.predict(X_test_s)
+print(f"🔨 [2/6] Local Outlier Factor (LOF)")
+lof_model = LocalOutlierFactor(n_neighbors=20, contamination=0.05, n_jobs=-1)
+y_pred_lof = lof_model.fit_predict(X_all)
 y_pred_lof = np.where(y_pred_lof == -1, 1, 0)
-metrics_dict["LOF"] = evaluate_anomaly(y_test, y_pred_lof, "LOF")
-predictions_dict["LOF"] = y_pred_lof
-
-models_dict["lof"] = lof_model
+tp = np.sum((y_pred_lof == 1) & (y_all == 1))
+fp = np.sum((y_pred_lof == 1) & (y_all == 0))
+fn = np.sum((y_pred_lof == 0) & (y_all == 1))
+precision = tp / (tp + fp + 1e-8)
+recall = tp / (tp + fn + 1e-8)
+f1 = 2 * precision * recall / (precision + recall + 1e-8)
 joblib.dump(lof_model, os.path.join(SAVE_DIR, "anomaly_lof_multimodel.pkl"))
-logger.info("   ✅ Saved LOF model")
+results["models"]["lof"] = {"precision": float(precision), "recall": float(recall), "f1": float(f1)}
+print(f"   ✅ F1={f1:.3f}, Precision={precision:.3f}, Recall={recall:.3f}\n")
 
-# ──────────────────────────────────────────────────────────────────
-# 3. One-Class SVM
-# ──────────────────────────────────────────────────────────────────
-
-logger.info("\n🔨 Building One-Class SVM model...")
-ocsvm_model = OneClassSVM(
-    kernel="rbf",
-    gamma="auto",
-    nu=anomaly_pct / 100,
-)
-
-logger.info("   Training One-Class SVM...")
-ocsvm_model.fit(X_train_s)
-
-y_pred_ocsvm = ocsvm_model.predict(X_test_s)
+print(f"🔨 [3/6] One-Class SVM")
+ocsvm_model = OneClassSVM(kernel='rbf', gamma='auto', nu=0.05)
+ocsvm_model.fit(X_normal)
+y_pred_ocsvm = ocsvm_model.predict(X_all)
 y_pred_ocsvm = np.where(y_pred_ocsvm == -1, 1, 0)
-metrics_dict["OneClassSVM"] = evaluate_anomaly(y_test, y_pred_ocsvm, "One-Class SVM")
-predictions_dict["OneClassSVM"] = y_pred_ocsvm
-
-models_dict["one_class_svm"] = ocsvm_model
+tp = np.sum((y_pred_ocsvm == 1) & (y_all == 1))
+fp = np.sum((y_pred_ocsvm == 1) & (y_all == 0))
+fn = np.sum((y_pred_ocsvm == 0) & (y_all == 1))
+precision = tp / (tp + fp + 1e-8)
+recall = tp / (tp + fn + 1e-8)
+f1 = 2 * precision * recall / (precision + recall + 1e-8)
 joblib.dump(ocsvm_model, os.path.join(SAVE_DIR, "anomaly_ocsvm_multimodel.pkl"))
-logger.info("   ✅ Saved One-Class SVM model")
+results["models"]["ocsvm"] = {"precision": float(precision), "recall": float(recall), "f1": float(f1)}
+print(f"   ✅ F1={f1:.3f}, Precision={precision:.3f}, Recall={recall:.3f}\n")
 
-# ──────────────────────────────────────────────────────────────────
-# 4. Autoencoder (Deep Learning)
-# ──────────────────────────────────────────────────────────────────
-
-logger.info("\n🔨 Building Autoencoder model...")
-
-# Use only normal data for training
-normal_indices = y_train == 0
-X_train_normal = X_train_s[normal_indices]
-
-encoding_dim = 2
-encoder = Sequential([
-    Dense(8, activation="relu", input_shape=(len(FEATURES),)),
-    Dropout(0.2),
-    Dense(encoding_dim, activation="relu"),
+print(f"🔨 [4/6] Autoencoder (Neural Network)")
+from tensorflow.keras import Sequential, layers
+autoencoder = Sequential([
+    layers.Dense(32, activation='relu', input_shape=(X_normal.shape[1],)),
+    layers.Dense(16, activation='relu'),
+    layers.Dense(8, activation='relu'),
+    layers.Dense(16, activation='relu'),
+    layers.Dense(32, activation='relu'),
+    layers.Dense(X_normal.shape[1])
 ])
+autoencoder.compile(optimizer='adam', loss='mse')
+autoencoder.fit(X_normal, X_normal, epochs=20, batch_size=32, validation_split=0.1, verbose=1)
+X_pred = autoencoder.predict(X_all, verbose=0)
+mse = np.mean((X_all - X_pred) ** 2, axis=1)
+threshold = np.percentile(mse, 95)
+y_pred_ae = (mse > threshold).astype(int)
+tp = np.sum((y_pred_ae == 1) & (y_all == 1))
+fp = np.sum((y_pred_ae == 1) & (y_all == 0))
+fn = np.sum((y_pred_ae == 0) & (y_all == 1))
+precision = tp / (tp + fp + 1e-8)
+recall = tp / (tp + fn + 1e-8)
+f1 = 2 * precision * recall / (precision + recall + 1e-8)
+autoencoder.save(os.path.join(SAVE_DIR, "anomaly_autoencoder_multimodel.keras"))
+joblib.dump(threshold, os.path.join(SAVE_DIR, "anomaly_ae_threshold.pkl"))
+results["models"]["autoencoder"] = {"precision": float(precision), "recall": float(recall), "f1": float(f1)}
+print(f"   ✅ F1={f1:.3f}, Precision={precision:.3f}, Recall={recall:.3f}\n")
 
-decoder = Sequential([
-    Dense(8, activation="relu", input_shape=(encoding_dim,)),
-    Dropout(0.2),
-    Dense(len(FEATURES), activation="sigmoid"),
-])
-
-autoencoder = Sequential([encoder, decoder])
-autoencoder.compile(optimizer=Adam(learning_rate=0.001), loss="mse")
-
-logger.info("   Training Autoencoder...")
-autoencoder.fit(
-    X_train_normal, X_train_normal,
-    validation_data=(X_val_s, X_val_s),
-    epochs=100,
-    batch_size=32,
-    callbacks=[EarlyStopping(monitor="val_loss", patience=15, restore_best_weights=True)],
-    verbose=0,
-)
-
-# Calculate reconstruction error
-X_test_pred = autoencoder.predict(X_test_s, verbose=0)
-reconstruction_errors = np.mean(np.abs(X_test_s - X_test_pred), axis=1)
-
-# Threshold: 95th percentile of training errors
-train_errors = np.mean(np.abs(X_train_normal - autoencoder.predict(X_train_normal, verbose=0)), axis=1)
-threshold = np.percentile(train_errors, 95)
-
-y_pred_ae = (reconstruction_errors > threshold).astype(int)
-metrics_dict["Autoencoder"] = evaluate_anomaly(y_test, y_pred_ae, "Autoencoder")
-predictions_dict["Autoencoder"] = y_pred_ae
-
-autoencoder.save(os.path.join(SAVE_DIR, "anomaly_autoencoder_multimodel"))
-logger.info("   ✅ Saved Autoencoder model")
-
-# ──────────────────────────────────────────────────────────────────
-# 5. DBSCAN (Clustering-based)
-# ──────────────────────────────────────────────────────────────────
-
-logger.info("\n🔨 Building DBSCAN model...")
-# DBSCAN doesn't have a clear predict method, so we'll use it for outlier detection
-# by finding noise points
-
-logger.info("   Training DBSCAN...")
+print(f"🔨 [5/6] DBSCAN")
 dbscan_model = DBSCAN(eps=0.5, min_samples=5)
-dbscan_labels = dbscan_model.fit_predict(X_test_s)
-
-y_pred_dbscan = (dbscan_labels == -1).astype(int)  # -1 indicates noise/outliers
-metrics_dict["DBSCAN"] = evaluate_anomaly(y_test, y_pred_dbscan, "DBSCAN")
-predictions_dict["DBSCAN"] = y_pred_dbscan
-
+y_pred_dbscan = dbscan_model.fit_predict(X_all)
+y_pred_dbscan = np.where(y_pred_dbscan == -1, 1, 0)
+tp = np.sum((y_pred_dbscan == 1) & (y_all == 1))
+fp = np.sum((y_pred_dbscan == 1) & (y_all == 0))
+fn = np.sum((y_pred_dbscan == 0) & (y_all == 1))
+precision = tp / (tp + fp + 1e-8)
+recall = tp / (tp + fn + 1e-8)
+f1 = 2 * precision * recall / (precision + recall + 1e-8)
 joblib.dump(dbscan_model, os.path.join(SAVE_DIR, "anomaly_dbscan_multimodel.pkl"))
-logger.info("   ✅ Saved DBSCAN model")
+results["models"]["dbscan"] = {"precision": float(precision), "recall": float(recall), "f1": float(f1)}
+print(f"   ✅ F1={f1:.3f}, Precision={precision:.3f}, Recall={recall:.3f}\n")
 
-# ──────────────────────────────────────────────────────────────────
-# 6. Ensemble (Voting)
-# ──────────────────────────────────────────────────────────────────
+print(f"🔨 [6/6] Ensemble Voting")
+votes = y_pred_if + y_pred_lof + y_pred_ocsvm + y_pred_ae + y_pred_dbscan
+y_pred_ensemble = (votes >= 3).astype(int)
+tp = np.sum((y_pred_ensemble == 1) & (y_all == 1))
+fp = np.sum((y_pred_ensemble == 1) & (y_all == 0))
+fn = np.sum((y_pred_ensemble == 0) & (y_all == 1))
+precision = tp / (tp + fp + 1e-8)
+recall = tp / (tp + fn + 1e-8)
+f1 = 2 * precision * recall / (precision + recall + 1e-8)
+results["models"]["ensemble"] = {"precision": float(precision), "recall": float(recall), "f1": float(f1)}
+print(f"   ✅ F1={f1:.3f}, Precision={precision:.3f}, Recall={recall:.3f}\n")
 
-logger.info("\n🔨 Building Ensemble Voting model...")
-
-# Combine predictions from all models (majority voting)
-ensemble_predictions = np.column_stack([
-    predictions_dict["IsolationForest"],
-    predictions_dict["LOF"],
-    predictions_dict["OneClassSVM"],
-    predictions_dict["Autoencoder"],
-    predictions_dict["DBSCAN"],
-])
-
-# Majority voting
-y_pred_ensemble = (ensemble_predictions.sum(axis=1) >= 3).astype(int)
-metrics_dict["Ensemble"] = evaluate_anomaly(y_test, y_pred_ensemble, "Ensemble")
-predictions_dict["Ensemble"] = y_pred_ensemble
-
-logger.info("   ✅ Ensemble created (majority voting of 5 models)")
-
-# Save scaler
+# SAVE
 joblib.dump(scaler, os.path.join(SAVE_DIR, "anomaly_scaler_multimodel.pkl"))
-joblib.dump({"threshold": float(threshold)}, os.path.join(SAVE_DIR, "anomaly_ae_threshold.pkl"))
+with open(os.path.join(SAVE_DIR, "anomaly_comparison_report.json"), 'w') as f:
+    json.dump(results, f, indent=2)
 
-# ─────────────────────────────────────────────────────────────────────────
-# Comparison Report
-
-logger.info("\n" + "="*70)
-logger.info("📊 ANOMALY DETECTION - MODEL COMPARISON REPORT")
-logger.info("="*70)
-
-comparison = {
-    "timestamp": datetime.now().isoformat(),
-    "test_set_size": len(y_test),
-    "anomaly_rate": float(anomaly_pct),
-    "models": metrics_dict,
-}
-
-# Find best model
-best_model = max(metrics_dict.items(), key=lambda x: x[1].get("f1", 0))
-
-logger.info(f"\n🏆 Best Model (by F1): {best_model[0]}")
-logger.info(f"   F1: {best_model[1]['f1']:.3f}")
-logger.info(f"   Precision: {best_model[1]['precision']:.3f}")
-logger.info(f"   Recall: {best_model[1]['recall']:.3f}")
-logger.info(f"   Specificity: {best_model[1]['specificity']:.3f}")
-
-# Save comparison
-report_path = os.path.join(SAVE_DIR, "anomaly_comparison_report.json")
-with open(report_path, "w") as f:
-    json.dump(comparison, f, indent=2)
-
-logger.info(f"\n📄 Full report saved to: {report_path}")
-logger.info("\n✨ Anomaly detection model training complete!")
+print(f"╔{'═'*75}╗")
+print(f"║{'✅ ANOMALY DETECTION TRAINING COMPLETE':^75}║")
+print(f"╚{'═'*75}╝\n")
+print(f"📊 Results saved to: {SAVE_DIR}\n")
