@@ -61,21 +61,41 @@ feature_cols = [col for col in df.columns if col not in ['anomaly_label']]
 X_all = df[feature_cols].copy()
 y_all = df['anomaly_label'].values
 
+print(f"   Initial shape: {X_all.shape}")
+print(f"   Initial columns: {X_all.columns.tolist()}")
+print(f"   Dtypes:\n{X_all.dtypes}")
+
 # Categorical encoding if any
 cat_cols = X_all.select_dtypes(include=['object']).columns.tolist()
+print(f"   🔍 Detected categorical columns: {cat_cols}")
+
 if cat_cols:
-    X_all = pd.get_dummies(X_all, columns=cat_cols, drop_first=True)
-    X_normal = pd.get_dummies(X_normal, columns=cat_cols, drop_first=True)
-    X_anomaly = pd.get_dummies(X_anomaly, columns=cat_cols, drop_first=True)
+    print(f"   🔄 Encoding {len(cat_cols)} categorical columns...")
+    for col in cat_cols:
+        print(f"      • {col}: {X_all[col].unique()[:5].tolist()}")
+    
+    X_all = pd.get_dummies(X_all, columns=cat_cols, drop_first=True, dtype=float)
+    X_normal = pd.get_dummies(X_normal, columns=cat_cols, drop_first=True, dtype=float)
+    X_anomaly = pd.get_dummies(X_anomaly, columns=cat_cols, drop_first=True, dtype=float)
+    print(f"   ✅ After encoding: {X_all.shape[1]} features")
 
-X_all = X_all.values
-X_normal = X_normal.values
-X_anomaly = X_anomaly.values
+# Convert to numpy and ensure float type
+print(f"   🔄 Converting to numpy (float32)...")
+X_all = X_all.values.astype(np.float32)
+X_normal = X_normal.values.astype(np.float32)
+X_anomaly = X_anomaly.values.astype(np.float32)
 
+# Handle any NaN values
+X_all = np.nan_to_num(X_all, nan=0.0, posinf=0.0, neginf=0.0)
+X_normal = np.nan_to_num(X_normal, nan=0.0, posinf=0.0, neginf=0.0)
+X_anomaly = np.nan_to_num(X_anomaly, nan=0.0, posinf=0.0, neginf=0.0)
+
+print(f"   🔄 Scaling features with StandardScaler...")
 scaler = StandardScaler()
 X_all = scaler.fit_transform(X_all)
 X_normal = scaler.transform(X_normal)
 X_anomaly = scaler.transform(X_anomaly)
+print(f"   ✅ Scaling complete")
 
 results = {"task": "anomaly_detection", "timestamp": datetime.now().isoformat(), "models": {}}
 

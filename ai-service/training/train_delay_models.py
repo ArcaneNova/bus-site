@@ -62,14 +62,34 @@ feature_cols = [col for col in df.columns if col not in ['delay_minutes', 'is_de
 X = df[feature_cols].copy()
 y_reg = df['delay_minutes'].values
 
+print(f"   Initial shape: {X.shape}")
+print(f"   Initial columns: {X.columns.tolist()}")
+print(f"   Dtypes:\n{X.dtypes}")
+
 # Categorical encoding
 cat_cols = X.select_dtypes(include=['object']).columns.tolist()
-if cat_cols:
-    X = pd.get_dummies(X, columns=cat_cols, drop_first=True)
+print(f"   🔍 Detected categorical columns: {cat_cols}")
 
-X = X.values
+if cat_cols:
+    print(f"   🔄 Encoding {len(cat_cols)} categorical columns...")
+    for col in cat_cols:
+        print(f"      • {col}: {X[col].unique()[:5].tolist()}")
+    
+    X = pd.get_dummies(X, columns=cat_cols, drop_first=True, dtype=float)
+    print(f"   ✅ After encoding: {X.shape[1]} features")
+
+# Convert to numpy and ensure float type
+print(f"   🔄 Converting to numpy (float32)...")
+X = X.values.astype(np.float32)
+print(f"   ✅ Array dtype: {X.dtype}, shape: {X.shape}")
+
+# Handle any NaN values
+X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
+
+print(f"   🔄 Scaling features with StandardScaler...")
 scaler = StandardScaler()
 X = scaler.fit_transform(X)
+print(f"   ✅ Scaling complete")
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y_reg, test_size=0.2, random_state=42, shuffle=False
