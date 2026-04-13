@@ -257,6 +257,41 @@ print("   • evaluation_results/*.csv (comparison tables)")
 
 **⏱️ Time: 2 minutes**
 
+---
+
+## 🔧 CRITICAL FIXES APPLIED (April 13, 2026)
+
+### Issue 1: Keras SavedModel Format Error
+**Problem:** TensorFlow 2.16+ requires `.keras` extension instead of directory
+**Error:** `ValueError: Invalid filepath extension for saving`
+**Fix:** ✅ Changed all model saves from `model.save(path)` to `model.save(path.keras)`
+
+### Issue 2: Dataset Too Large for Colab
+**Problem:** 14.7M rows crashed Colab memory
+**Solution:** ✅ Reduced to 2.4M rows (6 months selective sampling) - still publication-quality
+**Result:** All models now train without OOM errors
+
+### Issue 3: File Path Resolution Issues
+**Problem:** Scripts couldn't find datasets in Colab environment
+**Solution:** ✅ Added multi-location path detection:
+   - Local: `../data/demand_dataset.csv`
+   - Colab: `/content/bus-site/ai-service/data/demand_dataset.csv`
+   - Relative: `data/demand_dataset.csv`
+
+### Issue 4: Anomaly Dataset Generation Error
+**Problem:** `AttributeError: 'float' object has no attribute 'clip'`
+**Fix:** ✅ Wrapped scalar in numpy array: `np.array([np.random.exponential(3)]).clip(0, 10)[0]`
+
+### Issue 5: Training Progress Not Visible
+**Problem:** No feedback during long training runs
+**Fix:** ✅ Added:
+   - Model progress: `verbose=1` in Keras training
+   - Epoch-by-epoch loss tracking
+   - Test set evaluation after each model
+   - Clear section headers for each model
+
+---
+
 #### **Cell 8: Load & Display Results**
 ```python
 import json
