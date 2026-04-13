@@ -65,37 +65,66 @@ print(f"   Initial shape: {X_all.shape}")
 print(f"   Initial columns: {X_all.columns.tolist()}")
 print(f"   Dtypes:\n{X_all.dtypes}")
 
-# Categorical encoding if any
-cat_cols = X_all.select_dtypes(include=['object']).columns.tolist()
-print(f"   🔍 Detected categorical columns: {cat_cols}")
+# CRITICAL: Detect and encode ALL categorical columns BEFORE scaling
+print(f"\n   🔍 Detecting categorical columns...")
+categorical_cols = list(X_all.select_dtypes(include=['object']).columns)
+print(f"      Found: {categorical_cols}")
 
-if cat_cols:
-    print(f"   🔄 Encoding {len(cat_cols)} categorical columns...")
-    for col in cat_cols:
-        print(f"      • {col}: {X_all[col].unique()[:5].tolist()}")
+if len(categorical_cols) > 0:
+    print(f"   🔄 Encoding {len(categorical_cols)} categorical columns with pd.get_dummies()...")
+    for col in categorical_cols:
+        unique_vals = X_all[col].unique()[:5].tolist()
+        print(f"      • {col}: {unique_vals}")
     
-    X_all = pd.get_dummies(X_all, columns=cat_cols, drop_first=True, dtype=float)
-    X_normal = pd.get_dummies(X_normal, columns=cat_cols, drop_first=True, dtype=float)
-    X_anomaly = pd.get_dummies(X_anomaly, columns=cat_cols, drop_first=True, dtype=float)
-    print(f"   ✅ After encoding: {X_all.shape[1]} features")
+    # ONE-HOT ENCODE - this is CRITICAL for all three datasets
+    X_all = pd.get_dummies(X_all, columns=categorical_cols, drop_first=True, dtype=np.float64)
+    X_normal = pd.get_dummies(X_normal, columns=categorical_cols, drop_first=True, dtype=np.float64)
+    X_anomaly = pd.get_dummies(X_anomaly, columns=categorical_cols, drop_first=True, dtype=np.float64)
+    print(f"   ✅ After encoding: X_all shape = {X_all.shape} (features now numeric)")
+else:
+    print(f"   ℹ️  No categorical columns found - all numeric")
 
-# Convert to numpy and ensure float type
-print(f"   🔄 Converting to numpy (float32)...")
-X_all = X_all.values.astype(np.float32)
-X_normal = X_normal.values.astype(np.float32)
-X_anomaly = X_anomaly.values.astype(np.float32)
+# Verify all columns are numeric BEFORE converting to numpy
+print(f"\n   🔄 Verifying all columns are numeric...")
+non_numeric_all = X_all.select_dtypes(exclude=[np.number]).columns.tolist()
+non_numeric_norm = X_normal.select_dtypes(exclude=[np.number]).columns.tolist()
+non_numeric_anom = X_anomaly.select_dtypes(exclude=[np.number]).columns.tolist()
 
-# Handle any NaN values
-X_all = np.nan_to_num(X_all, nan=0.0, posinf=0.0, neginf=0.0)
-X_normal = np.nan_to_num(X_normal, nan=0.0, posinf=0.0, neginf=0.0)
-X_anomaly = np.nan_to_num(X_anomaly, nan=0.0, posinf=0.0, neginf=0.0)
+if len(non_numeric_all) + len(non_numeric_norm) + len(non_numeric_anom) > 0:
+    print(f"      ⚠️  WARNING: Non-numeric columns still exist")
+    print(f"      Forcing conversion to float64...")
+    X_all = X_all.astype(np.float64)
+    X_normal = X_normal.astype(np.float64)
+    X_anomaly = X_anomaly.astype(np.float64)
+else:
+    print(f"      ✅ All columns are numeric")
 
-print(f"   🔄 Scaling features with StandardScaler...")
-scaler = StandardScaler()
-X_all = scaler.fit_transform(X_all)
-X_normal = scaler.transform(X_normal)
-X_anomaly = scaler.transform(X_anomaly)
-print(f"   ✅ Scaling complete")
+# Convert to numpy array (MUST be numeric at this point)
+print(f"   🔄 Converting to numpy arrays...")
+X_all_array = X_all.values.astype(np.float32)
+X_normal_array = X_normal.values.astype(np.float32)
+X_anomaly_array = X_anomaly.values.astype(np.float32)
+
+# Handle NaN/inf values
+print(f"   🔄 Handling NaN and inf values...")
+X_all_array = np.nan_to_num(X_all_array, nan=0.0, posinf=0.0, neginf=0.0)
+X_normal_array = np.nan_to_num(X_normal_array, nan=0.0, posinf=0.0, neginf=0.0)
+X_anomaly_array = np.nan_to_num(X_anomaly_array, nan=0.0, posinf=0.0, neginf=0.0)
+
+# NOW scale (this should work since we have float32 arrays)
+print(f"   🔄 Scaling with StandardScaler...")
+try:
+    scaler = StandardScaler()
+    X_all = scaler.fit_transform(X_all_array)
+    X_normal = scaler.transform(X_normal_array)
+    X_anomaly = scaler.transform(X_anomaly_array)
+    print(f"   ✅ Scaling successful! Shapes: X_all={X_all.shape}, X_normal={X_normal.shape}, X_anomaly={X_anomaly.shape}")
+except ValueError as e:
+    print(f"   ❌ CRITICAL ERROR during scaling: {e}")
+    print(f"      X_all_array: shape={X_all_array.shape}, dtype={X_all_array.dtype}")
+    print(f"      X_normal_array: shape={X_normal_array.shape}, dtype={X_normal_array.dtype}")
+    print(f"      X_anomaly_array: shape={X_anomaly_array.shape}, dtype={X_anomaly_array.dtype}")
+    sys.exit(1)
 
 results = {"task": "anomaly_detection", "timestamp": datetime.now().isoformat(), "models": {}}
 

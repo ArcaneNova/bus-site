@@ -66,30 +66,58 @@ print(f"   Initial shape: {X.shape}")
 print(f"   Initial columns: {X.columns.tolist()}")
 print(f"   Dtypes:\n{X.dtypes}")
 
-# Categorical encoding
-cat_cols = X.select_dtypes(include=['object']).columns.tolist()
-print(f"   🔍 Detected categorical columns: {cat_cols}")
+# CRITICAL: Detect and encode ALL categorical columns BEFORE scaling
+print(f"\n   🔍 Detecting categorical columns...")
+categorical_cols = list(X.select_dtypes(include=['object']).columns)
+print(f"      Found: {categorical_cols}")
 
-if cat_cols:
-    print(f"   🔄 Encoding {len(cat_cols)} categorical columns...")
-    for col in cat_cols:
-        print(f"      • {col}: {X[col].unique()[:5].tolist()}")
+if len(categorical_cols) > 0:
+    print(f"   🔄 Encoding {len(categorical_cols)} categorical columns with pd.get_dummies()...")
+    for col in categorical_cols:
+        unique_vals = X[col].unique()[:5].tolist()
+        print(f"      • {col}: {unique_vals}")
     
-    X = pd.get_dummies(X, columns=cat_cols, drop_first=True, dtype=float)
-    print(f"   ✅ After encoding: {X.shape[1]} features")
+    # ONE-HOT ENCODE - this is CRITICAL
+    X = pd.get_dummies(X, columns=categorical_cols, drop_first=True, dtype=np.float64)
+    print(f"   ✅ After encoding: X shape = {X.shape} (features now numeric)")
+else:
+    print(f"   ℹ️  No categorical columns found - all numeric")
 
-# Convert to numpy and ensure float type
-print(f"   🔄 Converting to numpy (float32)...")
-X = X.values.astype(np.float32)
-print(f"   ✅ Array dtype: {X.dtype}, shape: {X.shape}")
+# Verify all columns are numeric BEFORE converting to numpy
+print(f"\n   🔄 Verifying all columns are numeric...")
+non_numeric = X.select_dtypes(exclude=[np.number]).columns.tolist()
+if len(non_numeric) > 0:
+    print(f"      ⚠️  WARNING: Non-numeric columns still exist: {non_numeric}")
+    print(f"      Forcing conversion to float64...")
+    X = X.astype(np.float64)
+else:
+    print(f"      ✅ All columns are numeric")
 
-# Handle any NaN values
-X = np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
+# Convert to numpy array (MUST be numeric at this point)
+print(f"   🔄 Converting to numpy array...")
+X_array = X.values
+print(f"      Shape: {X_array.shape}, dtype: {X_array.dtype}")
 
-print(f"   🔄 Scaling features with StandardScaler...")
-scaler = StandardScaler()
-X = scaler.fit_transform(X)
-print(f"   ✅ Scaling complete")
+# Ensure float32 for compatibility
+X_array = X_array.astype(np.float32)
+print(f"      After float32 conversion: dtype = {X_array.dtype}")
+
+# Handle NaN/inf values
+print(f"   🔄 Handling NaN and inf values...")
+X_array = np.nan_to_num(X_array, nan=0.0, posinf=0.0, neginf=0.0)
+
+# NOW scale (this should work since we have float32 array)
+print(f"   🔄 Scaling with StandardScaler...")
+try:
+    scaler = StandardScaler()
+    X = scaler.fit_transform(X_array)
+    print(f"   ✅ Scaling successful! Shape: {X.shape}")
+except ValueError as e:
+    print(f"   ❌ CRITICAL ERROR during scaling: {e}")
+    print(f"      Array shape: {X_array.shape}")
+    print(f"      Array dtype: {X_array.dtype}")
+    print(f"      Sample values: {X_array[0, :5]}")
+    sys.exit(1)
 
 X_train, X_test, y_train, y_test = train_test_split(
     X, y_reg, test_size=0.2, random_state=42, shuffle=False
