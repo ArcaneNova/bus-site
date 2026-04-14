@@ -39,10 +39,12 @@ for path in [
 
 SAVE_DIR = os.path.join(PROJECT_ROOT, "models", "saved")
 os.makedirs(SAVE_DIR, exist_ok=True)
+SCRIPT_VERSION = "2026-04-14-fix"
 
 print(f"\n╔{'═'*75}╗")
 print(f"║{'ANOMALY DETECTION - 6 METHODS COMPARISON':^75}║")
 print(f"╚{'═'*75}╝\n")
+print(f"   Trainer version: {SCRIPT_VERSION}")
 
 if DATA_PATH is None or not os.path.exists(DATA_PATH):
     print(f"❌ Dataset not found. Run: python enhanced_generate_dataset.py")
@@ -60,6 +62,20 @@ X_anomaly = df[df['anomaly_label'] == 1].copy()
 feature_cols = [col for col in df.columns if col not in ['anomaly_label']]
 X_all = df[feature_cols].copy()
 y_all = df['anomaly_label'].values
+
+if 'date' in X_all.columns:
+    print(f"\n   📅 Expanding raw date column into numeric features...")
+    parsed_dates = pd.to_datetime(X_all['date'], errors='coerce')
+    X_all['date_year'] = parsed_dates.dt.year.fillna(0).astype(np.int16)
+    X_all['date_dayofyear'] = parsed_dates.dt.dayofyear.fillna(0).astype(np.int16)
+    X_normal['date_year'] = pd.to_datetime(X_normal['date'], errors='coerce').dt.year.fillna(0).astype(np.int16)
+    X_normal['date_dayofyear'] = pd.to_datetime(X_normal['date'], errors='coerce').dt.dayofyear.fillna(0).astype(np.int16)
+    X_anomaly['date_year'] = pd.to_datetime(X_anomaly['date'], errors='coerce').dt.year.fillna(0).astype(np.int16)
+    X_anomaly['date_dayofyear'] = pd.to_datetime(X_anomaly['date'], errors='coerce').dt.dayofyear.fillna(0).astype(np.int16)
+    X_all = X_all.drop(columns=['date'])
+    X_normal = X_normal.drop(columns=['date'])
+    X_anomaly = X_anomaly.drop(columns=['date'])
+    print(f"      Added: date_year, date_dayofyear; dropped raw date")
 
 print(f"   Initial shape: {X_all.shape}")
 print(f"   Initial columns: {X_all.columns.tolist()}")

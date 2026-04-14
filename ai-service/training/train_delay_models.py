@@ -44,10 +44,12 @@ for path in [
 
 SAVE_DIR = os.path.join(PROJECT_ROOT, "models", "saved")
 os.makedirs(SAVE_DIR, exist_ok=True)
+SCRIPT_VERSION = "2026-04-14-fix"
 
 print(f"\n╔{'═'*75}╗")
 print(f"║{'DELAY PREDICTION - 6 REGRESSION MODELS':^75}║")
 print(f"╚{'═'*75}╝\n")
+print(f"   Trainer version: {SCRIPT_VERSION}")
 
 if DATA_PATH is None or not os.path.exists(DATA_PATH):
     print(f"❌ Dataset not found. Run: python enhanced_generate_dataset.py")
@@ -61,6 +63,14 @@ print(f"   ✅ Loaded {len(df):,} records")
 feature_cols = [col for col in df.columns if col not in ['delay_minutes', 'is_delayed']]
 X = df[feature_cols].copy()
 y_reg = df['delay_minutes'].values
+
+if 'date' in X.columns:
+    print(f"\n   📅 Expanding raw date column into numeric features...")
+    parsed_dates = pd.to_datetime(X['date'], errors='coerce')
+    X['date_year'] = parsed_dates.dt.year.fillna(0).astype(np.int16)
+    X['date_dayofyear'] = parsed_dates.dt.dayofyear.fillna(0).astype(np.int16)
+    X = X.drop(columns=['date'])
+    print(f"      Added: date_year, date_dayofyear; dropped raw date")
 
 print(f"   Initial shape: {X.shape}")
 print(f"   Initial columns: {X.columns.tolist()}")

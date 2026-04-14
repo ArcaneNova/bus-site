@@ -173,8 +173,8 @@ ai-service/
 from google.colab import drive
 drive.mount('/content/drive')
 
-# Clone repository
-!git clone https://github.com/ArcaneNova/bus-site.git
+# Clone repository or refresh if it already exists
+!if [ -d /content/bus-site/.git ]; then cd /content/bus-site && git pull origin main; else git clone https://github.com/ArcaneNova/bus-site.git /content/bus-site; fi
 %cd /content/bus-site/ai-service
 
 print("✅ Repository cloned & ready")
@@ -206,9 +206,17 @@ print("   • anomaly_dataset.csv (200K+ records)")
 
 #### **Cell 4: Train Demand Prediction Models (6 models)**
 ```python
+import subprocess, sys
+
 # Trains: LSTM, GRU, Transformer, XGBoost, LightGBM, Random Forest
 %cd /content/bus-site/ai-service/training
-!python train_demand_models.py
+# If you see a stale traceback, rerun Cell 1 to refresh the checkout.
+result = subprocess.run([sys.executable, "train_demand_models.py"], capture_output=True, text=True)
+print(result.stdout)
+if result.stderr:
+  print(result.stderr)
+if result.returncode != 0:
+  raise RuntimeError(f"Demand model training failed with exit code {result.returncode}. Fix the error above, then rerun Cell 1 and Cell 4.")
 
 print("\n✅ Demand models trained")
 print("   Check: models/saved/demand_comparison_report.json")
@@ -218,9 +226,16 @@ print("   Check: models/saved/demand_comparison_report.json")
 
 #### **Cell 5: Train Delay Prediction Models (12 models)**
 ```python
+import subprocess, sys
+
 # Trains: XGBoost, LightGBM, CatBoost, SVR, MLP + Classifiers
 %cd /content/bus-site/ai-service/training
-!python train_delay_models.py
+result = subprocess.run([sys.executable, "train_delay_models.py"], capture_output=True, text=True)
+print(result.stdout)
+if result.stderr:
+  print(result.stderr)
+if result.returncode != 0:
+  raise RuntimeError(f"Delay model training failed with exit code {result.returncode}. Fix the error above, then rerun Cell 1 and Cell 5.")
 
 print("\n✅ Delay models trained")
 print("   Check: models/saved/delay_comparison_report.json")
@@ -230,9 +245,16 @@ print("   Check: models/saved/delay_comparison_report.json")
 
 #### **Cell 6: Train Anomaly Detection Models (6 methods)**
 ```python
+import subprocess, sys
+
 # Trains: Isolation Forest, LOF, One-Class SVM, Autoencoder, DBSCAN, Ensemble
 %cd /content/bus-site/ai-service/training
-!python train_anomaly_models.py
+result = subprocess.run([sys.executable, "train_anomaly_models.py"], capture_output=True, text=True)
+print(result.stdout)
+if result.stderr:
+  print(result.stderr)
+if result.returncode != 0:
+  raise RuntimeError(f"Anomaly model training failed with exit code {result.returncode}. Fix the error above, then rerun Cell 1 and Cell 6.")
 
 print("\n✅ Anomaly models trained")
 print("   Check: models/saved/anomaly_comparison_report.json")

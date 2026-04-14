@@ -53,6 +53,7 @@ SAVE_DIR = os.path.join(PROJECT_ROOT, "models", "saved")
 os.makedirs(SAVE_DIR, exist_ok=True)
 
 RESULT_JSON = os.path.join(SAVE_DIR, "demand_comparison_report.json")
+SCRIPT_VERSION = "2026-04-14-fix"
 
 # ════════════════════════════════════════════════════════════════════════════
 # PRINT INFO
@@ -64,6 +65,7 @@ print(f"╚{'═'*75}╝")
 print(f"\n📁 Configuration:")
 print(f"   Script dir: {SCRIPT_DIR}")
 print(f"   Project root: {PROJECT_ROOT}")
+print(f"   Trainer version: {SCRIPT_VERSION}")
 print(f"   Data path: {DATA_PATH}")
 print(f"   Save dir: {SAVE_DIR}")
 
@@ -90,6 +92,14 @@ except Exception as e:
 feature_cols = [col for col in df.columns if col != 'passenger_count']
 X = df[feature_cols].copy()
 y = df['passenger_count'].values
+
+if 'date' in X.columns:
+    print(f"\n   📅 Expanding raw date column into numeric features...")
+    parsed_dates = pd.to_datetime(X['date'], errors='coerce')
+    X['date_year'] = parsed_dates.dt.year.fillna(0).astype(np.int16)
+    X['date_dayofyear'] = parsed_dates.dt.dayofyear.fillna(0).astype(np.int16)
+    X = X.drop(columns=['date'])
+    print(f"      Added: date_year, date_dayofyear; dropped raw date")
 
 print(f"   Initial shape: {X.shape}")
 print(f"   Initial columns: {X.columns.tolist()}")
