@@ -368,6 +368,80 @@ def create_summary_report(reports):
     print(f"✅ Evaluation results saved to: {OUTPUT_DIR}/")
     print("="*80)
 
+    return summary
+
+def create_executive_dashboard(summary):
+    """Create a single visual dashboard for Colab and paper presentation."""
+    logger.info("\n🧭 Creating executive dashboard...")
+
+    fig, axes = plt.subplots(2, 2, figsize=(16, 10))
+    fig.suptitle("SmartDTC AI Service — Executive Model Dashboard", fontsize=18, fontweight="bold")
+
+    # Demand summary card
+    axes[0, 0].axis("off")
+    demand = summary.get("task_summaries", {}).get("demand")
+    if demand:
+        demand_text = (
+            f"Demand Prediction\n\n"
+            f"Best Model: {demand['best_model'].upper()}\n"
+            f"MAE: {demand['best_mae']:.2f} passengers\n"
+            f"R²: {demand['best_r2']:.4f}\n"
+            f"Models Compared: {demand['models_compared']}"
+        )
+    else:
+        demand_text = "Demand Prediction\n\nNo report available"
+    axes[0, 0].text(0.02, 0.95, demand_text, va="top", ha="left", fontsize=13,
+                    bbox=dict(boxstyle="round,pad=0.6", facecolor="#EFF6FF", edgecolor="#93C5FD"))
+
+    # Delay summary card
+    axes[0, 1].axis("off")
+    delay = summary.get("task_summaries", {}).get("delay")
+    if delay:
+        delay_text = (
+            f"Delay Prediction\n\n"
+            f"Best Model: {delay['best_model'].upper()}\n"
+            f"MAE: {delay['best_mae_minutes']:.2f} minutes\n"
+            f"Models Compared: {delay['models_compared']}"
+        )
+    else:
+        delay_text = "Delay Prediction\n\nNo report available"
+    axes[0, 1].text(0.02, 0.95, delay_text, va="top", ha="left", fontsize=13,
+                    bbox=dict(boxstyle="round,pad=0.6", facecolor="#ECFDF5", edgecolor="#86EFAC"))
+
+    # Anomaly summary card
+    axes[1, 0].axis("off")
+    anomaly = summary.get("task_summaries", {}).get("anomaly")
+    if anomaly:
+        anomaly_text = (
+            f"Anomaly Detection\n\n"
+            f"Best Model: {anomaly['best_model'].upper()}\n"
+            f"F1-Score: {anomaly['best_f1']:.3f}\n"
+            f"Anomaly Rate: {anomaly['anomaly_rate']:.2f}%\n"
+            f"Models Compared: {anomaly['models_compared']}"
+        )
+    else:
+        anomaly_text = "Anomaly Detection\n\nNo report available"
+    axes[1, 0].text(0.02, 0.95, anomaly_text, va="top", ha="left", fontsize=13,
+                    bbox=dict(boxstyle="round,pad=0.6", facecolor="#FFF7ED", edgecolor="#FDBA74"))
+
+    # Overall recommendations
+    axes[1, 1].axis("off")
+    recommendations = [
+        "Use the PNG charts for slides",
+        "Use the CSV tables for your paper",
+        "Use the JSON summary for appendix",
+        "Download SmartDTC_Model_Comparison_Results.zip",
+    ]
+    rec_text = "What to export\n\n" + "\n".join(f"• {item}" for item in recommendations)
+    axes[1, 1].text(0.02, 0.95, rec_text, va="top", ha="left", fontsize=13,
+                    bbox=dict(boxstyle="round,pad=0.6", facecolor="#F5F3FF", edgecolor="#C4B5FD"))
+
+    plt.tight_layout(rect=[0, 0, 1, 0.95])
+    dashboard_path = os.path.join(OUTPUT_DIR, 'executive_dashboard.png')
+    plt.savefig(dashboard_path, dpi=300, bbox_inches='tight')
+    plt.close()
+    logger.info(f"   ✅ Saved: {dashboard_path}")
+
 # ─────────────────────────────────────────────────────────────────────────
 
 if __name__ == "__main__":
@@ -393,6 +467,7 @@ if __name__ == "__main__":
         create_anomaly_comparison_viz(reports['anomaly'])
     
     # Create summary
-    create_summary_report(reports)
+    summary = create_summary_report(reports)
+    create_executive_dashboard(summary)
     
     logger.info("\n✨ Evaluation complete!")

@@ -221,6 +221,9 @@ if os.path.exists(saved_dir):
         print(f"   • {f}")
 
 # Load and display reports
+print("\n🧭 EXECUTIVE DASHBOARD:")
+display(Image('/content/bus-site/ai-service/evaluation_results/executive_dashboard.png'))
+
 for task in ['demand', 'delay', 'anomaly']:
     report_file = os.path.join(saved_dir, f'{task}_comparison_report.json')
     if os.path.exists(report_file):
@@ -242,6 +245,8 @@ for task in ['demand', 'delay', 'anomaly']:
         print(f"\n⚠️ {task}_comparison_report.json not found")
 
 print("\n" + "=" * 80)
+print("\n🧭 EXECUTIVE DASHBOARD:")
+display(Image('/content/bus-site/ai-service/evaluation_results/executive_dashboard.png'))
 ```
 
 ---

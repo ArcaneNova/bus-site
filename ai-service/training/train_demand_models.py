@@ -165,6 +165,12 @@ X_train, X_test, y_train, y_test = train_test_split(
 
 print(f"   Train: {len(X_train):,}  Test: {len(X_test):,}")
 
+def safe_mape(y_true, y_pred, min_actual=1.0):
+    mask = np.abs(y_true) >= min_actual
+    if not np.any(mask):
+        return float('nan')
+    return float(np.mean(np.abs((y_pred[mask] - y_true[mask]) / y_true[mask])) * 100)
+
 # ════════════════════════════════════════════════════════════════════════════
 # MODEL TRAINING
 # ════════════════════════════════════════════════════════════════════════════
@@ -200,12 +206,12 @@ try:
     
     print(f"   Training (30 epochs)...")
     lstm_model.fit(X_train, y_train, epochs=30, batch_size=64, 
-                   validation_split=0.1, verbose=1, workers=0)
+                   validation_split=0.1, verbose=1)
     
     y_pred_lstm = lstm_model.predict(X_test, verbose=0).flatten()
     mae_lstm = np.mean(np.abs(y_pred_lstm - y_test))
     rmse_lstm = np.sqrt(np.mean((y_pred_lstm - y_test) ** 2))
-    mape_lstm = np.mean(np.abs((y_pred_lstm - y_test) / (y_test + 1e-8))) * 100
+    mape_lstm = safe_mape(y_test, y_pred_lstm)
     r2_lstm = 1 - np.sum((y_test - y_pred_lstm)**2) / np.sum((y_test - np.mean(y_test))**2)
     
     # Save as .keras (TensorFlow 2.16+ requirement)
@@ -243,12 +249,12 @@ try:
     
     print(f"   Training (30 epochs)...")
     gru_model.fit(X_train, y_train, epochs=30, batch_size=64,
-                  validation_split=0.1, verbose=1, workers=0)
+                  validation_split=0.1, verbose=1)
     
     y_pred_gru = gru_model.predict(X_test, verbose=0).flatten()
     mae_gru = np.mean(np.abs(y_pred_gru - y_test))
     rmse_gru = np.sqrt(np.mean((y_pred_gru - y_test) ** 2))
-    mape_gru = np.mean(np.abs((y_pred_gru - y_test) / (y_test + 1e-8))) * 100
+    mape_gru = safe_mape(y_test, y_pred_gru)
     r2_gru = 1 - np.sum((y_test - y_pred_gru)**2) / np.sum((y_test - np.mean(y_test))**2)
     
     gru_model.save(os.path.join(SAVE_DIR, "demand_gru_multimodel.keras"))
@@ -285,12 +291,12 @@ try:
     
     print(f"   Training (30 epochs)...")
     transformer_model.fit(X_train, y_train, epochs=30, batch_size=64,
-                          validation_split=0.1, verbose=1, workers=0)
+                          validation_split=0.1, verbose=1)
     
     y_pred_transformer = transformer_model.predict(X_test, verbose=0).flatten()
     mae_transformer = np.mean(np.abs(y_pred_transformer - y_test))
     rmse_transformer = np.sqrt(np.mean((y_pred_transformer - y_test) ** 2))
-    mape_transformer = np.mean(np.abs((y_pred_transformer - y_test) / (y_test + 1e-8))) * 100
+    mape_transformer = safe_mape(y_test, y_pred_transformer)
     r2_transformer = 1 - np.sum((y_test - y_pred_transformer)**2) / np.sum((y_test - np.mean(y_test))**2)
     
     transformer_model.save(os.path.join(SAVE_DIR, "demand_transformer_multimodel.keras"))
@@ -326,7 +332,7 @@ try:
     y_pred_xgb = xgb_model.predict(X_test)
     mae_xgb = np.mean(np.abs(y_pred_xgb - y_test))
     rmse_xgb = np.sqrt(np.mean((y_pred_xgb - y_test) ** 2))
-    mape_xgb = np.mean(np.abs((y_pred_xgb - y_test) / (y_test + 1e-8))) * 100
+    mape_xgb = safe_mape(y_test, y_pred_xgb)
     r2_xgb = 1 - np.sum((y_test - y_pred_xgb)**2) / np.sum((y_test - np.mean(y_test))**2)
     
     joblib.dump(xgb_model, os.path.join(SAVE_DIR, "demand_xgboost_multimodel.pkl"))
@@ -362,7 +368,7 @@ try:
     y_pred_lgb = lgb_model.predict(X_test)
     mae_lgb = np.mean(np.abs(y_pred_lgb - y_test))
     rmse_lgb = np.sqrt(np.mean((y_pred_lgb - y_test) ** 2))
-    mape_lgb = np.mean(np.abs((y_pred_lgb - y_test) / (y_test + 1e-8))) * 100
+    mape_lgb = safe_mape(y_test, y_pred_lgb)
     r2_lgb = 1 - np.sum((y_test - y_pred_lgb)**2) / np.sum((y_test - np.mean(y_test))**2)
     
     joblib.dump(lgb_model, os.path.join(SAVE_DIR, "demand_lightgbm_multimodel.pkl"))
@@ -397,7 +403,7 @@ try:
     y_pred_rf = rf_model.predict(X_test)
     mae_rf = np.mean(np.abs(y_pred_rf - y_test))
     rmse_rf = np.sqrt(np.mean((y_pred_rf - y_test) ** 2))
-    mape_rf = np.mean(np.abs((y_pred_rf - y_test) / (y_test + 1e-8))) * 100
+    mape_rf = safe_mape(y_test, y_pred_rf)
     r2_rf = 1 - np.sum((y_test - y_pred_rf)**2) / np.sum((y_test - np.mean(y_test))**2)
     
     joblib.dump(rf_model, os.path.join(SAVE_DIR, "demand_rf_multimodel.pkl"))

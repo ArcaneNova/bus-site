@@ -270,6 +270,7 @@ print("   Check: models/saved/anomaly_comparison_report.json")
 
 print("\n✅ Evaluation complete!")
 print("\n📊 Generated outputs:")
+print("   • evaluation_results/executive_dashboard.png")
 print("   • evaluation_results/demand_model_comparison.png")
 print("   • evaluation_results/delay_model_comparison.png")
 print("   • evaluation_results/anomaly_model_comparison.png")
@@ -328,6 +329,9 @@ print("="*80)
 print("📊 MODEL COMPARISON RESULTS")
 print("="*80)
 
+print("\n🧭 EXECUTIVE DASHBOARD:")
+display(Image('/content/bus-site/ai-service/evaluation_results/executive_dashboard.png'))
+
 # Demand
 if 'demand' in summary['task_summaries']:
     d = summary['task_summaries']['demand']
@@ -358,6 +362,7 @@ print("\n" + "="*80)
 
 # Display comparison plots
 print("\n📈 VISUALIZATIONS:")
+display(Image('/content/bus-site/ai-service/evaluation_results/executive_dashboard.png'))
 display(Image('/content/bus-site/ai-service/evaluation_results/demand_model_comparison.png'))
 display(Image('/content/bus-site/ai-service/evaluation_results/delay_model_comparison.png'))
 display(Image('/content/bus-site/ai-service/evaluation_results/anomaly_model_comparison.png'))

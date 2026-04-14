@@ -199,7 +199,7 @@ mlp = Sequential([
     layers.Dense(1)
 ])
 mlp.compile(optimizer='adam', loss='mse', metrics=['mae'])
-mlp.fit(X_train, y_train, epochs=30, batch_size=64, validation_split=0.1, verbose=1, workers=0)
+mlp.fit(X_train, y_train, epochs=30, batch_size=64, validation_split=0.1, verbose=1)
 y_pred = mlp.predict(X_test, verbose=0).flatten()
 mae = np.mean(np.abs(y_pred - y_test))
 rmse = np.sqrt(np.mean((y_pred - y_test) ** 2))
