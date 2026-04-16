@@ -209,14 +209,25 @@ print("   • anomaly_dataset.csv (200K+ records)")
 import subprocess, sys
 
 # Trains: LSTM, GRU, Transformer, XGBoost, LightGBM, Random Forest
+# Uses -u (unbuffered) + Popen so output streams live — no more waiting blind.
 %cd /content/bus-site/ai-service/training
-# If you see a stale traceback, rerun Cell 1 to refresh the checkout.
-result = subprocess.run([sys.executable, "train_demand_models.py"], capture_output=True, text=True)
-print(result.stdout)
-if result.stderr:
-  print(result.stderr)
-if result.returncode != 0:
-  raise RuntimeError(f"Demand model training failed with exit code {result.returncode}. Fix the error above, then rerun Cell 1 and Cell 4.")
+
+process = subprocess.Popen(
+    [sys.executable, "-u", "train_demand_models.py"],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,   # merge stderr into stdout stream
+    text=True,
+    bufsize=1,
+)
+for line in process.stdout:
+    print(line, end="", flush=True)
+process.wait()
+
+if process.returncode != 0:
+    raise RuntimeError(
+        f"Demand model training failed (exit {process.returncode}). "
+        "Fix the error above, then rerun Cell 1 and Cell 4."
+    )
 
 print("\n✅ Demand models trained")
 print("   Check: models/saved/demand_comparison_report.json")
@@ -230,12 +241,23 @@ import subprocess, sys
 
 # Trains: XGBoost, LightGBM, CatBoost, SVR, MLP + Classifiers
 %cd /content/bus-site/ai-service/training
-result = subprocess.run([sys.executable, "train_delay_models.py"], capture_output=True, text=True)
-print(result.stdout)
-if result.stderr:
-  print(result.stderr)
-if result.returncode != 0:
-  raise RuntimeError(f"Delay model training failed with exit code {result.returncode}. Fix the error above, then rerun Cell 1 and Cell 5.")
+
+process = subprocess.Popen(
+    [sys.executable, "-u", "train_delay_models.py"],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+    text=True,
+    bufsize=1,
+)
+for line in process.stdout:
+    print(line, end="", flush=True)
+process.wait()
+
+if process.returncode != 0:
+    raise RuntimeError(
+        f"Delay model training failed (exit {process.returncode}). "
+        "Fix the error above, then rerun Cell 1 and Cell 5."
+    )
 
 print("\n✅ Delay models trained")
 print("   Check: models/saved/delay_comparison_report.json")
@@ -249,12 +271,23 @@ import subprocess, sys
 
 # Trains: Isolation Forest, LOF, One-Class SVM, Autoencoder, DBSCAN, Ensemble
 %cd /content/bus-site/ai-service/training
-result = subprocess.run([sys.executable, "train_anomaly_models.py"], capture_output=True, text=True)
-print(result.stdout)
-if result.stderr:
-  print(result.stderr)
-if result.returncode != 0:
-  raise RuntimeError(f"Anomaly model training failed with exit code {result.returncode}. Fix the error above, then rerun Cell 1 and Cell 6.")
+
+process = subprocess.Popen(
+    [sys.executable, "-u", "train_anomaly_models.py"],
+    stdout=subprocess.PIPE,
+    stderr=subprocess.STDOUT,
+    text=True,
+    bufsize=1,
+)
+for line in process.stdout:
+    print(line, end="", flush=True)
+process.wait()
+
+if process.returncode != 0:
+    raise RuntimeError(
+        f"Anomaly model training failed (exit {process.returncode}). "
+        "Fix the error above, then rerun Cell 1 and Cell 6."
+    )
 
 print("\n✅ Anomaly models trained")
 print("   Check: models/saved/anomaly_comparison_report.json")
