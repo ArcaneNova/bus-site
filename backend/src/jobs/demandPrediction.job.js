@@ -1,66 +1,85 @@
 /**
  * demandPrediction.job.js
- * Hourly demand prediction via Python AI service.
- * Called by scheduler.service.js cron every hour.
+ * Hourly demand prediction via Python AI service (multi-model).
+ * Uses real weather from Open-Meteo + Indian holiday calendar.
  */
-const axios  = require('axios');
+const axios           = require('axios');
 const PassengerDemand = require('../models/PassengerDemand');
 const Route           = require('../models/Route');
+const { getCurrentWeather } = require('../services/weather.service');
+const { isHoliday }         = require('../utils/holidays');
 
 const AI_URL = process.env.AI_SERVICE_URL || process.env.PYTHON_AI_URL || 'http://localhost:8000';
 
-/**
- * runDemandPrediction
- * Fetches the last 7 days of demand data for each active route,
- * sends it to the AI service, and stores predictions back in MongoDB.
- */
 async function runDemandPrediction() {
   try {
     const routes = await Route.find({ isActive: true }).select('_id route_name');
+    const now    = new Date();
+    const hour   = now.getHours();
+    const dow    = now.getDay();
+    const date   = now.toISOString().split('T')[0];
+    const isWeekend  = dow === 0 || dow === 6;
+    const isHolidayToday = isHoliday(date);
 
-    const now  = new Date();
-    const hour = now.getHours();
+    // Fetch real weather once for all routes
+    const { weather, avg_temp_c } = await getCurrentWeather();
+
+    let successCount = 0;
+    let errorCount   = 0;
 
     for (const route of routes) {
-      // Build historical load data for the last 7 days (same hour)
-      const history = await PassengerDemand.find({
-        route: route._id,
-        hour,
-      })
-        .sort({ forDate: -1 })
-        .limit(7)
-        .select('actualCount predictedCount forDate');
-
-      const historicalLoad = history.map((h) => h.actualCount ?? h.predictedCount ?? 0);
-      if (historicalLoad.length === 0) continue;
-
-      // Call Python AI service
-      let predicted = null;
       try {
-        const { data } = await axios.post(`${AI_URL}/predict/demand`, {
-          route_id:        route._id.toString(),
-          hour,
-          day_of_week:     now.getDay(),
-          historical_load: historicalLoad,
-          weather_score:   0.8,
-        }, { timeout: 10000 });
+        const { data } = await axios.post(
+          `${AI_URL}/predict/demand`,
+          {
+            route_id:      route._id.toString(),
+            date,
+            hour,
+            is_weekend:    isWeekend,
+            is_holiday:    isHolidayToday,
+            weather,
+            avg_temp_c,
+            special_event: false,
+          },
+          { timeout: 10000 }
+        );
 
-        predicted = data.predicted_demand;
+        // New API returns: predicted_count, crowd_level, model, confidence
+        const predicted   = data.predicted_count ?? data.prediction?.predicted_count ?? 0;
+        const crowdLevel  = data.crowd_level      ?? data.prediction?.crowd_level     ?? 'low';
+        const modelUsed   = data.model            ?? data.prediction?.model            ?? 'unknown';
+
+        if (predicted <= 0) continue;
+
+        const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+        await PassengerDemand.findOneAndUpdate(
+          { route: route._id, forDate: today, hour },
+          {
+            $set: {
+              predictedCount: Math.round(predicted),
+              crowdLevel,
+              modelUsed,
+              weather,
+              avg_temp_c,
+              isWeekend,
+              isHoliday: isHolidayToday,
+              predictedAt: now,
+            },
+          },
+          { upsert: true, new: true }
+        );
+        successCount++;
       } catch (aiErr) {
         console.warn(`[DemandJob] AI call failed for route ${route._id}: ${aiErr.message}`);
-        continue;
+        errorCount++;
       }
-
-      // Upsert the prediction for today
-      const today = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-      await PassengerDemand.findOneAndUpdate(
-        { route: route._id, forDate: today, hour },
-        { $set: { predictedCount: Math.round(predicted), predictedAt: now } },
-        { upsert: true, new: true }
-      );
     }
 
-    console.log(`[DemandJob] Predictions updated for ${routes.length} routes at hour ${hour}`);
+    console.log(
+      `[DemandJob] Hour ${hour}: ${successCount}/${routes.length} routes updated` +
+      ` | weather=${weather} temp=${avg_temp_c}°C holiday=${isHolidayToday}` +
+      (errorCount ? ` | ${errorCount} errors` : '')
+    );
   } catch (err) {
     console.error('[DemandJob] Fatal error:', err.message);
   }

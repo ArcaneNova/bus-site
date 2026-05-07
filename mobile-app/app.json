@@ -69,10 +69,25 @@
           "cameraPermission": "Allow SmartDTC to use your camera."
         }
       ],
-      "expo-asset"
+      "expo-asset",
+      "expo-updates"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {
+        "origin": false
+      },
+      "eas": {
+        "projectId": "7585f0cc-f753-4fec-8a76-843b34a3e8d3"
+      }
+    },
+    "runtimeVersion": {
+      "policy": "appVersion"
+    },
+    "updates": {
+      "url": "https://u.expo.dev/7585f0cc-f753-4fec-8a76-843b34a3e8d3"
     }
   }
 }

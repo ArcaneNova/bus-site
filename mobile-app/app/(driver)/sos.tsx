@@ -7,6 +7,8 @@ import {
   Alert,
   Animated,
   TextInput,
+  ScrollView,
+  Platform,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import Toast from 'react-native-toast-message';
@@ -28,6 +30,7 @@ export default function SOSScreen() {
   const [message, setMessage] = useState('');
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
+  const [confirming, setConfirming] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
 
   const pulseSOS = () => {
@@ -44,58 +47,82 @@ export default function SOSScreen() {
       return;
     }
 
-    Alert.alert(
-      '🚨 Send SOS Alert',
-      `This will immediately alert all admins and dispatch support.\n\nType: ${selectedType}\n\nAre you sure?`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Send SOS',
-          style: 'destructive',
-          onPress: async () => {
-            setSending(true);
-            pulseSOS();
+    // Show confirmation on web, or use Alert on native
+    if (Platform.OS === 'web') {
+      setConfirming(true);
+    } else {
+      Alert.alert(
+        '🚨 Send SOS Alert',
+        `This will immediately alert all admins and dispatch support.\n\nType: ${selectedType}\n\nAre you sure?`,
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { text: 'Send SOS', style: 'destructive', onPress: () => doSendSOS() },
+        ]
+      );
+    }
+  };
 
-            try {
-              const { status } = await Location.requestForegroundPermissionsAsync();
-              let latitude = 28.6139;
-              let longitude = 77.2090;
+  const doSendSOS = async () => {
+    setConfirming(false);
+    console.log('[SOS] Starting SOS submission:', selectedType);
+    setSending(true);
+    pulseSOS();
 
-              if (status === 'granted') {
-                const loc = await Location.getCurrentPositionAsync({});
-                latitude = loc.coords.latitude;
-                longitude = loc.coords.longitude;
-              }
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      let latitude = 28.6139;
+      let longitude = 77.2090;
 
-              // Emit via socket
-              const socket = getSocket();
-              socket.emit('driver:sos', {
-                type: selectedType,
-                message: message || `${selectedType} emergency reported by driver`,
-                latitude,
-                longitude,
-              });
+      if (status === 'granted') {
+        const loc = await Location.getCurrentPositionAsync({});
+        latitude = loc.coords.latitude;
+        longitude = loc.coords.longitude;
+      }
 
-              // Also create alert via REST API
-              await api.post('/alerts', {
-                type: selectedType === 'medical' ? 'other' : selectedType,
-                severity: 'critical',
-                title: `SOS: ${selectedType}`,
-                message: message || `Emergency alert from driver ${user?.name}`,
-                location: { coordinates: [longitude, latitude] },
-              });
+      console.log('[SOS] Location:', latitude, longitude);
 
-              setSent(true);
-              Toast.show({ type: 'success', text1: 'SOS sent! Help is on the way.' });
-            } catch {
-              Toast.show({ type: 'error', text1: 'Failed to send SOS. Please call 112.' });
-            } finally {
-              setSending(false);
-            }
-          },
+      // Emit via socket (best effort)
+      const socket = getSocket();
+      console.log('[SOS] Emitting via socket');
+      try {
+        socket.emit('driver:sos', {
+          type: selectedType,
+          message: message || `${selectedType} emergency reported by driver`,
+          latitude,
+          longitude,
+        });
+        console.log('[SOS] Socket emit successful');
+      } catch (socketError) {
+        console.warn('[SOS] Socket emit failed:', socketError);
+      }
+
+      // Also create alert via REST API (main way)
+      console.log('[SOS] Posting to /alerts endpoint');
+      const res = await api.post('/alerts', {
+        type: 'sos',  // Use 'sos' type, not the emergency type
+        severity: 'critical',
+        message: message || `SOS: ${selectedType} - Emergency alert from driver ${user?.name}`,
+        details: {
+          emergencyType: selectedType,
+          latitude,
+          longitude,
         },
-      ]
-    );
+      });
+
+      console.log('[SOS] Response:', res.data);
+      setSent(true);
+      Toast.show({ type: 'success', text1: 'SOS sent! Help is on the way.' });
+    } catch (error: any) {
+      console.error('[SOS ERROR]', {
+        message: error?.message,
+        status: error?.response?.status,
+        data: error?.response?.data,
+        stack: error?.stack,
+      });
+      Toast.show({ type: 'error', text1: `Failed to send SOS: ${error?.response?.data?.message || error?.message || 'Unknown error'}` });
+    } finally {
+      setSending(false);
+    }
   };
 
   if (sent) {
@@ -113,8 +140,38 @@ export default function SOSScreen() {
     );
   }
 
+  if (confirming) {
+    return (
+      <View style={styles.confirmContainer}>
+        <View style={styles.confirmCard}>
+          <Ionicons name="alert-circle" size={60} color="#EF4444" />
+          <Text style={styles.confirmTitle}>Send SOS Alert?</Text>
+          <Text style={styles.confirmMessage}>
+            This will immediately alert all admins and dispatch support.
+          </Text>
+          <Text style={styles.confirmType}>Emergency Type: <Text style={styles.confirmTypeBold}>{selectedType}</Text></Text>
+          
+          <View style={styles.confirmButtonContainer}>
+            <TouchableOpacity 
+              style={[styles.confirmButton, styles.cancelButton]} 
+              onPress={() => setConfirming(false)}
+            >
+              <Text style={styles.cancelButtonText}>Cancel</Text>
+            </TouchableOpacity>
+            <TouchableOpacity 
+              style={[styles.confirmButton, styles.sendButton]} 
+              onPress={doSendSOS}
+            >
+              <Text style={styles.sendButtonText}>Send SOS</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </View>
+    );
+  }
+
   return (
-    <View style={styles.container}>
+    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer} scrollEnabled={Platform.OS === 'web'}>
       <View style={styles.warningBanner}>
         <Ionicons name="warning" size={20} color="#92400E" />
         <Text style={styles.warningText}>Use only in genuine emergencies</Text>
@@ -169,13 +226,25 @@ export default function SOSScreen() {
         />
       </View>
 
+      {/* Submit Button */}
+      <TouchableOpacity 
+        style={[styles.submitButton, !selectedType && styles.submitButtonDisabled]} 
+        onPress={sendSOS}
+        disabled={!selectedType || sending}
+      >
+        <Text style={styles.submitButtonText}>
+          {sending ? 'Sending...' : 'Submit SOS Alert'}
+        </Text>
+      </TouchableOpacity>
+
       <Text style={styles.emergencyNote}>For life-threatening emergencies, call 112 immediately.</Text>
-    </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
+  contentContainer: { paddingBottom: 32 },
   warningBanner: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -228,7 +297,17 @@ const styles = StyleSheet.create({
     backgroundColor: '#fff',
     textAlignVertical: 'top',
   },
-  emergencyNote: { textAlign: 'center', color: '#9CA3AF', fontSize: 13, marginTop: 8 },
+  submitButton: {
+    marginHorizontal: 16,
+    marginVertical: 16,
+    backgroundColor: '#DC2626',
+    paddingVertical: 14,
+    borderRadius: 10,
+    alignItems: 'center',
+  },
+  submitButtonDisabled: { opacity: 0.5, backgroundColor: '#9CA3AF' },
+  submitButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  emergencyNote: { textAlign: 'center', color: '#9CA3AF', fontSize: 13, marginTop: 8, paddingHorizontal: 16 },
   sentContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', gap: 12, padding: 32 },
   sentTitle: { fontSize: 28, fontWeight: '700', color: '#10B981' },
   sentSub: { fontSize: 16, color: '#6B7280', textAlign: 'center' },
@@ -240,4 +319,16 @@ const styles = StyleSheet.create({
     borderRadius: 10,
   },
   resetButtonText: { color: '#fff', fontWeight: '700', fontSize: 16 },
+  confirmContainer: { flex: 1, justifyContent: 'center', alignItems: 'center', padding: 16, backgroundColor: 'rgba(0, 0, 0, 0.5)' },
+  confirmCard: { backgroundColor: '#fff', borderRadius: 16, padding: 24, alignItems: 'center', gap: 16, width: '100%', maxWidth: 400 },
+  confirmTitle: { fontSize: 22, fontWeight: '700', color: '#111827' },
+  confirmMessage: { fontSize: 14, color: '#6B7280', textAlign: 'center', lineHeight: 20 },
+  confirmType: { fontSize: 14, color: '#6B7280', fontWeight: '500' },
+  confirmTypeBold: { fontWeight: '700', color: '#111827', textTransform: 'capitalize' },
+  confirmButtonContainer: { flexDirection: 'row', gap: 12, marginTop: 8, width: '100%' },
+  confirmButton: { flex: 1, paddingVertical: 12, borderRadius: 8, alignItems: 'center' },
+  cancelButton: { backgroundColor: '#E5E7EB' },
+  cancelButtonText: { color: '#374151', fontWeight: '600' },
+  sendButton: { backgroundColor: '#DC2626' },
+  sendButtonText: { color: '#fff', fontWeight: '600' },
 });

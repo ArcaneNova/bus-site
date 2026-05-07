@@ -55,9 +55,20 @@ exports.searchStages = async (req, res) => {
 
     const stages = await Stage.find({
       stage_name: { $regex: name, $options: 'i' },
-    }).limit(30);
+    }).limit(30).select('_id stage_name url_route_id seq location');
 
     res.json({ success: true, stages });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// GET /api/v1/stages/all?limit=5000
+exports.getAllStages = async (req, res) => {
+  try {
+    const limit = Math.min(Number(req.query.limit) || 5000, 10000);
+    const stages = await Stage.find({}).sort({ stage_name: 1 }).limit(limit).select('_id stage_name url_route_id seq location');
+    res.json({ success: true, count: stages.length, stages });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }

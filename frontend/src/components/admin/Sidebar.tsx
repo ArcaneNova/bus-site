@@ -9,22 +9,24 @@ import { useState } from 'react';
 import {
   LayoutDashboard, Bus, Map, Users, Calendar,
   AlertTriangle, BarChart3, LogOut, Navigation, History,
-  UserCog, ChevronLeft, ChevronRight, Brain, Moon, Sun, X,
+  UserCog, ChevronLeft, ChevronRight, Brain, Moon, Sun, X, Ticket,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
 const navItems = [
-  { href: '/admin',          icon: LayoutDashboard, label: 'Dashboard'    },
-  { href: '/admin/routes',   icon: Map,             label: 'Routes'       },
-  { href: '/admin/buses',    icon: Bus,             label: 'Fleet'        },
-  { href: '/admin/drivers',  icon: Users,           label: 'Drivers'      },
-  { href: '/admin/schedule', icon: Calendar,        label: 'Schedule'     },
-  { href: '/admin/tracking', icon: Navigation,      label: 'Live Map'     },
-  { href: '/admin/demand',   icon: Brain,           label: 'Demand AI'    },
-  { href: '/admin/alerts',   icon: AlertTriangle,   label: 'Alerts'       },
-  { href: '/admin/reports',  icon: BarChart3,       label: 'Reports'      },
-  { href: '/admin/trips',    icon: History,         label: 'Trip History' },
-  { href: '/admin/users',    icon: UserCog,         label: 'Users'        },
+  { href: '/admin',                 icon: LayoutDashboard, label: 'Dashboard'         },
+  { href: '/admin/routes',          icon: Map,             label: 'Routes'            },
+  { href: '/admin/buses',           icon: Bus,             label: 'Fleet'             },
+  { href: '/admin/drivers',         icon: Users,           label: 'Drivers'           },
+  { href: '/admin/schedule',        icon: Calendar,        label: 'Schedule'          },
+  { href: '/admin/bookings',        icon: Ticket,          label: 'Bookings'          },
+  { href: '/admin/tracking',        icon: Navigation,      label: 'Live Map'          },
+  { href: '/admin/demand',          icon: Brain,           label: 'Demand AI'         },
+  { href: '/admin/reports/models',  icon: BarChart3,       label: 'Model Comparison'  },
+  { href: '/admin/alerts',          icon: AlertTriangle,   label: 'Alerts'            },
+  { href: '/admin/reports',         icon: BarChart3,       label: 'Reports'           },
+  { href: '/admin/trips',           icon: History,         label: 'Trip History'      },
+  { href: '/admin/users',           icon: UserCog,         label: 'Users'             },
 ];
 
 interface SidebarProps {

@@ -11,6 +11,7 @@ const passengerDemandSchema = new mongoose.Schema({
   weather:        { type: String, default: 'clear' },
   isWeekend:      { type: Boolean, default: false },
   isHoliday:      { type: Boolean, default: false },
+  modelUsed:      { type: String, default: 'unknown' },
   predictedAt:    { type: Date, default: Date.now },
 }, { timestamps: true });
 

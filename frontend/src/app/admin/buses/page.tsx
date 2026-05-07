@@ -3,7 +3,8 @@
 import { useEffect, useState } from 'react';
 import api from '@/lib/api';
 import type { Bus } from '@/types';
-import { Plus, Edit2, Trash2, X, RefreshCw, Activity } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, RefreshCw, Activity, QrCode } from 'lucide-react';
+import { QRCodeSVG } from 'qrcode.react';
 import toast from 'react-hot-toast';
 
 const statusColor: Record<string, string> = {
@@ -29,6 +30,7 @@ export default function BusesPage() {
   const [form,      setForm]      = useState(EMPTY_FORM);
   const [saving,    setSaving]    = useState(false);
   const [statusBus, setStatusBus] = useState<Bus | null>(null);
+  const [qrBus,     setQrBus]     = useState<Bus | null>(null);
 
   const fetchAll = async () => {
     setLoading(true);
@@ -153,6 +155,7 @@ export default function BusesPage() {
                   </td>
                   <td className="px-4 py-3 flex gap-2">
                     <button onClick={() => openEdit(b)} className="text-blue-500 hover:text-blue-700" title="Edit"><Edit2 className="w-4 h-4" /></button>
+                    <button onClick={() => setQrBus(b)} className="text-sky-500 hover:text-sky-700" title="Bus QR Code"><QrCode className="w-4 h-4" /></button>
                     <button onClick={() => deleteBus(b._id)} className="text-red-500 hover:text-red-700" title="Delete"><Trash2 className="w-4 h-4" /></button>
                   </td>
                 </tr>
@@ -168,6 +171,49 @@ export default function BusesPage() {
           </div>
         </div>
       </div>
+
+      {qrBus && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm p-6 text-center space-y-4">
+            <div className="flex items-center justify-between mb-2">
+              <h2 className="text-lg font-semibold text-gray-800">Gate QR — {qrBus.busNumber}</h2>
+              <button onClick={() => setQrBus(null)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+            </div>
+            {qrBus.busQrId ? (
+              <>
+                <div className="flex justify-center p-4 bg-gray-50 rounded-xl border">
+                  <QRCodeSVG
+                    value={`${process.env.NEXT_PUBLIC_APP_URL || window.location.origin}/scan/${qrBus.busQrId}`}
+                    size={200}
+                    level="H"
+                    id={`qr-${qrBus._id}`}
+                  />
+                </div>
+                <p className="text-xs text-gray-500 font-mono break-all">{qrBus.busQrId}</p>
+                <p className="text-xs text-gray-400">Print and attach to bus gate. Passengers scan to pay &amp; board.</p>
+                <button
+                  onClick={() => {
+                    const svg = document.getElementById(`qr-${qrBus._id}`)?.closest('svg');
+                    if (!svg) return;
+                    const blob = new Blob([svg.outerHTML], { type: 'image/svg+xml' });
+                    const a = document.createElement('a');
+                    a.href = URL.createObjectURL(blob);
+                    a.download = `${qrBus.busNumber}-gate-qr.svg`;
+                    a.click();
+                  }}
+                  className="w-full py-2 bg-sky-500 hover:bg-sky-600 text-white rounded-lg text-sm font-medium flex items-center justify-center gap-2"
+                >
+                  <QrCode size={16} /> Download QR SVG
+                </button>
+              </>
+            ) : (
+              <p className="text-sm text-amber-600 bg-amber-50 rounded-lg p-3">
+                QR not generated yet. Save the bus once to auto-generate.
+              </p>
+            )}
+          </div>
+        </div>
+      )}
 
       {statusBus && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">

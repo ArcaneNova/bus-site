@@ -33,16 +33,29 @@ export default function RouteDetailScreen() {
 
   const fetchRouteDetails = async () => {
     try {
-      const [routeRes, stagesRes, busesRes] = await Promise.all([
-        api.get(`/routes/${id}`),
-        api.get(`/stages?routeId=${id}&limit=200`),
+      console.log('[ROUTE DETAIL] Fetching route:', id);
+      const routeRes = await api.get(`/routes/${id}`);
+      const route = routeRes.data.route;
+      console.log('[ROUTE DETAIL] Route loaded:', route.route_name, 'url_route_id:', route.url_route_id);
+      
+      // Use url_route_id to fetch stages, not the MongoDB _id
+      const [stagesRes, busesRes] = await Promise.all([
+        api.get(`/stages?routeId=${route.url_route_id}&limit=200`),
         api.get(`/tracking/route/${id}`),
       ]);
-      setRoute(routeRes.data.route);
+      
+      console.log('[ROUTE DETAIL] Loaded successfully');
+      setRoute(route);
       setStages(stagesRes.data.stages || []);
       setLiveBuses(busesRes.data.positions || []);
-    } catch {
-      Toast.show({ type: 'error', text1: 'Failed to load route details.' });
+    } catch (error: any) {
+      console.error('[ROUTE DETAIL ERROR]', {
+        routeId: id,
+        status: error?.response?.status,
+        message: error?.message,
+        data: error?.response?.data,
+      });
+      Toast.show({ type: 'error', text1: `Failed to load route: ${error?.response?.data?.message || error?.message}` });
     } finally {
       setLoading(false);
     }
@@ -126,6 +139,21 @@ export default function RouteDetailScreen() {
         )}
       </View>
 
+      {/* Book This Route Banner */}
+      <View style={styles.bookBanner}>
+        <View style={styles.bookBannerLeft}>
+          <Text style={styles.bookBannerTitle}>Ready to travel?</Text>
+          <Text style={styles.bookBannerSub}>Reserve your seat on this route</Text>
+        </View>
+        <TouchableOpacity
+          style={styles.bookNowBtn}
+          onPress={() => router.push({ pathname: '/(passenger)/book/[scheduleId]', params: { scheduleId: 'any', routeId: id } })}
+        >
+          <Ionicons name="ticket-outline" size={16} color="#fff" />
+          <Text style={styles.bookNowText}>Book Now</Text>
+        </TouchableOpacity>
+      </View>
+
       {/* Live Buses */}
       {liveBuses.length > 0 && (
         <View style={styles.section}>
@@ -174,6 +202,19 @@ export default function RouteDetailScreen() {
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: '#F9FAFB' },
+  bookBanner: {
+    flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
+    backgroundColor: '#FF6B00', marginHorizontal: 16, marginBottom: 4, marginTop: 4,
+    borderRadius: 14, padding: 14,
+  },
+  bookBannerLeft: { flex: 1 },
+  bookBannerTitle: { color: '#fff', fontSize: 15, fontWeight: '700' },
+  bookBannerSub: { color: '#FFE4CC', fontSize: 12, marginTop: 2 },
+  bookNowBtn: {
+    flexDirection: 'row', alignItems: 'center', gap: 6,
+    backgroundColor: '#fff', paddingHorizontal: 14, paddingVertical: 9, borderRadius: 24,
+  },
+  bookNowText: { color: '#FF6B00', fontWeight: '800', fontSize: 13 },
   center: { flex: 1, justifyContent: 'center', alignItems: 'center' },
   header: {
     backgroundColor: '#FF6B00',

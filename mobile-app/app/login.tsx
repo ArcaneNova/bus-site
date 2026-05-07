@@ -29,7 +29,9 @@ export default function LoginScreen() {
 
     setLoading(true);
     try {
+      console.log('[LOGIN] Attempting login with email:', email);
       await login(email.trim(), password);
+      console.log('[LOGIN] Login successful, user:', useAuthStore.getState().user);
       // After login, user is set — redirect by role
       const role = useAuthStore.getState().user?.role;
       if (role === 'driver') {
@@ -38,7 +40,13 @@ export default function LoginScreen() {
         router.replace('/(passenger)');
       }
     } catch (err: any) {
-      const message = err?.response?.data?.message || 'Login failed. Please try again.';
+      console.error('[LOGIN ERROR]', {
+        message: err?.message,
+        status: err?.response?.status,
+        data: err?.response?.data,
+        fullError: err
+      });
+      const message = err?.response?.data?.message || err?.message || 'Login failed. Please try again.';
       Toast.show({ type: 'error', text1: message });
     } finally {
       setLoading(false);

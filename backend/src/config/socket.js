@@ -16,9 +16,16 @@ const initSocket = (server) => {
   io.on('connection', (socket) => {
     logger.info(`🔌 Socket connected: ${socket.id}`);
 
+    // ── Admin subscribes to SOS alerts room ────────────────────
+    socket.on('admin:subscribe_sos', () => {
+      socket.join('sos-alerts');
+      logger.info(`Admin joined SOS room: ${socket.id}`);
+    });
+
     // ── Admin subscribes to all buses ──────────────────────────
     socket.on('admin:subscribe_all', () => {
       socket.join('admin-dashboard');
+      socket.join('sos-alerts'); // admins always get SOS
       logger.info(`Admin joined dashboard room: ${socket.id}`);
     });
 
@@ -80,6 +87,22 @@ const initSocket = (server) => {
       io.to('admin-dashboard').emit('bus:arrived', { busId, stageId, timestamp: new Date() });
     });
 
+    // ── Passenger SOS ───────────────────────────────────────────
+    socket.on('passenger:sos', (data) => {
+      const sosPayload = {
+        type: 'sos', severity: 'critical',
+        message: `🚨 Passenger SOS: ${data.type || 'emergency'} — ${data.message || ''}`,
+        userId: data.userId,
+        latitude: data.latitude,
+        longitude: data.longitude,
+        timestamp: new Date(),
+        ...data,
+      };
+      // Broadcast to both admin dashboard AND dedicated SOS room
+      io.to('admin-dashboard').emit('alert:new', sosPayload);
+      io.to('sos-alerts').emit('sos:new', sosPayload);
+    });
+
     // ── Driver SOS ──────────────────────────────────────────────
     socket.on('driver:sos', (data) => {
       io.to('admin-dashboard').emit('alert:new', {
@@ -87,6 +110,7 @@ const initSocket = (server) => {
         message: `🚨 SOS from Bus ${data.busId}: ${data.reason}`,
         ...data,
       });
+      io.to('sos-alerts').emit('sos:new', { ...data, source: 'driver' });
     });
 
     socket.on('disconnect', () => {

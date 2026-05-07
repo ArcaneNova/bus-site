@@ -90,17 +90,21 @@ export default function HomePage() {
           </div>
           <div className="hidden md:flex items-center gap-6 text-sm text-gray-600">
             <Link href="/track" className="hover:text-blue-600 transition">Live Tracking</Link>
-            <Link href="/routes" className="hover:text-blue-600 transition">Routes</Link>
             <Link href="/fare" className="hover:text-blue-600 transition">Fare Calculator</Link>
+            <Link href="/passenger" className="hover:text-blue-600 transition">Passenger App</Link>
+            <Link href="/driver" className="hover:text-orange-600 transition">Driver Portal</Link>
           </div>
           <div className="flex items-center gap-3">
-            <Link href="/track" className="text-sm text-gray-600 hover:text-blue-600 transition hidden md:block">Track Buses</Link>
-            <Link href="/admin" className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition">
-              Admin Dashboard
+            <Link href="/passenger" className="text-sm bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition hidden md:flex items-center gap-1.5">
+              <Users className="w-3.5 h-3.5" /> Passenger App
+            </Link>
+            <Link href="/login" className="text-sm bg-gray-900 hover:bg-gray-800 text-white px-4 py-2 rounded-lg font-medium transition">
+              Sign In
             </Link>
           </div>
         </div>
       </nav>
+
 
       {/* HERO */}
       <section className="pt-32 pb-20 bg-gradient-to-br from-slate-900 via-blue-950 to-indigo-900 text-white relative overflow-hidden">
@@ -126,19 +130,20 @@ export default function HomePage() {
               and Genetic Algorithm scheduling — delivering smarter, faster, more reliable bus services for 3.5 million daily passengers.
             </p>
             <div className="flex flex-wrap gap-4">
-              <Link href="/track"
-                className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:opacity-90 text-white px-6 py-3 rounded-xl font-semibold text-sm transition shadow-lg">
-                <Navigation className="w-4 h-4" /> Track Buses Live
+              <Link href="/passenger"
+                className="flex items-center gap-2 bg-gradient-to-r from-blue-500 to-indigo-600 hover:opacity-90 text-white px-6 py-3 rounded-xl font-semibold text-sm transition shadow-lg shadow-blue-500/30">
+                <Users className="w-4 h-4" /> Passenger App
+              </Link>
+              <Link href="/driver"
+                className="flex items-center gap-2 bg-gradient-to-r from-orange-500 to-red-500 hover:opacity-90 text-white px-6 py-3 rounded-xl font-semibold text-sm transition shadow-lg shadow-orange-500/20">
+                <Bus className="w-4 h-4" /> Driver Portal
               </Link>
               <Link href="/admin"
                 className="flex items-center gap-2 bg-white/15 hover:bg-white/25 border border-white/30 text-white px-6 py-3 rounded-xl font-semibold text-sm backdrop-blur transition">
                 <BarChart3 className="w-4 h-4" /> Admin Dashboard <ChevronRight className="w-4 h-4" />
               </Link>
-              <Link href="/fare"
-                className="flex items-center gap-2 bg-green-500/20 hover:bg-green-500/30 border border-green-400/30 text-green-300 px-6 py-3 rounded-xl font-semibold text-sm transition">
-                <Zap className="w-4 h-4" /> Fare Calculator
-              </Link>
             </div>
+
           </div>
 
           {/* Live Stats Bar */}
@@ -199,19 +204,23 @@ export default function HomePage() {
           <h2 className="text-3xl font-bold mb-4">Explore SmartDTC</h2>
           <p className="text-blue-200 mb-8">Track buses live, plan your journey, or dive into the admin analytics dashboard.</p>
           <div className="flex flex-wrap gap-4 justify-center">
-            <Link href="/track" className="bg-white text-blue-700 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-50 transition flex items-center gap-2">
+            <Link href="/passenger" className="bg-white text-blue-700 px-6 py-3 rounded-xl font-semibold text-sm hover:bg-blue-50 transition flex items-center gap-2">
+              <Users className="w-4 h-4" /> Passenger App
+            </Link>
+            <Link href="/driver" className="bg-gradient-to-r from-orange-500 to-red-500 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:opacity-90 transition flex items-center gap-2">
+              <Bus className="w-4 h-4" /> Driver Portal
+            </Link>
+            <Link href="/track" className="bg-white/15 border border-white/30 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-white/25 transition flex items-center gap-2">
               <Navigation className="w-4 h-4" /> Live Bus Map
             </Link>
             <Link href="/fare" className="bg-white/15 border border-white/30 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-white/25 transition flex items-center gap-2">
               <Zap className="w-4 h-4" /> Calculate Fare
             </Link>
-            <Link href="/routes" className="bg-white/15 border border-white/30 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-white/25 transition flex items-center gap-2">
-              <Route className="w-4 h-4" /> Browse Routes
-            </Link>
-            <Link href="/admin" className="bg-orange-500 hover:bg-orange-600 text-white px-6 py-3 rounded-xl font-semibold text-sm transition flex items-center gap-2">
+            <Link href="/admin" className="bg-white/15 border border-white/30 text-white px-6 py-3 rounded-xl font-semibold text-sm hover:bg-white/25 transition flex items-center gap-2">
               <BarChart3 className="w-4 h-4" /> Admin Panel <ArrowRight className="w-4 h-4" />
             </Link>
           </div>
+
         </div>
       </section>
 

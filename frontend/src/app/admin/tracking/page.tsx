@@ -7,10 +7,21 @@ import { connectSocket } from '@/lib/socket';
 import type { BusPosition } from '@/types';
 import {
   Navigation, Wifi, Layers, BarChart2, RefreshCw, Bus,
-  Clock, Zap, MapPin, X, ChevronRight, Filter,
+  Clock, Zap, MapPin, X, ChevronRight, Filter, Shield, AlertTriangle, CheckCircle,
 } from 'lucide-react';
 import toast from 'react-hot-toast';
 import { timeAgo } from '@/lib/utils';
+
+const AI_URL = process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:8000';
+
+interface AnomalyResult {
+  is_anomaly:   boolean;
+  score:        number;
+  confidence:   number;
+  reason:       string;
+  model:        string;
+  metrics:      { precision?: number; recall?: number; f1?: number };
+}
 
 const LiveMap = dynamic(() => import('@/components/map/LiveMap'), { ssr: false });
 
@@ -31,6 +42,8 @@ export default function TrackingPage() {
   const [dispatchRoute,  setDispatchRoute]  = useState('');
   const [dispatching,    setDispatching]    = useState(false);
   const [showDispatch,   setShowDispatch]   = useState(false);
+  const [anomaly,        setAnomaly]        = useState<AnomalyResult | null>(null);
+  const [anomalyLoading, setAnomalyLoading] = useState(false);
 
   const stats = {
     delayed: positions.filter(p => (p.delay_minutes ?? 0) > 5).length,
@@ -99,6 +112,29 @@ export default function TrackingPage() {
   const filtered = routeFilter
     ? positions.filter(p => (p as any).routeId === routeFilter || (p as any).route === routeFilter)
     : positions;
+
+  const checkAnomaly = useCallback(async (pos: BusPosition) => {
+    setAnomalyLoading(true); setAnomaly(null);
+    try {
+      const res = await fetch(`${AI_URL}/detect/anomaly`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          speed_kmh:      (pos as any).speed ?? 30,
+          delay_minutes:  pos.delay_minutes ?? 0,
+          passenger_load: (pos as any).passenger_load ?? 60,
+          model_key:      'ensemble',
+        }),
+      });
+      const data: AnomalyResult = await res.json();
+      setAnomaly(data);
+      if (data.is_anomaly) {
+        toast.error(`🚨 Anomaly on Bus ${(pos as any).busNumber ?? '—'}: ${data.reason}`, { duration: 5000 });
+      }
+    } catch {
+      setAnomaly(null);
+    } finally { setAnomalyLoading(false); }
+  }, []);
 
   const emergencyDispatch = async () => {
     if (!dispatchRoute) return toast.error('Select a route');
@@ -231,7 +267,7 @@ export default function TrackingPage() {
                 return (
                   <button
                     key={pos.bus}
-                    onClick={() => setSelectedBus(isSelected ? null : pos)}
+                    onClick={() => { setSelectedBus(isSelected ? null : pos); if (!isSelected) checkAnomaly(pos); }}
                     className={`w-full text-left px-3 py-2.5 border-b hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50 border-l-2 border-l-blue-500' : ''}`}
                   >
                     <div className="flex items-center justify-between">
@@ -282,19 +318,22 @@ export default function TrackingPage() {
         {/* Bus detail panel */}
         {selectedBus && (
           <div className="w-72 flex-shrink-0 bg-white rounded-xl border shadow-sm overflow-hidden flex flex-col">
-            <div className="px-4 py-3 bg-gradient-to-r from-blue-600 to-indigo-600 text-white flex items-center justify-between">
+            <div className={`px-4 py-3 text-white flex items-center justify-between bg-gradient-to-r ${
+              anomaly?.is_anomaly ? 'from-red-600 to-rose-600' : 'from-blue-600 to-indigo-600'
+            }`}>
               <div className="flex items-center gap-2">
                 <Bus className="w-4 h-4" />
                 <span className="font-semibold">{(selectedBus as any).busNumber || 'Bus Details'}</span>
+                {anomaly?.is_anomaly && <AlertTriangle className="w-4 h-4 text-yellow-300" />}
               </div>
-              <button onClick={() => setSelectedBus(null)} className="opacity-70 hover:opacity-100"><X className="w-4 h-4" /></button>
+              <button onClick={() => { setSelectedBus(null); setAnomaly(null); }} className="opacity-70 hover:opacity-100"><X className="w-4 h-4" /></button>
             </div>
             <div className="flex-1 p-4 space-y-3 overflow-y-auto">
               {[
-                { label: 'Delay',        value: (selectedBus.delay_minutes ?? 0) > 0 ? `+${selectedBus.delay_minutes} min` : 'On time', icon: Clock, color: (selectedBus.delay_minutes ?? 0) > 5 ? 'text-red-600' : 'text-green-600' },
-                { label: 'Speed',        value: `${(selectedBus as any).speed ?? 0} km/h`,    icon: Zap,      color: 'text-blue-600' },
-                { label: 'Next Stop',    value: (selectedBus.nextStage as any)?.stage_name ?? '—', icon: MapPin, color: 'text-purple-600' },
-                { label: 'Last Update',  value: timeAgo(selectedBus.timestamp),          icon: RefreshCw, color: 'text-gray-500' },
+                { label: 'Delay',       value: (selectedBus.delay_minutes ?? 0) > 0 ? `+${selectedBus.delay_minutes} min` : 'On time', icon: Clock,     color: (selectedBus.delay_minutes ?? 0) > 5 ? 'text-red-600' : 'text-green-600' },
+                { label: 'Speed',       value: `${(selectedBus as any).speed ?? 0} km/h`,              icon: Zap,       color: 'text-blue-600' },
+                { label: 'Next Stop',   value: (selectedBus.nextStage as any)?.stage_name ?? '—',       icon: MapPin,    color: 'text-purple-600' },
+                { label: 'Last Update', value: timeAgo(selectedBus.timestamp),                           icon: RefreshCw, color: 'text-gray-500' },
               ].map(({ label, value, icon: Icon, color }) => (
                 <div key={label} className="flex items-center gap-3 p-2.5 bg-gray-50 rounded-lg">
                   <Icon className={`w-4 h-4 flex-shrink-0 ${color}`} />
@@ -304,6 +343,56 @@ export default function TrackingPage() {
                   </div>
                 </div>
               ))}
+
+              {/* AI Anomaly Detection Panel */}
+              <div className={`rounded-lg p-3 border ${
+                anomalyLoading ? 'bg-gray-50 border-gray-200' :
+                anomaly?.is_anomaly ? 'bg-red-50 border-red-200' : 'bg-green-50 border-green-200'
+              }`}>
+                <div className="flex items-center gap-2 mb-2">
+                  <Shield className={`w-4 h-4 ${
+                    anomalyLoading ? 'text-gray-400 animate-pulse' :
+                    anomaly?.is_anomaly ? 'text-red-500' : 'text-green-500'
+                  }`} />
+                  <span className="text-xs font-semibold text-gray-700">AI Anomaly Detection</span>
+                  {!anomalyLoading && anomaly && (
+                    <span className="text-[10px] text-gray-400 ml-auto">{anomaly.model}</span>
+                  )}
+                </div>
+                {anomalyLoading ? (
+                  <p className="text-xs text-gray-400">Analysing with ensemble model…</p>
+                ) : anomaly ? (
+                  <>
+                    <div className="flex items-center gap-2">
+                      {anomaly.is_anomaly
+                        ? <AlertTriangle className="w-4 h-4 text-red-500 flex-shrink-0" />
+                        : <CheckCircle   className="w-4 h-4 text-green-500 flex-shrink-0" />
+                      }
+                      <span className={`text-sm font-bold ${
+                        anomaly.is_anomaly ? 'text-red-700' : 'text-green-700'
+                      }`}>
+                        {anomaly.is_anomaly ? 'ANOMALY DETECTED' : 'Normal'}
+                      </span>
+                      <span className="text-xs text-gray-500 ml-auto">{Math.round(anomaly.confidence * 100)}%</span>
+                    </div>
+                    <p className="text-xs text-gray-600 mt-1">{anomaly.reason}</p>
+                    {anomaly.metrics?.f1 != null && (
+                      <p className="text-[10px] text-gray-400 mt-1">Model F1={anomaly.metrics.f1.toFixed(3)}</p>
+                    )}
+                  </>
+                ) : (
+                  <p className="text-xs text-gray-400">Click a bus to run anomaly check</p>
+                )}
+              </div>
+
+              <button
+                onClick={() => checkAnomaly(selectedBus)}
+                disabled={anomalyLoading}
+                className="w-full text-xs text-purple-600 hover:text-purple-800 flex items-center justify-center gap-1 py-1 disabled:opacity-50"
+              >
+                {anomalyLoading ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Shield className="w-3 h-3" />}
+                Re-run Anomaly Check
+              </button>
 
               {selectedBus.location?.coordinates && (
                 <div className="p-2.5 bg-gray-50 rounded-lg">

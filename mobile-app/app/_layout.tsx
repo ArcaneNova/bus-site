@@ -22,6 +22,12 @@ Notifications.setNotificationHandler({
 });
 
 const registerForPushNotifications = async (): Promise<string | null> => {
+  // Skip on web platform
+  if (Platform.OS === 'web') {
+    console.info('[Push] Push notifications not supported on web.');
+    return null;
+  }
+
   if (!Device.isDevice) {
     console.info('[Push] Must use a physical device for push notifications.');
     return null;

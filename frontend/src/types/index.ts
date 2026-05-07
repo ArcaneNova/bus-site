@@ -37,6 +37,7 @@ export interface Bus {
   capacity: number;
   type: 'AC' | 'non-AC' | 'electric';
   status: 'active' | 'idle' | 'maintenance' | 'retired';
+  busQrId?: string;
   currentRoute?: Route;
   currentDriver?: string;
   lastPosition?: { lat: number; lng: number; speed: number; timestamp: string };
@@ -71,12 +72,19 @@ export interface BusPosition {
   bus: string;
   busNumber?: string;
   route?: string;
+  routeId?: string;
+  routeName?: string;
+  lat?: number;
+  lng?: number;
   location: { type: 'Point'; coordinates: [number, number] };
   speed: number;
   heading: number;
   delay_minutes: number;
   timestamp: string;
   nextStage?: { stage_name: string };
+  distanceToNextStop?: number;
+  stopsRemaining?: number;
+  isSimulated?: boolean;
 }
 
 export interface Alert {

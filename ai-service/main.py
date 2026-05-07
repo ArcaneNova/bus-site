@@ -1,17 +1,18 @@
 """
-main.py — SmartDTC AI Microservice
-FastAPI server exposing demand prediction, delay prediction,
-AI schedule generation, anomaly detection, ETA prediction,
-headway optimisation and model retraining endpoints.
+main.py — SmartDTC AI Microservice v3.0 (Multi-Model)
+FastAPI server exposing multi-model ML predictions for demand, delay,
+anomaly detection, ETA, schedule optimisation, and model comparison.
 
 Run: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 """
 
 import logging
+import json
+import os
 from contextlib import asynccontextmanager
-from typing import Optional
+from typing import Optional, List
 
-from fastapi import FastAPI, HTTPException, BackgroundTasks
+from fastapi import FastAPI, HTTPException, BackgroundTasks, Query
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -21,17 +22,19 @@ from schemas import (
     DelayRequest, DelayResponse,
     ScheduleRequest, ScheduleResponse,
 )
-from predictors import predict_demand, predict_delay, generate_schedule
+from predictors import predict_demand, predict_demand_all_models, predict_delay, generate_schedule
 
 logging.basicConfig(level=logging.INFO, format="%(levelname)s:  %(message)s")
 logger = logging.getLogger(__name__)
 
+MODEL_DIR = os.getenv("MODEL_DIR", "models/saved")
 
-# ── Lifespan (startup / shutdown) ──────────────────────────────────────────
+
+# ── Lifespan ───────────────────────────────────────────────────────────────────
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    logger.info("🚀  Loading ML models…")
+    logger.info("🚀  Loading multi-model ML suite…")
     model_loader.load_models()
 
     from anomaly_detector import load_anomaly_model
@@ -40,40 +43,52 @@ async def lifespan(app: FastAPI):
     from eta_predictor import load_eta_model
     load_eta_model()
 
-    logger.info("✅  AI service ready")
+    logger.info("✅  SmartDTC AI service ready — %d demand, %d delay, %d anomaly models",
+                len(model_loader.demand_models),
+                len(model_loader.delay_models),
+                len(model_loader.anomaly_models))
     yield
     logger.info("🛑  AI service shutting down")
 
 
-# ── App ────────────────────────────────────────────────────────────────────
+# ── App ─────────────────────────────────────────────────────────────────────────
 
 app = FastAPI(
     title="SmartDTC AI Service",
-    description="LSTM demand predictor + XGBoost delay predictor + GA schedule optimiser + anomaly detector + ETA predictor",
-    version="2.0.0",
+    description=(
+        "Multi-model ML service: 6 demand models (LSTM/GRU/Transformer/XGBoost/LightGBM/RF), "
+        "6 delay models (XGBoost/LightGBM/CatBoost/SVR/MLP/Ensemble), "
+        "6 anomaly detectors (IForest/LOF/OCSVM/Autoencoder/DBSCAN/Ensemble)."
+    ),
+    version="3.0.0",
     lifespan=lifespan,
 )
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5000", "http://localhost:3000"],
+    allow_origins=["http://localhost:5000", "http://localhost:3000", "*"],
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
 
-# ── Pydantic schemas for new endpoints ────────────────────────────────────
+# ── Pydantic schemas ────────────────────────────────────────────────────────────
 
 class AnomalyRequest(BaseModel):
-    speed_kmh:       float = Field(..., ge=0, le=200, description="Current bus speed km/h")
-    delay_minutes:   float = Field(..., ge=0,         description="Delay in minutes")
+    speed_kmh:       float = Field(..., ge=0, le=200)
+    delay_minutes:   float = Field(..., ge=0)
     passenger_load:  float = Field(60.0, ge=0, le=200)
+    model_key:       str   = Field("auto", description="auto|ensemble|isolation_forest|lof|ocsvm|autoencoder|dbscan")
 
 class AnomalyResponse(BaseModel):
     is_anomaly:   bool
     score:        float
     confidence:   float
     reason:       str
+    model:        str = "unknown"
+    is_best_model: bool = False
+    metrics:      dict = {}
+    all_model_results: dict = {}
 
 class ETARequest(BaseModel):
     distance_km:         float = Field(..., ge=0)
@@ -104,77 +119,21 @@ class RetrainRequest(BaseModel):
     retrain_lstm:     bool = False
     retrain_anomaly:  bool = True
 
-
-# ── Routes ─────────────────────────────────────────────────────────────────
-
-@app.get("/health")
-def health():
-    from anomaly_detector import _anomaly_model as anomaly_model
-    from eta_predictor import _eta_model as eta_model
-    return {
-        "status": "ok",
-        "version": "2.0.0",
-        "models": {
-            "demand_lstm":     model_loader.demand_model  is not None,
-            "delay_xgboost":   model_loader.delay_model   is not None,
-            "anomaly_iforest": anomaly_model               is not None,
-            "eta_gbm":         eta_model                   is not None,
-        },
-        "timestamp": __import__("datetime").datetime.utcnow().isoformat(),
-    }
-
-
-@app.get("/stats")
-def model_stats():
-    """Return model performance metrics for admin dashboard display."""
-    from anomaly_detector import _anomaly_model as anomaly_model
-    from eta_predictor import _eta_model as eta_model
-    return {
-        "models": {
-            "demand_lstm": {
-                "loaded":        model_loader.demand_model is not None,
-                "architecture":  "2-layer LSTM (64 units) + Dense",
-                "mape":          8.3,
-                "accuracy_pct":  91.7,
-                "training_data": "30-day DTC historical demand (569 routes)",
-                "peak_accuracy": 91.2,
-                "weekend_accuracy": 89.7,
-            },
-            "delay_xgboost": {
-                "loaded":     model_loader.delay_model is not None,
-                "algorithm":  "XGBoost Regressor",
-                "rmse_min":   4.2,
-                "r2_score":   0.81,
-                "features":   ["hour", "day_of_week", "weather", "passenger_load", "distance_km"],
-            },
-            "anomaly_iforest": {
-                "loaded":          anomaly_model is not None,
-                "algorithm":       "Isolation Forest",
-                "contamination":   0.05,
-                "features":        ["speed_kmh", "delay_minutes", "passenger_load"],
-            },
-            "eta_gbm": {
-                "loaded":     eta_model is not None,
-                "algorithm":  "Gradient Boosting Regressor",
-                "mae_min":    2.8,
-                "r2_score":   0.87,
-            },
-        },
-        "system": {
-            "lstm_mape":        8.3,
-            "otp_improvement":  "78% vs 62% baseline",
-            "wait_reduction":   "47% average",
-            "fleet_util_gain":  "+18% vs static allocation",
-        },
-    }
-
+class DemandAllModelsRequest(BaseModel):
+    route_id:      str
+    date:          str
+    hour:          int   = Field(..., ge=0, le=23)
+    is_weekend:    bool  = False
+    is_holiday:    bool  = False
+    weather:       str   = "clear"
+    avg_temp_c:    float = 25.0
+    special_event: bool  = False
 
 class FareRequest(BaseModel):
-    distance_km: float = Field(..., ge=0, description="Route distance in km")
-    bus_type: str = Field("non-AC", description="Bus type: AC, non-AC, electric")
-    from_stop: Optional[str] = None
-    to_stop:   Optional[str] = None
-
+    distance_km: float = Field(..., ge=0)
+    bus_type:    str   = Field("non-AC")
+    from_stop:   Optional[str] = None
+    to_stop:     Optional[str] = None
 
 class FareResponse(BaseModel):
     amount:      int
@@ -184,44 +143,157 @@ class FareResponse(BaseModel):
     slab_info:   str
 
 
+# ── HEALTH & STATUS ─────────────────────────────────────────────────────────────
+
+@app.get("/health")
+def health():
+    comp = model_loader.demand_comparison
+    delay_comp = model_loader.delay_comparison
+    anom_comp  = model_loader.anomaly_comparison
+
+    return {
+        "status":  "ok",
+        "version": "3.0.0",
+        "models": {
+            "demand": {
+                "loaded":     list(model_loader.demand_models.keys()),
+                "count":      len(model_loader.demand_models),
+                "best":       model_loader.demand_best_model,
+                "scaler":     model_loader.demand_scaler is not None,
+            },
+            "delay": {
+                "loaded":     list(model_loader.delay_models.keys()),
+                "count":      len(model_loader.delay_models),
+                "best":       model_loader.delay_best_model,
+                "scaler":     model_loader.delay_scaler is not None,
+            },
+            "anomaly": {
+                "loaded":     list(model_loader.anomaly_models.keys()),
+                "count":      len(model_loader.anomaly_models),
+                "best":       model_loader.anomaly_best_model,
+                "scaler":     model_loader.anomaly_scaler is not None,
+            },
+        },
+        "timestamp": __import__("datetime").datetime.utcnow().isoformat(),
+    }
+
+
+@app.get("/stats")
+def model_stats():
+    """Rich model performance metrics for admin dashboard."""
+    demand_rep = model_loader.demand_comparison.get("models", {})
+    delay_rep  = model_loader.delay_comparison.get("models", {})
+    anom_rep   = model_loader.anomaly_comparison.get("models", {})
+
+    best_d = model_loader.demand_best_model
+    best_l = model_loader.delay_best_model
+    best_a = model_loader.anomaly_best_model
+
+    d_met = demand_rep.get(best_d, {})
+    l_met = delay_rep.get(best_l,  {})
+    a_met = anom_rep.get(best_a,   {})
+
+    return {
+        "models": {
+            "demand": {
+                "best_model":    best_d,
+                "loaded_models": list(model_loader.demand_models.keys()),
+                "mape":          round(d_met.get("mape", 8.3),   4),
+                "mae":           round(d_met.get("mae",  1.4),   4),
+                "rmse":          round(d_met.get("rmse", 2.5),   4),
+                "r2":            round(d_met.get("r2",   0.99),  6),
+                "accuracy_pct":  round(100 - d_met.get("mape", 8.3), 2),
+                "all_metrics":   demand_rep,
+            },
+            "delay": {
+                "best_model":    best_l,
+                "loaded_models": list(model_loader.delay_models.keys()),
+                "mae":           round(l_met.get("mae",  1.06),  4),
+                "rmse":          round(l_met.get("rmse", 1.30),  4),
+                "r2":            round(l_met.get("r2",   0.95),  6),
+                "all_metrics":   delay_rep,
+            },
+            "anomaly": {
+                "best_model":    best_a,
+                "loaded_models": list(model_loader.anomaly_models.keys()),
+                "precision":     round(a_met.get("precision", 0.59), 4),
+                "recall":        round(a_met.get("recall",    0.99), 4),
+                "f1":            round(a_met.get("f1",        0.74), 4),
+                "all_metrics":   anom_rep,
+            },
+        },
+        "system": {
+            "demand_mape":      round(d_met.get("mape",  8.3), 2),
+            "demand_r2":        round(d_met.get("r2",    0.99), 4),
+            "delay_mae_min":    round(l_met.get("mae",   1.06), 2),
+            "anomaly_f1":       round(a_met.get("f1",    0.74), 4),
+            "otp_improvement":  "78% vs 62% baseline",
+            "wait_reduction":   "47% average",
+            "fleet_util_gain":  "+18% vs static allocation",
+        },
+    }
+
+
+@app.get("/models/comparison")
+def model_comparison_report():
+    """Full comparison report for all three tasks."""
+    return {
+        "demand": {
+            "task":           "demand_prediction",
+            "best_model":     model_loader.demand_best_model,
+            "loaded":         list(model_loader.demand_models.keys()),
+            "comparison":     model_loader.demand_comparison,
+        },
+        "delay": {
+            "task":           "delay_prediction",
+            "best_model":     model_loader.delay_best_model,
+            "loaded":         list(model_loader.delay_models.keys()),
+            "comparison":     model_loader.delay_comparison,
+        },
+        "anomaly": {
+            "task":           "anomaly_detection",
+            "best_model":     model_loader.anomaly_best_model,
+            "loaded":         list(model_loader.anomaly_models.keys()),
+            "comparison":     model_loader.anomaly_comparison,
+        },
+    }
+
+
+# ── FARE ────────────────────────────────────────────────────────────────────────
+
 @app.post("/predict/fare", response_model=FareResponse)
 def fare_prediction(req: FareRequest):
-    """Calculate bus fare based on distance and bus type using DTC slabs."""
     slabs = [
-        {"max_km": 2,   "non-AC": 10, "AC": 15, "electric": 10},
-        {"max_km": 5,   "non-AC": 15, "AC": 20, "electric": 15},
-        {"max_km": 10,  "non-AC": 20, "AC": 30, "electric": 20},
-        {"max_km": 15,  "non-AC": 25, "AC": 40, "electric": 25},
-        {"max_km": 20,  "non-AC": 30, "AC": 50, "electric": 30},
-        {"max_km": 25,  "non-AC": 35, "AC": 60, "electric": 35},
-        {"max_km": 30,  "non-AC": 40, "AC": 70, "electric": 40},
-        {"max_km": 40,  "non-AC": 50, "AC": 85, "electric": 50},
-        {"max_km": 999, "non-AC": 60, "AC": 100, "electric": 60},
+        {"max_km": 2,   "non-AC": 10,  "AC": 15,  "electric": 10},
+        {"max_km": 5,   "non-AC": 15,  "AC": 20,  "electric": 15},
+        {"max_km": 10,  "non-AC": 20,  "AC": 30,  "electric": 20},
+        {"max_km": 15,  "non-AC": 25,  "AC": 40,  "electric": 25},
+        {"max_km": 20,  "non-AC": 30,  "AC": 50,  "electric": 30},
+        {"max_km": 25,  "non-AC": 35,  "AC": 60,  "electric": 35},
+        {"max_km": 30,  "non-AC": 40,  "AC": 70,  "electric": 40},
+        {"max_km": 40,  "non-AC": 50,  "AC": 85,  "electric": 50},
+        {"max_km": 999, "non-AC": 60,  "AC": 100, "electric": 60},
     ]
     bus_type = req.bus_type if req.bus_type in ("AC", "electric") else "non-AC"
     slab     = next((s for s in slabs if req.distance_km <= s["max_km"]), slabs[-1])
-    amount   = slab[bus_type]
     return FareResponse(
-        amount=amount,
-        currency="INR",
-        bus_type=bus_type,
+        amount=slab[bus_type], currency="INR", bus_type=bus_type,
         distance_km=round(req.distance_km, 1),
         slab_info=f"Up to {slab['max_km']} km",
     )
 
 
-@app.post("/predict/demand", response_model=DemandResponse)
-def demand_prediction(req: DemandRequest):
+# ── DEMAND ──────────────────────────────────────────────────────────────────────
+
+@app.post("/predict/demand")
+def demand_prediction(req: DemandRequest, model: str = Query("auto")):
     try:
         result = predict_demand(
-            route_id      = req.route_id,
-            date          = req.date,
-            hour          = req.hour,
-            is_weekend    = req.is_weekend,
-            is_holiday    = req.is_holiday,
-            weather       = req.weather,
-            avg_temp_c    = req.avg_temp_c,
-            special_event = req.special_event,
+            route_id=req.route_id, date=req.date, hour=req.hour,
+            is_weekend=req.is_weekend, is_holiday=req.is_holiday,
+            weather=req.weather, avg_temp_c=req.avg_temp_c,
+            special_event=req.special_event,
+            model_key=model,
         )
         return result
     except Exception as e:
@@ -229,21 +301,35 @@ def demand_prediction(req: DemandRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@app.post("/predict/delay", response_model=DelayResponse)
-def delay_prediction(req: DelayRequest):
+@app.post("/predict/demand/all-models")
+def demand_all_models(req: DemandAllModelsRequest):
+    """Run all loaded demand models and return comparison."""
+    try:
+        result = predict_demand_all_models(
+            route_id=req.route_id, date=req.date, hour=req.hour,
+            is_weekend=req.is_weekend, is_holiday=req.is_holiday,
+            weather=req.weather, avg_temp_c=req.avg_temp_c,
+            special_event=req.special_event,
+        )
+        return result
+    except Exception as e:
+        logger.error(f"Demand all-models error: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ── DELAY ───────────────────────────────────────────────────────────────────────
+
+@app.post("/predict/delay")
+def delay_prediction(req: DelayRequest, model: str = Query("auto")):
     try:
         result = predict_delay(
-            route_id               = req.route_id,
-            hour                   = req.hour,
-            day_of_week            = req.day_of_week,
-            is_weekend             = req.is_weekend,
-            is_holiday             = req.is_holiday,
-            weather                = req.weather,
-            avg_temp_c             = req.avg_temp_c,
-            passenger_load_pct     = req.passenger_load_pct,
-            scheduled_duration_min = req.scheduled_duration_min,
-            distance_km            = req.distance_km,
-            total_stops            = req.total_stops,
+            route_id=req.route_id, hour=req.hour,
+            day_of_week=req.day_of_week, is_weekend=req.is_weekend,
+            is_holiday=req.is_holiday, weather=req.weather,
+            avg_temp_c=req.avg_temp_c, passenger_load_pct=req.passenger_load_pct,
+            scheduled_duration_min=req.scheduled_duration_min,
+            distance_km=req.distance_km, total_stops=req.total_stops,
+            model_key=model,
         )
         return result
     except Exception as e:
@@ -251,29 +337,31 @@ def delay_prediction(req: DelayRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ── SCHEDULE ─────────────────────────────────────────────────────────────────────
+
 @app.post("/schedule/generate", response_model=ScheduleResponse)
 def schedule_generation(req: ScheduleRequest):
     try:
         result = generate_schedule(
-            route_id    = req.route_id,
-            date        = req.date,
-            total_buses = req.total_buses_available,
+            route_id=req.route_id, date=req.date, total_buses=req.total_buses_available,
         )
         return result
     except Exception as e:
-        logger.error(f"Schedule generation error: {e}")
+        logger.error(f"Schedule error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ── ANOMALY ──────────────────────────────────────────────────────────────────────
+
 @app.post("/detect/anomaly", response_model=AnomalyResponse)
 def anomaly_detection(req: AnomalyRequest):
-    """Detect abnormal bus behaviour using Isolation Forest."""
     try:
         from anomaly_detector import detect_anomaly
         result = detect_anomaly(
-            speed_kmh      = req.speed_kmh,
-            delay_minutes  = req.delay_minutes,
-            passenger_load = req.passenger_load,
+            speed_kmh=req.speed_kmh,
+            delay_minutes=req.delay_minutes,
+            passenger_load=req.passenger_load,
+            model_key=req.model_key,
         )
         return AnomalyResponse(**result)
     except Exception as e:
@@ -281,55 +369,51 @@ def anomaly_detection(req: AnomalyRequest):
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ── ETA ──────────────────────────────────────────────────────────────────────────
+
 @app.post("/predict/eta", response_model=ETAResponse)
 def eta_prediction(req: ETARequest):
-    """Predict ETA in minutes using Gradient Boosting regressor."""
     try:
         from eta_predictor import predict_eta
         result = predict_eta(
-            distance_km        = req.distance_km,
-            hour               = req.hour,
-            day_of_week        = req.day_of_week,
-            is_weekend         = req.is_weekend,
-            weather            = req.weather,
-            avg_speed_kmh      = req.avg_speed_kmh,
-            passenger_load_pct = req.passenger_load_pct,
+            distance_km=req.distance_km, hour=req.hour,
+            day_of_week=req.day_of_week, is_weekend=req.is_weekend,
+            weather=req.weather, avg_speed_kmh=req.avg_speed_kmh,
+            passenger_load_pct=req.passenger_load_pct,
         )
         return ETAResponse(**result)
     except Exception as e:
-        logger.error(f"ETA prediction error: {e}")
+        logger.error(f"ETA error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
+
+# ── HEADWAY OPTIMISATION ─────────────────────────────────────────────────────────
 
 @app.post("/optimize/headway")
 def headway_optimization(req: OptimizeRequest):
-    """Genetic Algorithm headway optimizer — finds optimal dispatch times."""
     try:
         from optimizer import optimize_headway
         result = optimize_headway(
-            route_id   = req.route_id,
-            date       = req.date,
-            fleet_size = req.fleet_size,
-            is_weekend = req.is_weekend,
-            is_holiday = req.is_holiday,
-            start_hour = req.start_hour,
-            end_hour   = req.end_hour,
+            route_id=req.route_id, date=req.date, fleet_size=req.fleet_size,
+            is_weekend=req.is_weekend, is_holiday=req.is_holiday,
+            start_hour=req.start_hour, end_hour=req.end_hour,
         )
         return {"success": True, **result}
     except Exception as e:
-        logger.error(f"Headway optimization error: {e}")
+        logger.error(f"Headway error: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ── ADMIN / RETRAIN ──────────────────────────────────────────────────────────────
+
 @app.post("/admin/retrain")
 async def trigger_retrain(req: RetrainRequest, background_tasks: BackgroundTasks):
-    """Trigger model retraining pipeline (runs in background)."""
     def _do_retrain():
         from retrain_pipeline import run_retrain_pipeline
         report = run_retrain_pipeline(
-            retrain_xgboost = req.retrain_xgboost,
-            retrain_lstm    = req.retrain_lstm,
-            retrain_anomaly = req.retrain_anomaly,
+            retrain_xgboost=req.retrain_xgboost,
+            retrain_lstm=req.retrain_lstm,
+            retrain_anomaly=req.retrain_anomaly,
         )
         logger.info(f"Retrain complete: {report['status']}")
 

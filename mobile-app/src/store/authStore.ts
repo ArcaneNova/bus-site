@@ -1,7 +1,45 @@
 import { create } from 'zustand';
 import * as SecureStore from 'expo-secure-store';
+import { Platform } from 'react-native';
 import api from '@/lib/api';
 import { User } from '@/types';
+
+// Helper to safely get/set tokens (web fallback to localStorage)
+const getToken = async () => {
+  try {
+    if (Platform.OS === 'web') {
+      return typeof window !== 'undefined' ? localStorage.getItem('accessToken') : null;
+    }
+    return await SecureStore.getItemAsync('accessToken');
+  } catch (error) {
+    console.warn('[TOKEN STORAGE] Get error:', error);
+    return null;
+  }
+};
+
+const setToken = async (token: string) => {
+  try {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') localStorage.setItem('accessToken', token);
+    } else {
+      await SecureStore.setItemAsync('accessToken', token);
+    }
+  } catch (error) {
+    console.warn('[TOKEN STORAGE] Set error:', error);
+  }
+};
+
+const deleteToken = async () => {
+  try {
+    if (Platform.OS === 'web') {
+      if (typeof window !== 'undefined') localStorage.removeItem('accessToken');
+    } else {
+      await SecureStore.deleteItemAsync('accessToken');
+    }
+  } catch (error) {
+    console.warn('[TOKEN STORAGE] Delete error:', error);
+  }
+};
 
 interface AuthState {
   user: User | null;
@@ -24,7 +62,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
 
   loadToken: async () => {
     try {
-      const token = await SecureStore.getItemAsync('accessToken');
+      const token = await getToken();
       if (token) {
         set({ accessToken: token });
         await get().fetchMe();
@@ -37,10 +75,21 @@ export const useAuthStore = create<AuthState>((set, get) => ({
   },
 
   login: async (email, password) => {
-    const res = await api.post('/auth/login', { email, password });
-    const { accessToken, user } = res.data;
-    await SecureStore.setItemAsync('accessToken', accessToken);
-    set({ user, accessToken, isAuthenticated: true });
+    try {
+      console.log('[AUTHSTORE LOGIN] Sending request for:', email);
+      const res = await api.post('/auth/login', { email, password });
+      console.log('[AUTHSTORE LOGIN] Response:', res.data);
+      const { accessToken, user } = res.data;
+      if (!accessToken) {
+        throw new Error('No access token in response');
+      }
+      await setToken(accessToken);
+      set({ user, accessToken, isAuthenticated: true });
+      console.log('[AUTHSTORE LOGIN] Success - stored token and user');
+    } catch (error) {
+      console.error('[AUTHSTORE LOGIN] Error:', error);
+      throw error;
+    }
   },
 
   logout: async () => {
@@ -49,7 +98,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
     } catch {
       // ignore
     }
-    await SecureStore.deleteItemAsync('accessToken');
+    await deleteToken();
     set({ user: null, accessToken: null, isAuthenticated: false });
   },
 
@@ -58,7 +107,7 @@ export const useAuthStore = create<AuthState>((set, get) => ({
       const res = await api.get('/auth/me');
       set({ user: res.data.user, isAuthenticated: true });
     } catch {
-      await SecureStore.deleteItemAsync('accessToken');
+      await deleteToken();
       set({ user: null, accessToken: null, isAuthenticated: false });
     }
   },

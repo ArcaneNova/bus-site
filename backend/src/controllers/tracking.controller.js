@@ -1,12 +1,11 @@
 const BusPosition = require('../models/BusPosition');
 const Bus         = require('../models/Bus');
 
-// GET /api/v1/tracking/live  — all buses with recent position
+// GET /api/v1/tracking/live  — all buses with recent position (normalized for mobile)
 exports.getLiveBuses = async (req, res) => {
   try {
-    // Get latest position per bus using aggregation
-    const positions = await BusPosition.aggregate([
-      { $match: { isSimulated: { $ne: true } } },
+    // Include simulated buses (GPS simulator used in demo/dev mode)
+    const raw = await BusPosition.aggregate([
       { $sort: { timestamp: -1 } },
       { $group: { _id: '$bus', doc: { $first: '$$ROOT' } } },
       { $replaceRoot: { newRoot: '$doc' } },
@@ -15,6 +14,23 @@ exports.getLiveBuses = async (req, res) => {
       { $lookup: { from: 'routes', localField: 'route', foreignField: '_id', as: 'routeInfo' } },
       { $unwind: { path: '$routeInfo', preserveNullAndEmptyArrays: true } },
     ]);
+
+    // Normalize for mobile map
+    const positions = raw.map(p => {
+      const coords = p.location?.coordinates;
+      return {
+        ...p,
+        busId: String(p.bus),
+        busNumber: p.busInfo?.busNumber || 'Bus',
+        lat: coords ? coords[1] : null,
+        lng: coords ? coords[0] : null,
+        speed: p.speed || 0,
+        delay: p.delay_minutes || 0,
+        passenger_load: p.passenger_load || 0,
+        routeName: p.routeInfo?.route_name || '',
+        nextStop: p.nextStage?.stage_name || p.nextStop || '',
+      };
+    }).filter(p => p.lat && p.lng);
 
     res.json({ success: true, count: positions.length, positions });
   } catch (err) {
@@ -44,7 +60,6 @@ exports.getBusesByRoute = async (req, res) => {
     const { Types } = require('mongoose');
     const positions = await BusPosition.aggregate([
       { $match: { route: new Types.ObjectId(req.params.routeId) } },
-      { $match: { isSimulated: { $ne: true } } },
       { $sort: { timestamp: -1 } },
       { $group: { _id: '$bus', doc: { $first: '$$ROOT' } } },
       { $replaceRoot: { newRoot: '$doc' } },
@@ -70,7 +85,7 @@ exports.getNearbyBuses = async (req, res) => {
           distanceField: 'distance',
           maxDistance:   Number(radius),
           spherical:     true,
-          query:         { isSimulated: { $ne: true } },
+          query:         {}, // include simulated buses for demo mode
         },
       },
       { $sort: { bus: 1, timestamp: -1 } },

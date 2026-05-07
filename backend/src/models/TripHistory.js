@@ -13,6 +13,18 @@ const tripHistorySchema = new mongoose.Schema({
   avgSpeed:       { type: Number, default: 0 }, // km/h
   delayMinutes:   { type: Number, default: 0 },
   incidents:      [{ type: String }],
+  fare:           { type: Number, default: 0 },       // INR collected
+  passengerCount: { type: Number, default: 0 },       // passengers served
+  onTimeStatus:   { type: String, enum: ['on-time', 'delayed', 'early'], default: 'on-time' },
+  rating: {
+    overall:  { type: Number, min: 1, max: 5 },
+    driver:   { type: Number, min: 1, max: 5 },
+    comfort:  { type: Number, min: 1, max: 5 },
+    tags:     [{ type: String }],
+    comment:  { type: String },
+    ratedBy:  { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    ratedAt:  { type: Date },
+  },
   status: {
     type: String,
     enum: ['completed', 'incomplete', 'emergency-stopped'],

@@ -28,10 +28,16 @@ exports.getAllRoutes = async (req, res) => {
 // GET /api/v1/routes/:id
 exports.getRoute = async (req, res) => {
   try {
+    console.log('[GET ROUTE] Fetching route:', req.params.id);
     const route = await Route.findById(req.params.id);
-    if (!route) return res.status(404).json({ success: false, message: 'Route not found.' });
+    if (!route) {
+      console.log('[GET ROUTE] Route not found');
+      return res.status(404).json({ success: false, message: 'Route not found.' });
+    }
+    console.log('[GET ROUTE] Route found:', route.route_name);
     res.json({ success: true, route });
   } catch (err) {
+    console.error('[GET ROUTE ERROR]', err.message);
     res.status(500).json({ success: false, message: err.message });
   }
 };

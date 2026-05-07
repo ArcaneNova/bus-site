@@ -123,20 +123,25 @@ exports.deleteUser = async (req, res) => {
 exports.login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('[AUTH LOGIN] Received request:', { email, hasPassword: !!password, origin: req.get('origin') });
 
     if (!email || !password) {
+      console.log('[AUTH LOGIN] Missing email or password');
       return res.status(400).json({ success: false, message: 'Email and password are required.' });
     }
 
     const user = await User.findOne({ email }).select('+password');
     if (!user || !(await user.comparePassword(password))) {
+      console.log('[AUTH LOGIN] Invalid credentials for:', email);
       return res.status(401).json({ success: false, message: 'Invalid credentials.' });
     }
 
     if (!user.isActive) {
+      console.log('[AUTH LOGIN] Account deactivated:', email);
       return res.status(403).json({ success: false, message: 'Account is deactivated.' });
     }
 
+    console.log('[AUTH LOGIN] Login successful for:', email);
     sendTokens(user, 200, res);
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });

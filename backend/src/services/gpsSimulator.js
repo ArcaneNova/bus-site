@@ -4,16 +4,65 @@
  * - Runs on a 5-second interval
  * - Realistic speed variation (peak vs off-peak hours)
  * - Delay detection + automatic alert generation
- * - Emits Socket.io events: bus:location_update, alert:new
+ * - Anomaly detection via AI service → auto-generates critical alerts
+ * - Emits Socket.io events: bus:location_update, alert:new, anomaly:detected
  */
 
+const axios       = require('axios');
 const Bus         = require('../models/Bus');
 const Stage       = require('../models/Stage');
 const BusPosition = require('../models/BusPosition');
 const Alert       = require('../models/Alert');
+const Booking     = require('../models/Booking');
+const Schedule    = require('../models/Schedule');
 const { getIO }   = require('../config/socket');
 
-// In-memory state: busId → { idx, stages, delayMin, alertedDelay }
+const AI_URL = process.env.AI_SERVICE_URL || process.env.PYTHON_AI_URL || 'http://localhost:8000';
+
+// In-memory state: busId → { idx, stages, delayMin, alertedDelay, alertedAnomaly, passengerLoad }
+// passengerLoad cache refreshes every 5 minutes per bus
+const _loadCache = {}; // busId → { load, fetchedAt }
+const LOAD_CACHE_TTL = 5 * 60 * 1000;
+
+/**
+ * Get real passenger load % for a bus from active bookings.
+ * Falls back to a peak-hour-aware estimate if no schedule found.
+ */
+async function getPassengerLoad(bus) {
+  const busIdStr = String(bus._id);
+  const cached   = _loadCache[busIdStr];
+  if (cached && (Date.now() - cached.fetchedAt) < LOAD_CACHE_TTL) {
+    return cached.load;
+  }
+
+  try {
+    // Find the active/in-progress schedule for this bus
+    const schedule = await Schedule.findOne({
+      bus:    bus._id,
+      status: 'in-progress',
+    }).select('_id bus').lean();
+
+    if (schedule) {
+      const capacity = bus.capacity || 60;
+      const [confirmed, boarded] = await Promise.all([
+        Booking.countDocuments({ schedule: schedule._id, status: 'confirmed' }),
+        Booking.countDocuments({ schedule: schedule._id, status: 'boarded' }),
+      ]);
+      const load = Math.min(100, Math.round(((confirmed + boarded) / capacity) * 100));
+      _loadCache[busIdStr] = { load, fetchedAt: Date.now() };
+      return load;
+    }
+  } catch { /* fall through to estimate */ }
+
+  // Realistic estimate: peak hours have higher load
+  const h = new Date().getHours();
+  const isPeak = (h >= 7 && h <= 10) || (h >= 17 && h <= 20);
+  const load = isPeak
+    ? 55 + Math.floor(Math.random() * 35)   // 55–90% at peak
+    : 15 + Math.floor(Math.random() * 40);  // 15–55% off-peak
+  _loadCache[busIdStr] = { load, fetchedAt: Date.now() };
+  return load;
+}
 const simState = {};
 let   simInterval = null;
 let   isRunning   = false;
@@ -56,18 +105,22 @@ async function tickBus(bus) {
 
     const delay = state.delayMin;
 
+    // Fetch real passenger load (cached 5 min)
+    const passengerLoad = await getPassengerLoad(bus);
+
     // Save to BusPosition
     await BusPosition.create({
-      bus:           bus._id,
-      route:         bus.currentRoute?._id || bus.currentRoute,
-      location:      { type: 'Point', coordinates: [pos.lng, pos.lat] },
+      bus:            bus._id,
+      route:          bus.currentRoute?._id || bus.currentRoute,
+      location:       { type: 'Point', coordinates: [pos.lng, pos.lat] },
       speed,
-      heading:       Math.floor(Math.random() * 360),
-      nextStage:     nxt._id,
-      etaNextStage:  new Date(Date.now() + delay * 60000),
-      delay_minutes: delay,
-      isSimulated:   true,
-      timestamp:     new Date(),
+      heading:        Math.floor(Math.random() * 360),
+      nextStage:      nxt._id,
+      etaNextStage:   new Date(Date.now() + delay * 60000),
+      delay_minutes:  delay,
+      passenger_load: passengerLoad,
+      isSimulated:    true,
+      timestamp:      new Date(),
     });
 
     // Update Bus.lastPosition
@@ -78,20 +131,21 @@ async function tickBus(bus) {
     // ── Emit Socket.io ──
     const io = getIO();
     const payload = {
-      _id:         String(bus._id),
-      bus:         String(bus._id),
-      busId:       String(bus._id),
-      busNumber:   bus.busNumber,
-      lat:         pos.lat,
-      lng:         pos.lng,
+      _id:            String(bus._id),
+      bus:            String(bus._id),
+      busId:          String(bus._id),
+      busNumber:      bus.busNumber,
+      lat:            pos.lat,
+      lng:            pos.lng,
       speed,
-      delay_minutes: delay,
+      delay_minutes:  delay,
       delay,
-      nextStage:   nxt.stage_name,
-      nextStageId: String(nxt._id),
-      routeId:     String(bus.currentRoute?._id || bus.currentRoute || ''),
-      routeName:   bus.currentRoute?.route_name || '',
-      timestamp:   new Date().toISOString(),
+      passenger_load: passengerLoad,
+      nextStage:      nxt.stage_name,
+      nextStageId:    String(nxt._id),
+      routeId:        String(bus.currentRoute?._id || bus.currentRoute || ''),
+      routeName:      bus.currentRoute?.route_name || '',
+      timestamp:      new Date().toISOString(),
     };
 
     io.to(`bus:${bus._id}`).emit('bus:location_update', payload);
@@ -112,6 +166,37 @@ async function tickBus(bus) {
       io.to('admin-dashboard').emit('alert:new', alert);
     } else if (delay <= 5) {
       state.alertedDelay = false; // reset so it can alert again if delay recurs
+    }
+
+    // ── Anomaly Detection via AI service (every 5th tick to avoid overload) ──
+    state.anomalyTick = ((state.anomalyTick || 0) + 1) % 5;
+    if (state.anomalyTick === 0) {
+      try {
+        const { data: anom } = await axios.post(
+          `${AI_URL}/detect/anomaly`,
+          { speed_kmh: speed, delay_minutes: delay, passenger_load: passengerLoad },
+          { timeout: 3000 }
+        );
+        if (anom.is_anomaly && !state.alertedAnomaly) {
+          state.alertedAnomaly = true;
+          const anomAlert = await Alert.create({
+            type:       'breakdown',
+            severity:   'critical',
+            route:      bus.currentRoute?._id || bus.currentRoute,
+            bus:        bus._id,
+            message:    `⚠️ Anomaly detected on Bus ${bus.busNumber}: ${anom.reason || 'unusual behaviour'} (score: ${(anom.score || 0).toFixed(2)})`,
+            details:    { anomalyScore: anom.score, model: anom.model, speed, delay },
+            isResolved: false,
+          });
+          io.to('admin-dashboard').emit('alert:new', anomAlert);
+          io.to('admin-dashboard').emit('anomaly:detected', {
+            busId: String(bus._id), busNumber: bus.busNumber,
+            score: anom.score, reason: anom.reason, model: anom.model,
+          });
+        } else if (!anom.is_anomaly) {
+          state.alertedAnomaly = false;
+        }
+      } catch { /* AI service unavailable — skip */ }
     }
 
     // ── Advance position ──

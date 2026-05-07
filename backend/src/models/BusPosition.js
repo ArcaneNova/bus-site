@@ -13,6 +13,7 @@ const busPositionSchema = new mongoose.Schema({
   nextStage:     { type: mongoose.Schema.Types.ObjectId, ref: 'Stage' },
   etaNextStage:  { type: Date },
   delay_minutes: { type: Number, default: 0 },
+  passenger_load: { type: Number, default: 0 }, // % of bus capacity currently occupied
   timestamp:     { type: Date, default: Date.now },
   isSimulated:   { type: Boolean, default: false },
 });

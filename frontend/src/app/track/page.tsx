@@ -52,7 +52,7 @@ export default function TrackPage() {
       });
       setLastUpdate(new Date());
     });
-    return () => socket.off('bus:location_update');
+    return () => { socket.off('bus:location_update'); };
   }, [fetchPositions]);
 
   const fetchAIETA = useCallback(async (pos: BusPosition) => {

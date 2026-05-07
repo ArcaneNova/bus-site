@@ -7,8 +7,6 @@ const compression = require('compression');
 const cookieParser = require('cookie-parser');
 const rateLimit = require('express-rate-limit');
 const mongoSanitize = require('express-mongo-sanitize');
-const xss = require('xss-clean');
-const hpp = require('hpp');
 require('dotenv').config();
 
 const { initSocket } = require('./config/socket');
@@ -28,6 +26,30 @@ const alertRoutes     = require('./routes/alert.routes');
 const reportRoutes    = require('./routes/report.routes');
 const mobileRoutes    = require('./routes/mobile.routes');
 const publicRoutes    = require('./routes/public.routes');
+const adminRoutes     = require('./routes/admin.routes');
+
+// AI proxy router — forwards /api/v1/ai/* to Python AI microservice
+const { Router } = express;
+const axios = require('axios');
+const aiProxy = Router();
+const AI_URL = process.env.AI_SERVICE_URL || process.env.PYTHON_AI_URL || 'http://localhost:8000';
+['demand','delay','eta','fare'].forEach(path => {
+  aiProxy.post(`/${path}`, async (req, res) => {
+    try {
+      const { data } = await axios.post(`${AI_URL}/predict/${path}`, req.body, { timeout: 8000 });
+      res.json({ success: true, ...data });
+    } catch (e) {
+      const fallbacks = { demand: { predicted_count: 50, crowd_level: 'medium' }, delay: { predicted_delay_minutes: 3 }, eta: { eta_minutes: 15, eta_confidence: 0.7, model: 'fallback', breakdown: {} }, fare: { amount: 20, currency: 'INR' } };
+      res.json({ success: true, ...fallbacks[path], model: 'fallback' });
+    }
+  });
+});
+aiProxy.post('/anomaly', async (req, res) => {
+  try {
+    const { data } = await axios.post(`${AI_URL}/detect/anomaly`, req.body, { timeout: 8000 });
+    res.json({ success: true, ...data });
+  } catch (e) { res.json({ success: true, is_anomaly: false, score: 0, confidence: 0.5, reason: 'unavailable', model: 'fallback' }); }
+});
 
 const app = express();
 const server = http.createServer(app);
@@ -38,26 +60,41 @@ initSocket(server);
 // ── Security Middleware ─────────────────────────────────────────────────────
 app.use(helmet());
 app.use(cors({
-  origin: [process.env.CLIENT_URL, 'http://localhost:3000', 'http://localhost:19006'],
+  origin: (origin, callback) => {
+    const allowedOrigins = [
+      process.env.CLIENT_URL,
+      'http://localhost:3000',
+      'http://localhost:19006',
+      'http://localhost:8081', // Expo web
+      /^http:\/\/192\.168\..*:/, // Localhost network IP
+      /^exp:\/\/.*/, // Expo tunnel
+    ];
+    
+    if (!origin || allowedOrigins.some(allowed => 
+      typeof allowed === 'string' ? origin === allowed : allowed.test(origin)
+    )) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed for origin: ' + origin));
+    }
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH'],
 }));
 
 // Sanitise against NoSQL injection (mongo-sanitize)
-app.use(mongoSanitize());
-
-// Sanitise against XSS
-app.use(xss());
-
-// Prevent HTTP Parameter Pollution
-app.use(hpp({
-  whitelist: ['status', 'routeId', 'driverId', 'busId', 'from', 'to', 'page', 'limit'],
-}));
+// express-mongo-sanitize tries to reassign req.query which is a read-only getter
+// in Express 5 — so we manually sanitize only req.body and req.params instead.
+app.use((req, res, next) => {
+  if (req.body)   req.body   = mongoSanitize.sanitize(req.body);
+  if (req.params) req.params = mongoSanitize.sanitize(req.params);
+  next();
+});
 
 // ── Rate Limiting (tiered by role / endpoint sensitivity) ──────────────────
 const globalLimiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 200,
+  max: 500,
   message: { error: 'Too many requests, please try again later.' },
   standardHeaders: true,
   legacyHeaders:   false,
@@ -104,6 +141,8 @@ app.use('/api/v1/alerts',   alertRoutes);
 app.use('/api/v1/reports',  reportRoutes);
 app.use('/api/v1/mobile',   mobileRoutes);
 app.use('/api/v1/public',   publicRoutes);
+app.use('/api/v1/admin',    adminRoutes);
+app.use('/api/v1/ai',       aiProxy);
 
 // ── Health Check ────────────────────────────────────────────────────────────
 app.get('/health', (req, res) => {

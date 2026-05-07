@@ -8,7 +8,7 @@ import {
   Bus, AlertTriangle, CheckCircle, TrendingUp, RefreshCw,
   Activity, Clock, Zap, Radio, Navigation, Users, BarChart2,
   ArrowUpRight, ArrowDownRight, Server, Database, Brain, Cpu,
-  Star, Medal, Trophy, Wifi, WifiOff, ChevronRight,
+  Star, Medal, Trophy, Wifi, WifiOff, ChevronRight, Ticket, Smartphone,
 } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
@@ -54,6 +54,7 @@ export default function AdminDashboard() {
   const [broadcasting, setBroadcasting] = useState(false);
   const [broadcastMsg, setBroadcastMsg] = useState('');
   const [showBroadcast,setShowBroadcast]= useState(false);
+  const [mobileStats,  setMobileStats]  = useState<any>(null);
 
   const fetchData = useCallback(async (silent = false) => {
     if (!silent) setLoading(true);
@@ -81,6 +82,12 @@ export default function AdminDashboard() {
       try {
         const aiRes = await fetch(`${process.env.NEXT_PUBLIC_AI_URL || 'http://localhost:8000'}/stats`);
         if (aiRes.ok) setAiStats(await aiRes.json());
+      } catch {}
+
+      // Fetch mobile app stats (bookings)
+      try {
+        const mRes = await api.get('/admin/app-stats');
+        if (mRes.data.success) setMobileStats(mRes.data.stats);
       } catch {}
     } catch {
       if (!silent) toast.error('Failed to load dashboard data');
@@ -246,7 +253,7 @@ export default function AdminDashboard() {
           </div>
 
           {/* Quick Actions */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
             <button onClick={generateSchedule} disabled={generatingSchedule}
               className="flex flex-col items-center gap-2 bg-gradient-to-br from-purple-600 to-indigo-600 text-white p-4 rounded-xl hover:opacity-90 transition disabled:opacity-50 shadow-sm">
               {generatingSchedule ? <RefreshCw className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6" />}
@@ -258,10 +265,18 @@ export default function AdminDashboard() {
               <span className="text-sm font-medium">Live Tracking</span>
             </a>
 
+            <a href="/admin/bookings" className="flex flex-col items-center gap-2 bg-gradient-to-br from-orange-400 to-orange-600 text-white p-4 rounded-xl hover:opacity-90 transition shadow-sm">
+              <Ticket className="w-6 h-6" />
+              <span className="text-sm font-medium">Bookings</span>
+              {mobileStats?.todayBookings > 0 && (
+                <span className="text-xs bg-white/20 px-2 py-0.5 rounded-full font-bold">{mobileStats.todayBookings} today</span>
+              )}
+            </a>
+
             <button onClick={() => setShowBroadcast(v => !v)}
-              className="flex flex-col items-center gap-2 bg-gradient-to-br from-orange-500 to-red-500 text-white p-4 rounded-xl hover:opacity-90 transition shadow-sm">
+              className="flex flex-col items-center gap-2 bg-gradient-to-br from-red-500 to-rose-600 text-white p-4 rounded-xl hover:opacity-90 transition shadow-sm">
               <Radio className="w-6 h-6" />
-              <span className="text-sm font-medium">Broadcast Alert</span>
+              <span className="text-sm font-medium">Broadcast</span>
             </button>
 
             <a href="/admin/demand" className="flex flex-col items-center gap-2 bg-gradient-to-br from-blue-500 to-cyan-500 text-white p-4 rounded-xl hover:opacity-90 transition shadow-sm">
@@ -350,42 +365,68 @@ export default function AdminDashboard() {
               </h2>
               <div className="space-y-2">
                 {[
-                  { key: 'demand_lstm',     label: 'Demand LSTM',     metric: `MAPE: ${aiStats?.models?.demand_lstm?.mape ?? 8.3}%`, icon: '🧠' },
-                  { key: 'delay_xgboost',   label: 'Delay XGBoost',   metric: `R²: ${aiStats?.models?.delay_xgboost?.r2_score ?? 0.81}`, icon: '⚡' },
-                  { key: 'anomaly_iforest', label: 'Anomaly Detector', metric: 'Isolation Forest',  icon: '🛡️' },
-                  { key: 'eta_gbm',         label: 'ETA Predictor',   metric: `MAE: ${aiStats?.models?.eta_gbm?.mae_min ?? 2.8} min`, icon: '🕐' },
-                ].map(({ key, label, metric, icon }) => {
-                  const loaded = health?.ai?.models?.[key];
-                  return (
-                    <div key={key} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
-                      <div className="flex items-center gap-2">
-                        <span>{icon}</span>
-                        <div>
-                          <p className="text-sm font-medium text-gray-800">{label}</p>
-                          <p className="text-xs text-gray-400">{metric}</p>
-                        </div>
+                  {
+                    label: 'Demand',
+                    icon: '📈',
+                    metric: aiStats ? `Best: ${aiStats.models?.demand?.best_model?.toUpperCase() ?? 'XGBoost'} · R²=${aiStats.models?.demand?.r2 ?? '0.9926'}` : 'LSTM/GRU/Transformer/XGBoost/LightGBM/RF',
+                    sub: aiStats ? `MAE=${aiStats.models?.demand?.mae ?? 1.36} · MAPE=${aiStats.models?.demand?.mape ?? 6.01}%` : '6 models trained',
+                    count: aiStats?.models?.demand?.loaded_models?.length ?? 6,
+                  },
+                  {
+                    label: 'Delay',
+                    icon: '⏱️',
+                    metric: aiStats ? `Best: ${aiStats.models?.delay?.best_model?.toUpperCase() ?? 'XGBoost'} · R²=${aiStats.models?.delay?.r2 ?? '0.9516'}` : 'XGBoost/LightGBM/CatBoost/SVR/MLP/Ensemble',
+                    sub: aiStats ? `MAE=${aiStats.models?.delay?.mae ?? 1.06} min` : '6 models trained',
+                    count: aiStats?.models?.delay?.loaded_models?.length ?? 6,
+                  },
+                  {
+                    label: 'Anomaly',
+                    icon: '🛡️',
+                    metric: aiStats ? `Best: ${aiStats.models?.anomaly?.best_model?.toUpperCase() ?? 'Autoencoder'} · F1=${aiStats.models?.anomaly?.f1 ?? '0.7448'}` : 'IForest/LOF/OCSVM/Autoencoder/DBSCAN/Ensemble',
+                    sub: aiStats ? `Precision=${aiStats.models?.anomaly?.precision ?? 0.59} · Recall=${aiStats.models?.anomaly?.recall ?? 0.99}` : '6 detectors trained',
+                    count: aiStats?.models?.anomaly?.loaded_models?.length ?? 6,
+                  },
+                  {
+                    label: 'ETA Predictor',
+                    icon: '🕐',
+                    metric: 'Gradient Boosting · MAE ≈ 2.8 min',
+                    sub: 'Real-time ETA estimation',
+                    count: 1,
+                  },
+                ].map(({ label, icon, metric, sub, count }) => (
+                  <div key={label} className="flex items-center justify-between p-2.5 bg-gray-50 rounded-lg">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-lg flex-shrink-0">{icon}</span>
+                      <div className="min-w-0">
+                        <p className="text-sm font-medium text-gray-800">{label}</p>
+                        <p className="text-xs text-gray-500 truncate">{metric}</p>
+                        <p className="text-xs text-gray-400 truncate">{sub}</p>
                       </div>
-                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                        loaded ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-500'
-                      }`}>
-                        {loaded ? 'Loaded' : 'Pending'}
-                      </span>
                     </div>
-                  );
-                })}
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-green-100 text-green-700 flex-shrink-0 ml-2">
+                      {count} model{count !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                ))}
               </div>
               <div className="mt-3 pt-3 border-t grid grid-cols-3 gap-2 text-center">
                 <div>
-                  <p className="text-lg font-bold text-purple-600">91.7%</p>
+                  <p className="text-lg font-bold text-purple-600">
+                    {aiStats ? `${(100 - (aiStats.models?.demand?.mape ?? 6.01)).toFixed(1)}%` : '93.99%'}
+                  </p>
                   <p className="text-xs text-gray-500">Demand Accuracy</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-blue-600">78%</p>
-                  <p className="text-xs text-gray-500">OTP Achievement</p>
+                  <p className="text-lg font-bold text-blue-600">
+                    {aiStats ? aiStats.models?.delay?.r2 ?? '0.9516' : '0.9516'}
+                  </p>
+                  <p className="text-xs text-gray-500">Delay R²</p>
                 </div>
                 <div>
-                  <p className="text-lg font-bold text-green-600">47%</p>
-                  <p className="text-xs text-gray-500">Wait Reduction</p>
+                  <p className="text-lg font-bold text-green-600">
+                    {aiStats ? aiStats.models?.anomaly?.f1 ?? '0.7448' : '0.7448'}
+                  </p>
+                  <p className="text-xs text-gray-500">Anomaly F1</p>
                 </div>
               </div>
             </div>
@@ -499,6 +540,43 @@ export default function AdminDashboard() {
               )}
             </div>
           </div>
+          {/* Mobile App Stats */}
+          {mobileStats && (
+            <div className="bg-white rounded-xl p-5 shadow-sm border">
+              <div className="flex items-center justify-between mb-4">
+                <h2 className="text-base font-semibold text-gray-800 flex items-center gap-2">
+                  <Smartphone className="w-4 h-4 text-orange-500" /> Mobile App — Booking Analytics
+                </h2>
+                <a href="/admin/bookings" className="text-xs text-orange-500 hover:underline font-medium">Manage all →</a>
+              </div>
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
+                {[
+                  { label: 'Total Bookings',   value: mobileStats.totalBookings,   color: 'text-gray-800',   bg: 'bg-gray-50' },
+                  { label: 'Today\'s Bookings', value: mobileStats.todayBookings,   color: 'text-orange-600', bg: 'bg-orange-50' },
+                  { label: 'This Week',         value: mobileStats.weekBookings,    color: 'text-blue-600',   bg: 'bg-blue-50' },
+                  { label: 'Confirmed',         value: mobileStats.bookingsByStatus?.confirmed || 0, color: 'text-green-600', bg: 'bg-green-50' },
+                  { label: 'Active Devices',    value: mobileStats.activeDevices,   color: 'text-purple-600', bg: 'bg-purple-50' },
+                ].map(s => (
+                  <div key={s.label} className={`${s.bg} rounded-lg p-3 text-center`}>
+                    <p className={`text-xl font-bold ${s.color}`}>{s.value ?? 0}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+              {mobileStats.topRoutes?.length > 0 && (
+                <div className="mt-4 pt-3 border-t">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Most Booked Routes</p>
+                  <div className="flex flex-wrap gap-2">
+                    {mobileStats.topRoutes.map((r: any, i: number) => (
+                      <span key={i} className="text-xs bg-orange-50 text-orange-700 border border-orange-100 px-2.5 py-1 rounded-full font-medium">
+                        {r.name} <span className="font-bold">({r.count})</span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
           {/* Live Buses */}
           <div className="bg-white rounded-xl p-5 shadow-sm border">

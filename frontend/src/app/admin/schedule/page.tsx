@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useCallback } from 'react';
 import api from '@/lib/api';
 import type { Schedule } from '@/types';
-import { Calendar, Plus, RefreshCw, Sparkles, X, ChevronDown, ChevronUp, Clock, Zap, Edit2, Trash2 } from 'lucide-react';
+import { Calendar, Plus, RefreshCw, Sparkles, X, ChevronDown, ChevronUp, Clock, Zap, Edit2, Trash2, Users, AlertTriangle } from 'lucide-react';
 import { formatDate } from '@/lib/utils';
 import toast from 'react-hot-toast';
 
@@ -87,13 +87,27 @@ export default function SchedulePage() {
   const [editSched,      setEditSched]      = useState<Schedule | null>(null);
   const [form,           setForm]           = useState(EMPTY_FORM);
   const [saving,         setSaving]         = useState(false);
+  const [aiModelInfo,    setAiModelInfo]    = useState<{model?: string; count?: number} | null>(null);
+  const [bookedSeats,    setBookedSeats]    = useState<Record<string, number>>({});
+  const [statusUpdating, setStatusUpdating] = useState<string | null>(null);
 
 
   const fetchSchedules = async () => {
     setLoading(true);
     try {
       const { data } = await api.get(`/schedule?date=${date}&limit=50`);
-      setSchedules(data.schedules);
+      const scheds: Schedule[] = data.schedules || [];
+      setSchedules(scheds);
+      // Fetch booked seat counts per schedule in parallel
+      const counts: Record<string, number> = {};
+      await Promise.all(scheds.map(async (s) => {
+        try {
+          const bRes = await api.get(`/mobile/passenger/bookings?scheduleId=${s._id}&limit=200`);
+          const active = (bRes.data.bookings || []).filter((b: {status:string}) => ['confirmed','boarded'].includes(b.status));
+          counts[s._id] = active.reduce((acc: number, b: {passengers:number}) => acc + (b.passengers || 1), 0);
+        } catch { counts[s._id] = 0; }
+      }));
+      setBookedSeats(counts);
     } catch { toast.error('Failed to load schedules'); }
     finally { setLoading(false); }
   };
@@ -184,6 +198,16 @@ export default function SchedulePage() {
     } catch { toast.error('Failed to delete'); }
   };
 
+  const quickStatus = async (id: string, status: string) => {
+    setStatusUpdating(id);
+    try {
+      await api.put(`/schedule/${id}`, { status });
+      setSchedules(prev => prev.map(s => s._id === id ? { ...s, status: status as Schedule['status'] } : s));
+      toast.success(`Status updated to ${status}`);
+    } catch { toast.error('Failed to update status'); }
+    finally { setStatusUpdating(null); }
+  };
+
   useEffect(() => { fetchSchedules(); }, [date]);
   useEffect(() => { if (showAIPanel) fetchRoutes(); }, [showAIPanel]);
 
@@ -191,6 +215,7 @@ export default function SchedulePage() {
     if (!aiRouteId) { toast.error('Select a route first'); return; }
     setAILoading(true);
     setAISlots([]);
+    setAiModelInfo(null);
     try {
       const { data } = await api.post('/schedule/generate-ai', {
         date,
@@ -199,6 +224,10 @@ export default function SchedulePage() {
       });
       const normalized = (data.slots || []).map((slot: AISlot) => normalizeAIBusSlot(date, slot));
       setAISlots(normalized);
+      // Track which demand model was used
+      if (data.schedules?.[0]?.demand_model || data.demand_model) {
+        setAiModelInfo({ model: data.schedules?.[0]?.demand_model ?? data.demand_model });
+      }
       toast.success(`Generated ${normalized.length} optimal slots`);
     } catch {
       toast.error('AI generation failed — check AI service is running');
@@ -296,7 +325,9 @@ export default function SchedulePage() {
             <div className="flex items-center gap-2">
               <Sparkles className="w-5 h-5 text-purple-600" />
               <h2 className="font-semibold text-purple-900">AI Schedule Generator</h2>
-              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">LSTM + Optimizer</span>
+              <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">
+                {aiModelInfo?.model ? `Demand: ${aiModelInfo.model.toUpperCase()}` : 'Multi-Model'}
+              </span>
             </div>
             <div className="flex items-center gap-2">
               <button
@@ -361,7 +392,12 @@ export default function SchedulePage() {
           {aiSlots.length > 0 && (
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <p className="text-sm font-medium text-gray-700">{aiSlots.length} AI-optimized slots for {date}</p>
+                <div>
+                  <p className="text-sm font-medium text-gray-700">{aiSlots.length} AI-optimized slots for {date}</p>
+                  {aiModelInfo?.model && (
+                    <p className="text-xs text-purple-600 mt-0.5">Demand model: 🏆 {aiModelInfo.model.toUpperCase()}</p>
+                  )}
+                </div>
                 <button
                   onClick={applyAISchedule}
                   disabled={applyLoading}
@@ -396,48 +432,134 @@ export default function SchedulePage() {
       {/* Schedule table */}
       <div className="bg-white rounded-xl shadow-sm border overflow-hidden">
         {loading ? (
-          <p className="text-center py-10 text-gray-400">Loading…</p>
+          <div className="text-center py-16 text-gray-400">
+            <RefreshCw className="w-6 h-6 animate-spin mx-auto mb-2" />
+            <p>Loading schedules…</p>
+          </div>
         ) : schedules.length === 0 ? (
           <div className="text-center py-16 text-gray-400">
             <Calendar className="w-10 h-10 mx-auto mb-3" />
-            <p>No schedules for {date}</p>
+            <p className="font-medium">No schedules for {date}</p>
+            <p className="text-sm mt-1">Click <strong>Add Trip</strong> or use <strong>Generate AI Schedule</strong></p>
           </div>
         ) : (
-          <table className="w-full text-sm">
-            <thead className="bg-gray-50 border-b">
-              <tr>
-                {['Route', 'Bus', 'Driver', 'Departure', 'ETA', 'Type', 'Status', 'Actions'].map((h) => (
-                  <th key={h} className="text-left px-4 py-3 font-medium text-gray-600">{h}</th>
-                ))}
-              </tr>
-            </thead>
-            <tbody className="divide-y">
-              {schedules.map((s) => {
-                const color = statusColor[s.status] || 'gray';
+          <>
+            {/* Summary bar */}
+            <div className="flex items-center gap-6 px-5 py-3 bg-gray-50 border-b text-xs text-gray-500">
+              <span className="font-semibold text-gray-700 text-sm">{schedules.length} trips</span>
+              {(['scheduled','in-progress','completed','cancelled'] as const).map(st => {
+                const count = schedules.filter(s => s.status === st).length;
+                if (!count) return null;
+                const colors: Record<string, string> = { scheduled:'blue', 'in-progress':'yellow', completed:'green', cancelled:'red' };
+                const c = colors[st] || 'gray';
                 return (
-                  <tr key={s._id} className="hover:bg-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-800 max-w-48 truncate">{s.route?.route_name}</td>
-                    <td className="px-4 py-3">{s.bus?.busNumber}</td>
-                    <td className="px-4 py-3 text-gray-500">{(s.driver?.userId as any)?.name || '—'}</td>
-                    <td className="px-4 py-3">{formatDate(s.departureTime, { timeStyle: 'short' })}</td>
-                    <td className="px-4 py-3">{formatDate(s.estimatedArrivalTime, { timeStyle: 'short' })}</td>
-                    <td className="px-4 py-3 capitalize">{s.type}</td>
-                    <td className="px-4 py-3">
-                      <span className={`px-2 py-0.5 rounded-full text-xs font-medium bg-${color}-100 text-${color}-700 capitalize`}>
-                        {s.status}
-                      </span>
-                    </td>
-                    <td className="px-4 py-3">
-                      <div className="flex gap-2">
-                        <button onClick={() => openEdit(s)} className="text-blue-500 hover:text-blue-700" title="Edit"><Edit2 className="w-4 h-4" /></button>
-                        <button onClick={() => deleteSchedule(s._id)} className="text-red-500 hover:text-red-700" title="Delete"><Trash2 className="w-4 h-4" /></button>
-                      </div>
-                    </td>
-                  </tr>
+                  <span key={st} className={`flex items-center gap-1 bg-${c}-100 text-${c}-700 px-2 py-0.5 rounded-full font-medium capitalize`}>
+                    {count} {st}
+                  </span>
                 );
               })}
-            </tbody>
-          </table>
+              <span className="ml-auto">
+                Total booked: <strong>{Object.values(bookedSeats).reduce((a,b) => a+b, 0)} seats</strong>
+              </span>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead className="bg-gray-50 border-b">
+                  <tr>
+                    {['Route', 'Bus', 'Driver', 'Departure', 'Arrival', 'Type', 'Occupancy', 'Status', 'Actions'].map((h) => (
+                      <th key={h} className="text-left px-4 py-3 font-medium text-gray-600 whitespace-nowrap">{h}</th>
+                    ))}
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {schedules.map((s) => {
+                    const color = statusColor[s.status] || 'gray';
+                    const capacity = (s.bus as any)?.capacity ?? 0;
+                    const booked = bookedSeats[s._id] ?? 0;
+                    const pct = capacity > 0 ? Math.min(100, Math.round((booked / capacity) * 100)) : 0;
+                    const isUpdating = statusUpdating === s._id;
+                    return (
+                      <tr key={s._id} className="hover:bg-gray-50 transition-colors">
+                        <td className="px-4 py-3 font-medium text-gray-800 max-w-48">
+                          <p className="truncate">{(s.route as any)?.route_name ?? '—'}</p>
+                        </td>
+                        <td className="px-4 py-3">
+                          <p className="font-medium text-gray-700">{(s.bus as any)?.busNumber ?? '—'}</p>
+                          {(s.bus as any)?.type && (
+                            <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium ${
+                              (s.bus as any).type === 'AC' ? 'bg-blue-100 text-blue-700' :
+                              (s.bus as any).type === 'electric' ? 'bg-green-100 text-green-700' :
+                              'bg-gray-100 text-gray-500'
+                            }`}>{(s.bus as any).type}</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 text-gray-500 max-w-32">
+                          <p className="truncate">{(s.driver?.userId as any)?.name || '—'}</p>
+                        </td>
+                        <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">{formatDate(s.departureTime, { timeStyle: 'short' })}</td>
+                        <td className="px-4 py-3 font-mono text-xs whitespace-nowrap">{formatDate(s.estimatedArrivalTime, { timeStyle: 'short' })}</td>
+                        <td className="px-4 py-3 capitalize">
+                          <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                            s.type === 'peak' ? 'bg-orange-100 text-orange-700' :
+                            s.type === 'express' ? 'bg-purple-100 text-purple-700' :
+                            s.type === 'emergency' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-600'
+                          }`}>{s.type}</span>
+                        </td>
+                        <td className="px-4 py-3 min-w-[120px]">
+                          {capacity > 0 ? (
+                            <div>
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="text-xs text-gray-500">{booked}/{capacity}</span>
+                                {pct >= 90 && <AlertTriangle className="w-3 h-3 text-red-500" />}
+                                {pct >= 70 && pct < 90 && <span className="text-[10px] text-orange-500 font-medium">Near full</span>}
+                              </div>
+                              <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                <div
+                                  className={`h-full rounded-full transition-all ${
+                                    pct >= 90 ? 'bg-red-500' : pct >= 70 ? 'bg-orange-400' : 'bg-green-500'
+                                  }`}
+                                  style={{ width: `${pct}%` }}
+                                />
+                              </div>
+                            </div>
+                          ) : (
+                            <span className="flex items-center gap-1 text-xs text-gray-400">
+                              <Users className="w-3 h-3" />{booked} booked
+                            </span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3">
+                          <select
+                            value={s.status}
+                            disabled={isUpdating}
+                            onChange={e => quickStatus(s._id, e.target.value)}
+                            className={`text-xs px-2 py-1 rounded-lg border font-medium capitalize cursor-pointer focus:outline-none ${
+                              s.status === 'scheduled'    ? 'bg-blue-50 border-blue-200 text-blue-700' :
+                              s.status === 'in-progress'  ? 'bg-yellow-50 border-yellow-200 text-yellow-700' :
+                              s.status === 'completed'    ? 'bg-green-50 border-green-200 text-green-700' :
+                              'bg-red-50 border-red-200 text-red-700'
+                            }`}
+                          >
+                            <option value="scheduled">Scheduled</option>
+                            <option value="in-progress">In Progress</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                        </td>
+                        <td className="px-4 py-3">
+                          <div className="flex gap-2">
+                            <button onClick={() => openEdit(s)} className="text-blue-500 hover:text-blue-700" title="Edit"><Edit2 className="w-4 h-4" /></button>
+                            <button onClick={() => deleteSchedule(s._id)} className="text-red-500 hover:text-red-700" title="Delete"><Trash2 className="w-4 h-4" /></button>
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </>
         )}
       </div>
 
